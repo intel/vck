@@ -1,0 +1,81 @@
+version: '2'
+services:
+  etcd:
+    image: "quay.io/coreos/etcd:v3.2"
+    command: "etcd --advertise-client-urls http://0.0.0.0:2379 --listen-client-urls http://0.0.0.0:2379"
+    ports:
+      - 2379:2379
+
+  kubernetes:
+    image: "gcr.io/google-containers/hyperkube-amd64:v1.7.3"
+    depends_on:
+      - "etcd"
+    command: "/hyperkube apiserver --insecure-bind-address=0.0.0.0 --etcd-servers=http://etcd:2379 --service-cluster-ip-range=10.0.0.0/16"
+    ports:
+      - 8080:8080
+
+  stream-prediction-controller:
+    image: "stream-prediction-controller"
+    command:
+      sh -c "
+      /go/src/github.com/NervanaSystems/kube-controllers-go/resources/wait-port kubernetes 8080 &&
+      /go/bin/stream-prediction-controller
+        --kubeconfig=/go/src/github.com/NervanaSystems/kube-controllers-go/resources/config
+        --deploymentFile=/go/src/github.com/NervanaSystems/kube-controllers-go/cmd/stream-prediction-controller/resources/deployment.tmpl
+        --serviceFile=/go/src/github.com/NervanaSystems/kube-controllers-go/cmd/stream-prediction-controller/resources/service.tmpl
+        --ingressFile=/go/src/github.com/NervanaSystems/kube-controllers-go/cmd/stream-prediction-controller/resources/ingress.tmpl
+        --hpaFile=/go/src/github.com/NervanaSystems/kube-controllers-go/cmd/stream-prediction-controller/resources/hpa.tmpl
+        --namespace=e2e-test
+        --v=4"
+    depends_on:
+      - "kubernetes"
+    privileged: true # required for debugging
+
+  model-training-controller:
+    image: "model-training-controller"
+    command:
+      sh -c "
+      /go/src/github.com/NervanaSystems/kube-controllers-go/resources/wait-port kubernetes 8080 &&
+      /go/bin/model-training-controller
+        --kubeconfig=/go/src/github.com/NervanaSystems/kube-controllers-go/resources/config
+        --jobFile=/go/src/github.com/NervanaSystems/kube-controllers-go/cmd/model-training-controller/resources/job.tmpl
+        --namespace=e2e-test
+        --v=4"
+    depends_on:
+      - "kubernetes"
+    privileged: true # required for debugging
+
+  batch-prediction-controller:
+    image: "batch-prediction-controller"
+    command:
+      sh -c "
+      /go/src/github.com/NervanaSystems/kube-controllers-go/resources/wait-port kubernetes 8080 &&
+      /go/bin/batch-prediction-controller
+        --kubeconfig=/go/src/github.com/NervanaSystems/kube-controllers-go/resources/config
+        --jobFile=/go/src/github.com/NervanaSystems/kube-controllers-go/cmd/batch-prediction-controller/resources/job.tmpl
+        --namespace=e2e-test
+        --v=4"
+    depends_on:
+      - "kubernetes"
+    privileged: true # required for debugging
+
+  example-controller:
+    image: "example-controller"
+    depends_on:
+      - "kubernetes"
+    command:
+      sh -c "
+      /go/src/github.com/NervanaSystems/kube-controllers-go/resources/wait-port kubernetes 8080 &&
+      /go/bin/example-controller
+        --kubeconfig=/go/src/github.com/NervanaSystems/kube-controllers-go/resources/config"
+    privileged: true # required for debugging
+
+  test:
+    image: "kube-controllers-go"
+    depends_on:
+      - "kubernetes"
+      - "stream-prediction-controller"
+      - "model-training-controller"
+    environment:
+      - KUBECONFIG=/go/src/github.com/NervanaSystems/kube-controllers-go/resources/config
+    command: "sleep inf"

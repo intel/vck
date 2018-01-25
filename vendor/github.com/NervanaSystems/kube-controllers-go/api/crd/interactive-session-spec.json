@@ -1,0 +1,171 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "interactive-session",
+  "description": "Represents an interactive session in Nervana Cloud",
+  "type": "object",
+  "definitions": {
+    "apiVersion": {
+      "type": "string",
+      "description": "API version of job spec e.g. helium.aipg.intel.com/v1",
+      "pattern": "^([a-zA-Z0-9\\-_]+)(\\.[a-zA-Z0-9\\-_]+)*\\/([a-zA-Z0-9\\-_]+)(\\/[a-zA-Z0-9\\-_]+)*$"
+    },
+    "sessionSpec": {
+      "type": "object",
+      "required": ["URL"],
+      "properties": {
+        "URL": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "securitySpec": {
+      "type": "object",
+      "required": ["presignedToken", "jwtToken"],
+      "properties": {
+        "presignedToken": {
+          "type": "string"
+        },
+        "jwtToken": {
+          "type": "string"
+        }
+      }
+    },
+    "containerSpec": {
+      "type": "object",
+      "description": "The container spec describes the container and entry point for the interactive session.",
+      "properties": {
+        "image": {
+          "type": "string",
+          "description": "Base image of Neon container. If not present, default will be used."
+        },
+        "command": {
+          "type": "array",
+          "description": "Command executed as entrypoint to the container. First item should be the binary to execute.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "s3URL": {
+      "type": "string",
+      "format": "uri",
+      "description": "S3 URL to Amazon S3 bucket. Should start with 's3://'"
+    },
+    "repoSpec": {
+      "type": "object",
+      "required": ["URL", "commit"],
+      "description": "Describes a git repository to pull into the container at runtime",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the Git repository"
+        },
+        "URL": {
+          "type": "string",
+          "format": "uri",
+          "description": "Git URL of repository"
+        },
+        "commit": {
+          "type": "string",
+          "description": "Either branch, tag or commit."
+        }
+      }
+    },
+    "resourceSpec": {
+      "type": "object",
+      "description": "Resource requirements for the interactive sessino. These resources are passed directly to Kubernetes.",
+      "properties": {
+        "requests": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "state": {
+      "type": "string",
+      "description": "The state space for an interactive session. 'Pending' is the initial state, and 'Completed' and 'Failed' are terminal.",
+      "enum": ["Pending", "Running", "Completed", "Failed"]
+    }
+  },
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": {
+      "$ref": "#/definitions/apiVersion"
+    },
+    "kind": {
+      "type": "string",
+      "description": "Session type. Only allowed value is 'InteractiveSession'",
+      "enum": [ "InteractiveSession" ]
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Kubernetes metadata",
+      "required": ["jobID", "tenantID"],
+      "properties": {
+        "jobID": {
+          "type": "number",
+          "description": "Interactive session id"
+        },
+        "tenantID": {
+          "type": "number",
+          "description": "ID of tenant owning this interactive session"
+        }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "description": "The specification for the interactive session and encodes all information needed to run it. The session controllers will monitor for changes continously and act based on the desired state encoded here",
+      "required": ["sessionSpec", "securitySpec", "containerSpec", "state"],
+      "properties": {
+        "sessionSpec": {
+          "$ref": "#/definitions/sessionSpec"
+        },
+        "securitySpec": {
+          "$ref": "#/definitions/securitySpec"
+        },
+        "containerSpec": {
+          "$ref": "#/definitions/containerSpec"
+        },
+        "sandboxS3URLPath": {
+          "$ref": "#/definitions/s3URL"
+        },
+        "volumesS3URLs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/s3URL"
+          }
+        },
+        "repositories": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/repoSpec"
+          }
+        },
+        "resourceSpec": {
+          "$ref": "#/definitions/resourceSpec"
+        },
+        "state": {
+          "$ref": "#/definitions/state"
+        }
+      }
+    },
+    "status": {
+      "type": "object",
+      "description": "Describes the current status of the interactive session i.e. the details of how the session sub-components are realizing the higher level session objective",
+      "required": ["state"],
+      "properties": {
+        "state": {
+          "$ref": "#/definitions/state"
+        },
+        "message": {
+          "type": "string",
+          "description": "Describes the reason for the interactive session being in its current state"
+        }
+      }
+    }
+  }
+}

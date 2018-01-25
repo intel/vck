@@ -1,0 +1,40 @@
+{
+    "apiVersion": "aipg.intel.com/v1",
+    "kind": "InteractiveSession",
+    "metadata": {
+        "jobID": 3,
+        "tenantID": 20
+    },
+    "spec": {
+        "state": "Running",
+        "sessionSpec": {
+            "URL": "https://interact/329393"
+        },
+        "securitySpec": {
+            "presignedToken": "foobar",
+            "jwtToken": "barbaz"
+        },
+        "containerSpec": {
+            "command": ["foo.py", "bar", "baz"]
+        },
+        "sandboxS3URL": "s3://baz/bar",
+        "volumesS3URLs": [
+            "s3://baz/foo",
+            "s3://baz/baz"
+        ],
+        "repositories": [
+            {
+                "name": "foo",
+                "URL": "git://git@github.com/foo/bar",
+                "commit": "v0.1.0"
+            },
+            {
+                "URL": "https://github.com/baz/foo",
+                "commit": "master"
+            }
+        ]
+    },
+    "status": {
+        "state": "Pending"
+    }
+}

@@ -1,0 +1,59 @@
+#!/bin/bash
+set -o nounset -o errexit -o pipefail
+GODEBUGGER=${GODEBUGGER:=gdb}
+
+usage () 
+{
+  echo -e "Usage: $0 attach processname\n" \
+'attach:\n' \
+'  \033[4ma\033[0mttach   attach to the process with the given name\n'
+}
+
+attach ()
+{
+  pname=${1:0:15}
+  pid=$(pgrep $pname)
+  while [ -z "$pid" ]; do
+    echo "waiting for $1 process to start..."
+    sleep 1
+    pid=$(pgrep $pname)
+  done
+  case "$GODEBUGGER" in
+    dlv)
+      dlv attach $pid
+      ;;
+    gdb)
+      gdb --quiet -iex "set auto-load safe-path /usr/local/go/src/runtime/runtime-gdb.py" -pid $pid
+      ;;
+    *)
+      echo "unknown debugger $GODEBUGGER"
+      ;;
+  esac
+}
+
+commands () 
+{
+  if [ $# = "0" ]; then
+    usage
+    exit 1
+  fi
+  local exitcode=0
+  while :
+  do
+    case "$1" in
+      a | at | att | atta | attac | attach)
+        shift 1
+        attach "$@"
+        exitcode=$?
+        break
+        ;;
+      *)
+        echo "**** unknown argument $1 ****"
+        exitcode=1
+        break
+        ;;  
+    esac
+  done
+  exit $exitcode
+}
+commands $*

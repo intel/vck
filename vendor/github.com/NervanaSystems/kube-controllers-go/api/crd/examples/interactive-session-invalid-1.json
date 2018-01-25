@@ -1,0 +1,17 @@
+{
+    "apiVersion": "{invalid api version}",
+    "kind": "invalid kind",
+    "metadata": {
+        "name": 2.0
+    },
+    "spec": {
+        "securitySpec": {
+            "presignedToken": "foobar",
+            "jwtToken": "barbaz"
+        },
+        "state": "Created"
+    },
+    "status": {
+        "state": "Not a valid state"
+    }
+}

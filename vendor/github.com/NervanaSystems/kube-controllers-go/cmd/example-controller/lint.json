@@ -1,0 +1,10 @@
+{
+  "vendor": true,
+  "deadline": "2m",
+  "aggregate": true,
+  "enable-gc": true,
+  "concurrency": 1,
+  "DisableAll": true,
+  "deadline": "10m",
+  "Enable": ["vet", "gofmt", "misspell", "deadcode"]
+}

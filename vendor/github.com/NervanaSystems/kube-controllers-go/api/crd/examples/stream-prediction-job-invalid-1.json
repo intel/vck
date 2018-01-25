@@ -1,0 +1,38 @@
+{
+    "apiVersion": "{invalid api version}",
+    "kind": "invalid kind",
+    "metadata": {
+        "name": 2.0
+    },
+    "spec": {
+        "securitySpec": {
+            "presignedToken": "foobar",
+            "jwtToken": "barbaz"
+        },
+        "kryptonRepoSpec": {
+            "image": "ubuntu",
+            "sidecarImage": "ubuntu",
+            "repoURL": "http://github.com/bar/foo",
+            "commit": "0f7aab7a458521a1d7b82462c2751ed3e22bfd99"
+        },
+        "streamDataSpec": {
+            "modelPRM": "",
+            "modelPath": "",
+            "datasetPath": "",
+            "extraFilename": "",
+            "customCodeURL": "",
+            "customCommit": "",
+            "awsPath": "",
+            "aWSDefaultRegion": "",
+            "streamID": {
+                "foo": "bar"
+            },
+            "streamName": ""
+        },
+        "state": "Created"
+
+    },
+    "status": {
+        "state": "Not a valid state"
+    }
+}

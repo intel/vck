@@ -1,2 +1,1 @@
-# experimental-kvc
-Data management utility
+# Nervana Volume Controller

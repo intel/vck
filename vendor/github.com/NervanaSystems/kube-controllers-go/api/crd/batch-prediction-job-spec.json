@@ -1,0 +1,160 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "batch-prediction",
+  "description": "Represents a batch prediction job in Nervana Cloud",
+  "type": "object",
+  "definitions": {
+    "apiVersion": {
+      "type": "string",
+      "description": "API version of job spec e.g. helium.aipg.intel.com/v1",
+      "pattern": "^([a-zA-Z0-9\\-_]+)(\\.[a-zA-Z0-9\\-_]+)*\\/([a-zA-Z0-9\\-_]+)(\\/[a-zA-Z0-9\\-_]+)*$"
+    },
+    "repoSpec": {
+      "type": "object",
+      "required": ["URL", "commit"],
+      "description": "Describes a git repository to pull into the container at runtime",
+      "properties": {
+        "URL": {
+          "type": "string",
+          "description": "Git URL of repository"
+        },
+        "commit": {
+          "type": "string",
+          "description": "Either branch, tag or commit."
+        }
+      }
+    },
+    "batchDataSpec": {
+      "type": "object",
+      "required": ["batchID"],
+      "properties": {
+        "modelPath": {
+          "type": "string",
+          "description": "URL to model file",
+          "format": "uri"
+        },
+        "datasetPath": {
+          "type": "string",
+          "description": "URL to data set file"
+        },
+        "extraFilename": {
+          "type": "string",
+          "description": "Local files to copy into sandbox of the stream prediction runtime"
+        },
+        "awsPath": {
+          "type": "string",
+          "description": "Sandbox for job files. Log files from the job execution will end up here as well."
+        },
+        "awsDefaultRegion": {
+          "type": "string",
+          "description": "The default AWS region to use for s3 downloads."
+        }
+      }
+    },
+    "resourceSpec": {
+      "type": "object",
+      "description": "Resource requirements for the batch prediction job. These resources are passed directly to Kubernetes.",
+      "properties": {
+        "requests": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "s3URL": {
+      "type": "string",
+      "format": "URI",
+      "description": "S3 URL to Amazon S3 bucket. Should start with 's3://'"
+    },
+    "state": {
+      "type": "string",
+      "description": "The state space for a batch prediction job. 'Pending' is the initial state, and 'Completed' and 'Failed' are terminal.",
+      "enum": ["Pending", "Running", "Completed", "Failed"]
+    }
+  },
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": {
+      "$ref": "#/definitions/apiVersion"
+    },
+    "kind": {
+      "type": "string",
+      "description": "Job type. Only allowed value is 'BatchPrediction'",
+      "enum": [ "BatchPrediction" ]
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Kubernetes metadata",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Batch prediction job name e.g. batch-123"
+        }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "description": "The specification for the job and encode all information needed to run the stream prediction job. The job controllers will monitor for changes continously and act based on the desired state encoded here",
+      "required": ["batchID", "state"],
+      "properties": {
+        "state": {
+          "$ref": "#/definitions/state"
+        },
+        "resourceSpec": {
+          "$ref": "#/definitions/resourceSpec"
+        },
+        "repositories": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/repoSpec"
+          }
+        },
+        "batchID": {
+          "type": "number",
+          "description": "The ID of the batch"
+        },
+        "scriptFilePath": {
+          "type": "string",
+          "description": "Batch prediction script file name"
+        },
+        "modelWeightsS3URL": {
+          "$ref": "#/definitions/s3URL",
+          "description": "URL of the Amazon S3 bucket where the model weights are stored"
+        },
+        "modelWeightsFileName": {
+          "type": "string",
+          "description": "Name of the model weights file"
+        },
+        "extraFilename": {
+          "type": "string",
+          "description": "Local files to copy into sandbox of the stream prediction runtime"
+        },
+        "awsPath": {
+          "type": "string",
+          "description": "Sandbox for job files. Log files from the job execution will end up here as well."
+        },
+        "awsDefaultRegion": {
+          "type": "string",
+          "description": "The default AWS region to use for s3 downloads."
+        }
+      }
+    },
+    "status": {
+      "type": "object",
+      "description": "Describes the current status of the batch prediction job i.e. the details of how the job sub-components are realizing the higher level job objective",
+      "required": ["state"],
+      "properties": {
+        "state": {
+          "$ref": "#/definitions/state"
+        },
+        "message": {
+          "type": "string",
+          "description": "Describes the reason for the batch prediction job being in its current state"
+        }
+      }
+    }
+  }
+}

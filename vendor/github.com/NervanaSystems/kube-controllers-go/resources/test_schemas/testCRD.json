@@ -1,0 +1,29 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "id": "test-crd",
+    "type": "object",
+    "required": ["apiVersion", "kind", "metadata"],
+    "properties": {
+      "apiVersion": {
+        "type": "string",
+        "pattern": "^([a-zA-Z0-9\\-_]+)(\\.[a-zA-Z0-9\\-_]+)*\\/([a-zA-Z0-9\\-_]+)(\\/[a-zA-Z0-9\\-_]+)*$"
+      },
+      "kind": {
+        "type": "string",
+        "enum": ["TestCRD"]
+      },
+      "metadata": {
+        "type": "object",
+        "required": ["name", "namespace"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "namespace": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+  
