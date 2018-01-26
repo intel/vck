@@ -4,8 +4,6 @@ all: docker
 
 VERSION := $(shell git describe --tags --always --dirty)
 
-GOOGLE_PROJECT_ID=
-GOOGLE_AUTH=
 IMAGE_NAME=kube-volume-controller
 
 docker:
@@ -31,12 +29,6 @@ code-generation:
 	/go/bin/deepcopy-gen --output-base=/go/src --input-dirs=github.com/NervanaSystems/kube-volume-controller/pkg/apis/cr/v1/...
 
 push-image-preflight:
-ifeq ($(GOOGLE_PROJECT_ID),)
-	$(error GOOGLE_PROJECT_ID must be set)
-endif
-ifeq ($(GOOGLE_AUTH),)
-	$(error GOOGLE_AUTH must be set)
-endif
 	echo "$(GOOGLE_AUTH)" | base64 --decode > /tmp/gcp-key.json
 	gcloud auth activate-service-account --key-file /tmp/gcp-key.json
 	gcloud config set project "$(GOOGLE_PROJECT_ID)"

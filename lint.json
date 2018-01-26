@@ -1,5 +1,5 @@
 {
-  "vendor": true,
+  "vendor": false,
   "deadline": "2m",
   "aggregate": true,
   "enable-gc": true,

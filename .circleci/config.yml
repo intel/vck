@@ -1,0 +1,48 @@
+version: 2
+jobs:
+  build:
+    docker:
+      # CircleCI Go images available at: https://hub.docker.com/r/circleci/golang/
+      - image: circleci/golang:1.9.2
+    working_directory: /go/src/github.com/NervanaSystems/kube-volume-controller
+    steps:
+      - checkout
+      - run:
+          name: install dependencies
+          environment:
+            GCLOUD_SDK_VERSION: 186.0.0
+          command: |
+            go get -u \
+              github.com/golang/dep/cmd/dep \
+              github.com/alecthomas/gometalinter \
+              github.com/kubernetes/gengo/examples/deepcopy-gen
+            pushd $HOME
+            curl -sSLo google-cloud-sdk.tar.gz https://storage.googleapis.com/cloud-sdk-release/google-cloud-sdk-${GCLOUD_SDK_VERSION}-linux-x86_64.tar.gz
+            tar zxf google-cloud-sdk.tar.gz && rm google-cloud-sdk.tar.gz
+            ./google-cloud-sdk/install.sh --usage-reporting=true --path-update=true --quiet
+            sudo ln -s "${HOME}/google-cloud-sdk/bin/gcloud" /usr/local/bin/
+            popd
+      - run:
+          name: get dependencies and generate
+          command: |
+            dep ensure
+            # NOTE: different from Makefile since input must be relative to execution path
+            /go/bin/deepcopy-gen --output-base=/go/src --input-dirs=./pkg/apis/cr/v1/...
+      - run:
+          name: Run lint tests
+          command: |
+            gometalinter --install
+            make lint
+      - run:
+          name: Run unit tests
+          command: |
+            make test
+      - setup_remote_docker
+      - run:
+          name: Build container
+          command: |
+            go install -gcflags "-N -l" github.com/NervanaSystems/kube-volume-controller
+            cp /go/bin/kube-volume-controller ./
+            make docker
+            make push-image
+
