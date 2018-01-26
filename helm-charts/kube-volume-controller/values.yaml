@@ -1,0 +1,10 @@
+registry: "gcr.io/"
+org: "constant-cubist-173123"
+repo: "kube-volume-controller"
+tag: "master"
+
+## Flags used for kube-volume-controller command
+## Example usage:
+# flags:
+# - "--namespace:<namespace>"
+flags:

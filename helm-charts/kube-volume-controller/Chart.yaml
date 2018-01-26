@@ -1,0 +1,4 @@
+apiVersion: v1
+description: kube-volume-controller
+name: kube-volume-controller
+version: v0.1.0
