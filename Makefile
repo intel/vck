@@ -1,6 +1,6 @@
 .PHONY: docker test
 
-all: docker
+all: test
 
 VERSION := $(shell git describe --tags --always --dirty)
 
@@ -11,6 +11,19 @@ docker:
 		-t $(IMAGE_NAME):$(VERSION) \
 		-t $(IMAGE_NAME):latest \
 		.
+
+prereq:
+	go get -u \
+		github.com/golang/dep/cmd/dep \
+		github.com/alecthomas/gometalinter \
+		github.com/kubernetes/gengo/examples/deepcopy-gen
+	gometalinter --install
+
+dep-ensure:
+	dep ensure
+
+build: dep-ensure code-generation
+	go build -gcflags "-N -l" github.com/NervanaSystems/kube-volume-controller
 
 lint:
 	gometalinter --config=./lint.json --vendor .

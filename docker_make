@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# terminate child processes on exit
+trap 'kill $(jobs -pr) > /dev/null 2>&1' SIGINT SIGTERM EXIT
+
+set -e
+set -u
+set -o pipefail
+
+# NOTE: proxifier inteferes with nc -z port scan so hardcoded for now:
+PORT=64321
+
+type -p socat > /dev/null 2>&1 || (echo "socat needs to be installed" && exit 1)
+type -p docker > /dev/null 2>&1 || (echo "Docker needs to be installed" && exit 1)
+docker version >/dev/null 2>&1 || (echo "Docker needs to be configured/running" && exit 1)
+
+if [[ -z "${SSH_AUTH_SOCK:-}" ]]; then
+  echo "Please configure ssh-agent and configure github to use ssh keys."
+  exit 1
+fi
+
+if [[ $(ssh-add -l | grep -c 'no identities') -eq 1 ]]; then
+  echo "Please add github private key via command 'ssh-add [/path/to/github_private_key]' and rerun this command"
+  exit 1
+fi
+
+# NOTE: forward SSH_AUTH_SOCK until docker socket forwarding is resolved:
+# https://github.com/docker/for-mac/issues/483
+socat TCP-LISTEN:"$PORT",reuseaddr,fork,bind=127.0.0.1 UNIX-CLIENT:"$SSH_AUTH_SOCK" &
+
+# Set host address based on system
+PLATFORM=$(uname -s)
+if [[ $PLATFORM == 'Darwin' ]]; then
+  # NOTE: see https://docs.docker.com/docker-for-mac/networking/#use-cases-and-workarounds
+  HOST='docker.for.mac.localhost'
+else
+  HOST='127.0.0.1'
+fi
+
+
+docker run --net=host -v "${HOME}"/root \
+  -v $(pwd)/:/go/src/github.com/NervanaSystems/kube-volume-controller \
+  -e SSH_AUTH_SOCK=/var/run/ssh_agent.sock \
+  -w /go/src/github.com/NervanaSystems/kube-volume-controller \
+  -it nanliu/golang:1.9.2 /bin/bash -c "socat UNIX-LISTEN:/var/run/ssh_agent.sock,reuseaddr,fork TCP:$HOST:$PORT & make ${1:-}"

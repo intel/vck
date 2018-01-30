@@ -1,4 +1,6 @@
 *.swp
 *.swo
 *.swn
+pkg/apis/cr/v1/deepcopy_generated.go
 vendor
+kube-volume-controller
