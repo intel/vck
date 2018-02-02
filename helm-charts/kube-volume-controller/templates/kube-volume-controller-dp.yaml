@@ -18,6 +18,9 @@ spec:
         app: kube-volume-controller
         servicetype: controller
     spec:
+    {{- if .Values.rbac.install }}
+      serviceAccountName: kube-volume-controller
+    {{- end }}
       containers:
       - name: kube-volume-controller
         image: {{ .Values.registry }}{{ .Values.org }}/{{ .Values.repo }}:{{ .Values.tag }}

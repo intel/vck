@@ -8,3 +8,12 @@ tag: "master"
 # flags:
 # - "--namespace:<namespace>"
 flags:
+- "--podFile=./pkg/resources/pod.tmpl"
+- "--pvFile=./pkg/resources/pv.tmpl"
+- "--pvcFile=./pkg/resources/pvc.tmpl"
+- "--namespace=kvc-testing"
+
+## Install Default RBAC roles and bindings
+rbac:
+  install: true
+  apiVersion: v1
