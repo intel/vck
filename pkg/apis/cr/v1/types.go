@@ -26,18 +26,23 @@ import (
 	"github.com/NervanaSystems/kube-controllers-go/pkg/states"
 )
 
-const GroupName = "aipg.intel.com"
+const (
+	GroupName string = "aipg.intel.com"
 
-const Version = "v1"
+	Version string = "v1"
 
-// The kind of the crd
-const VolumeManagerResourceKind = "VolumeManager"
+	// The kind of the crd.
+	VolumeManagerResourceKind string = "VolumeManager"
 
-// The singular form of the crd
-const VolumeManagerResourceSingular = "volumemanager"
+	// The singular form of the crd.
+	VolumeManagerResourceSingular string = "volumemanager"
 
-// The plural form of the crd
-const VolumeManagerResourcePlural = "volumemanagers"
+	// The plural form of the crd.
+	VolumeManagerResourcePlural string = "volumemanagers"
+
+	// The message for a successful volume claim.
+	SuccessfulVolumeClaimMessage string = "success"
+)
 
 var (
 	// GVK unambiguously identifies the volume manager kind.
@@ -86,38 +91,40 @@ func (s *VolumeManager) SetStatusStateWithMessage(state states.State, msg string
 	s.Status.Message = msg
 }
 
-// VolumeManagerSpec is the spec for the crd.
-type VolumeManagerSpec struct {
-	Volumes []VolumeConfig `json:"volumes"`
-	State   states.State   `json:"state"`
-}
-
-// VolumeConfig contains all the configuration required for the volumes.
-type VolumeConfig struct {
-	ID         string            `json:"id"`
-	Replicas   string            `json:"replicas"`
-	SourceType DataSourceType    `json:"sourceType"`
-	SourceURL  string            `json:"sourceURL"`
-	MountPath  string            `json:"mountPath"`
-	AccessMode string            `json:"accessMode"`
-	Options    map[string]string `json:"options"`
-}
-
 // DataSourceType is the type of the data source (e.g., S3, NFS).
 type DataSourceType string
 
-// VolumeManagerStatus is the status for the crd.
-type VolumeManagerStatus struct {
-	VolumeClaims []VolumeClaimStatus `json:"volumeClaims"`
-	State        states.State        `json:"state,omitempty"`
-	Message      string              `json:"message,omitempty"`
+// VolumeConfig contains all the configuration required for a volume.
+type VolumeConfig struct {
+	ID         string            `json:"id"`
+	Replicas   int               `json:"replicas"`
+	SourceType DataSourceType    `json:"sourceType"`
+	SourceURL  string            `json:"sourceURL"`
+	AccessMode string            `json:"accessMode"`
+	Capacity   string            `json:"capacity"`
+	Labels     map[string]string `json:"labels"`
+	Options    map[string]string `json:"options"`
 }
 
-// VolumeClaimStatus provides the details on PVC to claim for corresponding
+// VolumeManagerSpec is the spec for the crd.
+type VolumeManagerSpec struct {
+	VolumeConfigs []VolumeConfig `json:"volumeConfigs"`
+	State         states.State   `json:"state"`
+}
+
+// VolumeClaim provides the details on PVC to claim for corresponding
 // volumes.
-type VolumeClaimStatus struct {
-	ID      string `json:"id"`
-	PVCName string `json:"pvcName"`
+type VolumeClaim struct {
+	ID       string   `json:"id"`
+	PVCNames []string `json:"pvcName"`
+	Message  string   `json:"message,omitempty"`
+}
+
+// VolumeManagerStatus is the status for the crd.
+type VolumeManagerStatus struct {
+	VolumeClaims []VolumeClaim `json:"volumeClaims"`
+	State        states.State  `json:"state,omitempty"`
+	Message      string        `json:"message,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

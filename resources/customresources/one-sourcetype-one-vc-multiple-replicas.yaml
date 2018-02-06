@@ -1,0 +1,19 @@
+apiVersion: aipg.intel.com/v1
+kind: VolumeManager
+metadata:
+  name: kvc-example
+  namespace: <insert-namespace-here>
+spec:
+  volumeConfigs:
+    - id: "vol1"
+      replicas: 3
+      sourceType: "S3"
+      sourceURL: "s3://neon-stockdatasets/cifar-100-python.tar.gz"
+      AccessMode: "ReadWriteOnce"
+      Capacity: 5Gi
+      Labels:
+        key1: val1
+        key2: val2
+      Options:
+        awsAccessKeyID: <insert-aws-access-key-id-here>
+        awsAccessKey: <insert-aws-secret-access-key-here>

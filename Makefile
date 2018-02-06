@@ -22,7 +22,7 @@ prereq:
 dep-ensure:
 	dep ensure
 
-build: dep-ensure code-generation
+build: prereq dep-ensure code-generation lint
 	go build -gcflags "-N -l" github.com/NervanaSystems/kube-volume-controller
 
 lint:
@@ -34,9 +34,6 @@ lint:
 
 test:
 	go test --cover ./...
-	# go test --cover .
-	# go test --cover ./pkg/apis/...
-	# go test --cover ./pkg/hooks/...
 
 code-generation:
 	/go/bin/deepcopy-gen --output-base=/go/src --input-dirs=github.com/NervanaSystems/kube-volume-controller/pkg/apis/cr/v1/...

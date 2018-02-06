@@ -31,8 +31,10 @@ rules:
   - pods
   - services
   - endpoints
+  - persistentvolumes
   - persistentvolumeclaims
   - events
+  - nodes
   verbs:
   - "*"
 - apiGroups:

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"time"
 
 	"github.com/golang/glog"
 
@@ -14,16 +13,19 @@ import (
 
 	"github.com/NervanaSystems/kube-controllers-go/pkg/controller"
 	"github.com/NervanaSystems/kube-controllers-go/pkg/crd"
-	"github.com/NervanaSystems/kube-controllers-go/pkg/reconcile"
 	"github.com/NervanaSystems/kube-controllers-go/pkg/resource"
 	"github.com/NervanaSystems/kube-controllers-go/pkg/util"
 	crv1 "github.com/NervanaSystems/kube-volume-controller/pkg/apis/cr/v1"
+	"github.com/NervanaSystems/kube-volume-controller/pkg/handlers"
 	"github.com/NervanaSystems/kube-volume-controller/pkg/hooks"
 )
 
 func main() {
 	kubeconfig := flag.String("kubeconfig", "", "Path to a kubeconfig file")
 	namespace := flag.String("namespace", apiv1.NamespaceAll, "Namespace to monitor (Default all)")
+	podTemplateFile := flag.String("podFile", "/etc/volumemanagers/pod.tmpl", "Path to a job template file")
+	pvTemplateFile := flag.String("pvFile", "/etc/volumemangers/pv.tmpl", "Path to a job template file")
+	pvcTemplateFile := flag.String("pvcFile", "/etc/volumemangers/pvc.tmpl", "Path to a job template file")
 	schemaFile := flag.String("schema", "", "Path to a custom resource schema file")
 	flag.Set("logtostderr", "true")
 	flag.Parse()
@@ -38,8 +40,7 @@ func main() {
 		panic(err)
 	}
 
-	// k8sclientset, err := kubernetes.NewForConfig(config)
-	_, err = kubernetes.NewForConfig(config)
+	k8sClientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		panic(err)
 	}
@@ -69,12 +70,22 @@ func main() {
 		panic(err)
 	}
 
-	// globalTemplateValues := resource.GlobalTemplateValues{}
+	globalTemplateValues := resource.GlobalTemplateValues{}
+	// The ordering of these resource clients matters. We want the pod to be
+	// deployed last as it will use the PVC created before it.
+	resourceClients := []resource.Client{
+		resource.NewNodeClient(globalTemplateValues, k8sClientset, ""),
+		resource.NewPersistentVolumeClient(globalTemplateValues, k8sClientset, *pvTemplateFile),
+		resource.NewPersistentVolumeClaimClient(globalTemplateValues, k8sClientset, *pvcTemplateFile),
+		resource.NewPodClient(globalTemplateValues, k8sClientset, *podTemplateFile),
+	}
 
-	resourceClients := []resource.Client{}
+	dataHandlers := []handlers.DataHandler{
+		handlers.NewS3Handler(k8sClientset, resourceClients),
+	}
 
 	// Create hooks
-	hooks := hooks.NewVolumeManagerHooks(crdClient, resourceClients)
+	hooks := hooks.NewVolumeManagerHooks(crdClient, dataHandlers)
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
@@ -82,10 +93,6 @@ func main() {
 	// Start a controller for instances of our custom resource.
 	controller := controller.New(crdHandle, hooks, crdClient.RESTClient())
 	go controller.Run(ctx, *namespace)
-
-	// Start reconciliation in the background for subresource management.
-	reconciler := reconcile.New(*namespace, crv1.GVK, crdHandle, crdClient, resourceClients)
-	go reconciler.Run(ctx, 10*time.Second)
 
 	<-ctx.Done()
 }

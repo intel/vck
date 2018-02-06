@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "{{.KVCName}}"
+  namespace: "{{.NS}}"
+  ownerReferences:
+  - apiVersion: {{.APIVersion}}
+    kind: {{.Kind}}
+    name: {{.Name}}
+    uid: {{.UID}}
+    controller: {{.Controller}}
+    blockOwnerDeletion: {{.BlockOwnerDeletion}}
+  labels:
+{{ range $key, $val := .Labels }}
+    "{{ $key }}": "{{ $val }}"
+{{ end }}
+  annotations:
+    "volume.alpha.kubernetes.io/node-affinity": '{
+      "requiredDuringSchedulingIgnoredDuringExecution": {
+        "nodeSelectorTerms": [
+          { "matchExpressions": [
+            { "key": "kubernetes.io/hostname",
+              "operator": "In",
+              "values": ["{{.NodeName}}"]
+            }
+          ]}
+         ]}
+        }'
+spec:
+  capacity:
+    storage: "{{.Capacity}}"
+  accessModes:
+  - "{{.AccessMode}}"
+  persistentVolumeReclaimPolicy: Delete
+  local:
+    path: /var/datasets/{{.KVCDataPathSuffix}}
+  storageClassName: "{{.KVCStorageClassName}}"

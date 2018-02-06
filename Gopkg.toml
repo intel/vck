@@ -22,7 +22,7 @@
 
 
 [[constraint]]
-  branch = "master"
+  branch = "add-pv-pvc-client"
   name = "github.com/NervanaSystems/kube-controllers-go"
 
 [[constraint]]
@@ -32,3 +32,15 @@
 [[constraint]]
   branch = "master"
   name = "github.com/google/gofuzz"
+
+[[constraint]]
+  version = "kubernetes-1.9.2"
+  name = "k8s.io/api"
+
+[[constraint]]
+  version = "kubernetes-1.9.2"
+  name = "k8s.io/apimachinery"
+
+[[constraint]]
+  version = "kubernetes-1.9.2"
+  name = "k8s.io/apiextensions-apiserver"

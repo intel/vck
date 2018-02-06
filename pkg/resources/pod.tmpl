@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{.KVCName}}"
+  namespace: "{{.NS}}"
+  ownerReferences:
+  - apiVersion: {{.APIVersion}}
+    kind: {{.Kind}}
+    name: {{.Name}}
+    uid: {{.UID}}
+    controller: {{.Controller}}
+    blockOwnerDeletion: {{.BlockOwnerDeletion}}
+  labels:
+{{ range $key, $val := .Labels }}
+    "{{ $key }}": "{{ $val }}"
+{{ end }}
+spec:
+  nodeName: "{{.NodeName}}"
+  volumes:
+    - name: dataset-root
+      hostPath:
+        path: /var/datasets
+  initContainers:
+  - image: balajismaniam/aws-cli
+    imagePullPolicy: "Always"
+    command: ["/bin/sh"]
+    args: ["-c", "mkdir -p $DATA_PATH"]
+    name: kvc-s3-init-container
+    volumeMounts:
+    - mountPath: /var/datasets
+      name: dataset-root
+    env:
+    - name: DATA_PATH
+      value: /var/datasets/{{.KVCDataPathSuffix}}/
+  containers:
+  - image: balajismaniam/aws-cli
+    imagePullPolicy: "Always"
+    command: ["/bin/sh"]
+    args: ["-c", "aws s3 cp $S3_URL $DATA_PATH"]
+    name: kvc-s3-sync-container
+    volumeMounts:
+    - mountPath: /var/datasets
+      name: dataset-root
+    env:
+    - name: AWS_ACCESS_KEY_ID
+      value: {{index .Options "awsAccessKeyID"}}
+    - name: AWS_SECRET_ACCESS_KEY
+      value: {{index .Options "awsAccessKey"}}
+    - name: S3_URL
+      value: {{.SourceURL}}
+    - name: DATA_PATH
+      value: /var/datasets/{{.KVCDataPathSuffix}}/
+  restartPolicy: "Never"
