@@ -1,34 +1,18 @@
-# Nervana Volume Controller
-# Docker Make
+# Kubernetes Volume Controller (KVC)
 
-If you don't want to install the golang toolchain locally and you have docker installed, you can run `docker_make` instead of `make`:
+## Overview
 
-```
-$ ./docker_make dep-ensure
-dep ensure
+This project provides basic volume management in Kubernetes v1.9+ using custom 
+resource definitions (CRDs) and controllers.
 
-$ ./docker_make code-generation
-/go/bin/deepcopy-gen --output-base=/go/src --input-dirs=github.com/NervanaSystems/kube-volume-controller/pkg/apis/cr/v1/...
+## Further Reading
 
-$ ./docker_make lint
-gometalinter --config=./lint.json --vendor .
-# Disabling golint for apis since it conflicts with the deepcopy-gen
-# annotations.
-gometalinter --config=./lint.json --disable=golint ./pkg/apis/...
-gometalinter --config=./lint.json ./pkg/hooks/...
+- [Architecture][arch-doc]
+- [Developer Manual][dev-doc]
+- [Operator Manual][ops-doc]
+- [User Manual][user-doc]
 
-
-$ ./docker_make test
-go test --cover ./...
-?   	github.com/NervanaSystems/kube-volume-controller	[no test files]
-ok  	github.com/NervanaSystems/kube-volume-controller/pkg/apis/cr/v1	0.166s	coverage: 53.4% of statements
-?   	github.com/NervanaSystems/kube-volume-controller/pkg/hooks	[no test files]
-# go test --cover .
-# go test --cover ./pkg/apis/...
-# go test --cover ./pkg/hooks/...
-
-$ ./docker_make build
-dep ensure
-/go/bin/deepcopy-gen --output-base=/go/src --input-dirs=github.com/NervanaSystems/kube-volume-controller/pkg/apis/cr/v1/...
-go build -gcflags "-N -l" github.com/NervanaSystems/kube-volume-controller
-```
+[arch-doc]: docs/arch.md
+[dev-doc]: docs/dev.md
+[ops-doc]: docs/ops.md
+[user-doc]: docs/user.md
