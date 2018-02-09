@@ -1,0 +1,18 @@
+apiVersion: aipg.intel.com/v1
+kind: VolumeManager
+metadata:
+  name: kvc-example2
+  namespace: <insert-namespace-here>
+spec:
+  volumeConfigs:
+    - id: "vol1"
+      replicas: 1
+      sourceType: "NFS"
+      AccessMode: "ReadWriteMany"
+      Capacity: 5Gi
+      Labels:
+        key1: val1
+        key2: val2
+      Options:
+        server: <insert-server-ip-here>
+        path: <insert-exported-path-here>

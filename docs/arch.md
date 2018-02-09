@@ -63,19 +63,19 @@ below:
 
 | Field Name           | Type| definition|
 | :------------- | :------ | :----------- |
-| `apiVersion` | `string` | API version of volume manager |
-|`kind` | enum: `VolumeManager` | Type. Only allowed value is `VolumeManager` |
-| `metadata.name` | `string` | Name of the volume manager instance |
-| `spec.volumes` | array of `volumeConfig` | Volumes and data information |
-| `volumeConfig.id` | `string` | An identifier for the volume |
-| `volumeConfig.replicas` | `int` | Number of replicas required on distinct compute nodes|
-| `volumeConfig.sourceType` | `string`| Source type of the dataset to be used by the volume (e.g., S3, NFS)|
+| `apiVersion`* | `string` | API version of volume manager |
+|`kind`* | enum: `VolumeManager` | Type. Only allowed value is `VolumeManager` |
+| `metadata.name`* | `string` | Name of the volume manager instance |
+| `spec.volumes`* | array of `volumeConfig` | Volumes and data information |
+| `volumeConfig.id`* | `string` | An identifier for the volume |
+| `volumeConfig.replicas`* | `int` | Number of replicas required on distinct compute nodes|
+| `volumeConfig.sourceType`* | `string`| Source type of the dataset to be used by the volume (e.g., S3, NFS)|
 | `volumeConfig.sourceURL` | `string`| Source URL of the data set |
-| `volumeConfig.accessMode` | `string` | Type of access mode |
-| `volumeConfig.capacity` | `string` | Size requested for the volume |
-| `volumeConfig.labels` | `map[string]string` | Any labels required for the volume |
+| `volumeConfig.accessMode`* | `string` | Type of access mode |
+| `volumeConfig.capacity`* | `string` | Size requested for the volume |
+| `volumeConfig.labels`* | `map[string]string` | Any labels required for the volume |
 | `volumeConfig.options` | `map[string]string`| Any options required for the volume |
-| `spec.state` | enum: `Pending`, `Running`, `Failed`, `Completed` |  The desired state for this volume manager instance |
+| `spec.state*` | enum: `Pending`, `Running`, `Failed`, `Completed` |  The desired state for this volume manager instance |
 | `status.volumeClaims` | array of `volumeClaim` | volume claim information |
 | `volumeClaim.id` | `string` | An identifier for the volume. There is a one-to-one mapping between `volumeConfig.id` and `volumeClaim.id` |
 | `volumeClaim.pvcNames` | array of `strings` | Names of all the PVCs associated with a `volumeClaim` |
@@ -83,6 +83,7 @@ below:
 | `status.state` | enum: `Pending`, `Running`, `Failed`, `Completed` |  The  current state of this volume manger instance |
 | `status.message` | `string` | A message associated with the current state of this volume manager instance |
 
+Fields marked with `*` are mandatory.
 ## The KVC Controller
 
 The KVC controller uses PVs, PVCs and Pods to manage volumes and the associated
@@ -153,7 +154,7 @@ functions provide the logic to be executed when the CR containing the
 the `DataHandler` interface in [handlers.go][handler-interface]. 
 
 For each `sourceType`, a new data handler must be implemented. For more
-information on adding a new data handler, read the [user manual][user-doc].
+information on adding a new data handler, read the [developer manual][dev-doc].
 
 
 [pv]: https://kubernetes.io/docs/concepts/storage/persistent-volumes/
@@ -164,4 +165,4 @@ information on adding a new data handler, read the [user manual][user-doc].
 [vol-sched]: https://github.com/kubernetes/features/issues/490
 [aeon]: https://github.com/NervanaSystems/aeon
 [handler-interface]: ../pkg/handlers/handlers.go
-[user-doc]: user.md
+[dev-doc]: dev.md

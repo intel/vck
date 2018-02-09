@@ -80,7 +80,7 @@ Events:  <none>
 ```
 
 Other examples on custom resource manifest can be found in [resources][resources-dir]
-directory.
+directory. For details about source types and their fields, refer [types of sources](#types-of-sources).
 
 ## Create a Pod using the PVC as a Volume. 
 
@@ -93,10 +93,31 @@ $ kubectl create -f resources/pods/pvc-pod.yaml
 pod "kvc-claim-pod" created
 ```
 
+## Types of sources
+The following source types are currently implemented:
+* S3: Files present in the bucket and provided as `volumeConfig.sourceURL` in the CR are downloaded/synced and made available as a PVC.
+* NFS: The path exported by an NFS server is mounted and made available as a PVC.
+
+For examples on how to define and use the different types, please refer to the examples in [resources][resources-dir].
+
+Each source type requires some extra mandatory files. The description of these fields for each source type is given below:
+
+| Type           | Required Fields                                    |  Description                             | 
+|:---------------|:---------------------------------------------------|:-----------------------------------------|
+| `S3`           | `volumeConfig.sourceURL`                           | The s3 url to download the data from     |
+|                | `volumeConfig.options["awsAccessKeyID]`            | The aws access key to access the s3 data |
+|                | `volumeConfig.options["awsAccessKey"]`             | The aws secret key to access the s3 data |
+| `NFS`          | `volumeConfig.options["server"]`                   | Address of the NFS server                |
+|                | `volumeConfig.options["path"]`                     | The path exported by the NFS server      |
+
+To add a new source type, a new handler specific to the source type is required. Please refer to the [developer manual][dev-doc] for more details.
+
 [ops-doc]: ops.md
+[dev-doc]: dev.md
+[arch-doc]: arch.md
 [resources-dir]: resources/customresources
 [vol-sched]: https://github.com/kubernetes/features/issues/490
 [helm]: https://docs.helm.sh/using_helm/
 [kubectl]: https://kubernetes.io/docs/tasks/tools/install-kubectl/
-[cr-example]: ../resources/customresources/one-sourcetype-one-vc.yaml
+[cr-example]: ../resources/customresources/s3/one-vc.yaml
 [pod-example]: ../resources/pods/pvc-pod.yaml

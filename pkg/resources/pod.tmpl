@@ -31,7 +31,7 @@ spec:
       name: dataset-root
     env:
     - name: DATA_PATH
-      value: /var/datasets/{{.KVCDataPathSuffix}}/
+      value: {{ index .KVCOptions "path" }}
   containers:
   - image: balajismaniam/aws-cli
     imagePullPolicy: "Always"
@@ -49,5 +49,5 @@ spec:
     - name: S3_URL
       value: {{.SourceURL}}
     - name: DATA_PATH
-      value: /var/datasets/{{.KVCDataPathSuffix}}/
+      value: {{ index .KVCOptions "path" }}
   restartPolicy: "Never"

@@ -13,28 +13,28 @@ import (
 )
 
 const (
-	s3SourceType crv1.DataSourceType = "S3"
+	nfsSourceType crv1.DataSourceType = "NFS"
 )
 
-type s3Handler struct {
+type nfsHandler struct {
 	sourceType         crv1.DataSourceType
 	k8sClientset       *kubernetes.Clientset
 	k8sResourceClients []resource.Client
 }
 
-func NewS3Handler(k8sClientset *kubernetes.Clientset, resourceClients []resource.Client) DataHandler {
-	return &s3Handler{
-		sourceType:         s3SourceType,
+func NewNFSHandler(k8sClientset *kubernetes.Clientset, resourceClients []resource.Client) DataHandler {
+	return &nfsHandler{
+		sourceType:         nfsSourceType,
 		k8sClientset:       k8sClientset,
 		k8sResourceClients: resourceClients,
 	}
 }
 
-func (h *s3Handler) GetSourceType() crv1.DataSourceType {
+func (h *nfsHandler) GetSourceType() crv1.DataSourceType {
 	return h.sourceType
 }
 
-func (h *s3Handler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef metav1.OwnerReference) crv1.VolumeClaim {
+func (h *nfsHandler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef metav1.OwnerReference) crv1.VolumeClaim {
 	if len(vc.Labels) == 0 {
 		return crv1.VolumeClaim{
 			ID:      vc.ID,
@@ -42,45 +42,30 @@ func (h *s3Handler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef metav1.
 		}
 	}
 
-	if _, ok := vc.Options["awsAccessKeyID"]; !ok {
+	if _, ok := vc.Options["server"]; !ok {
 		return crv1.VolumeClaim{
 			ID:      vc.ID,
-			Message: fmt.Sprintf("awsAccessKeyID key has to be set in options"),
+			Message: fmt.Sprintf("server has to be set in options"),
 		}
 	}
 
-	if _, ok := vc.Options["awsAccessKey"]; !ok {
+	if _, ok := vc.Options["path"]; !ok {
 		return crv1.VolumeClaim{
 			ID:      vc.ID,
-			Message: fmt.Sprintf("awsAccessKey key has to be set in options"),
+			Message: fmt.Sprintf("path has to be set in options"),
 		}
 	}
 
-	nodeClient := h.getK8SResourceClientFromPlural("nodes")
-	nodeList, err := nodeClient.List(ns, map[string]string{})
-	if err != nil {
-		return crv1.VolumeClaim{
-			ID:      vc.ID,
-			Message: fmt.Sprintf("error getting node list: %v", err),
-		}
-	}
+	replicas := vc.Replicas
 
-	// If number of nodes < replicas, then return immediately.
-	if len(nodeList) < vc.Replicas {
-		return crv1.VolumeClaim{
-			ID: vc.ID,
-			Message: fmt.Sprintf("replicas [%v] greater than number of nodes [%v]",
-				vc.Replicas, len(nodeList)),
-		}
+	if vc.AccessMode != "ReadWriteOnce" {
+		replicas = 1
 	}
-
-	nodeNames := getNodeNames(nodeList)
 
 	kvcNames := []string{}
-	for i := 0; i < vc.Replicas; i++ {
+	for i := 0; i < replicas; i++ {
 		kvcName := fmt.Sprintf("%s%s", kvcNamePrefix, uuid.NewUUID())
 		kvcNames = append(kvcNames, kvcName)
-		kvcDataPathSuffix := fmt.Sprintf("%s%s", kvcNamePrefix, uuid.NewUUID())
 		for _, client := range h.k8sResourceClients {
 			if client.Plural() == "nodes" {
 				continue
@@ -99,12 +84,13 @@ func (h *s3Handler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef metav1.
 				vc,
 				controllerRef,
 				ns,
-				nodeNames[i],
+				"",
 				kvcName,
 				"kvc",
-				"local",
+				"nfs",
 				map[string]string{
-					"path": fmt.Sprintf("/var/datasets/%s", kvcDataPathSuffix),
+					"server": vc.Options["server"],
+					"path":   vc.Options["path"],
 				},
 			})
 
@@ -124,7 +110,7 @@ func (h *s3Handler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef metav1.
 	}
 }
 
-func (h *s3Handler) OnDelete(ns string, vc crv1.VolumeConfig, controllerRef metav1.OwnerReference) {
+func (h *nfsHandler) OnDelete(ns string, vc crv1.VolumeConfig, controllerRef metav1.OwnerReference) {
 	for _, client := range h.k8sResourceClients {
 		if client.Plural() == "nodes" {
 			continue
@@ -132,7 +118,7 @@ func (h *s3Handler) OnDelete(ns string, vc crv1.VolumeConfig, controllerRef meta
 
 		resourceList, err := client.List(ns, vc.Labels)
 		if err != nil {
-			glog.Warningf("[s3-handler] OnDelete: error while listing resource [%s], %v", client.Plural(), err)
+			glog.Warningf("[nfs-handler] OnDelete: error while listing resource [%s], %v", client.Plural(), err)
 		}
 
 		for _, resource := range resourceList {
@@ -143,24 +129,4 @@ func (h *s3Handler) OnDelete(ns string, vc crv1.VolumeConfig, controllerRef meta
 		}
 	}
 
-}
-
-func (h *s3Handler) getK8SResourceClientFromPlural(plural string) resource.Client {
-	for _, client := range h.k8sResourceClients {
-		if plural == client.Plural() {
-			return client
-		}
-	}
-
-	return nil
-}
-
-func getNodeNames(nodeList []metav1.Object) []string {
-	nodeNames := []string{}
-
-	for _, node := range nodeList {
-		nodeNames = append(nodeNames, node.GetName())
-	}
-
-	return nodeNames
 }

@@ -11,3 +11,7 @@ type DataHandler interface {
 	OnAdd(namespace string, vc crv1.VolumeConfig, controllerRef metav1.OwnerReference) crv1.VolumeClaim
 	OnDelete(namespace string, vc crv1.VolumeConfig, controllerRef metav1.OwnerReference)
 }
+
+const (
+	kvcNamePrefix string = "kvc-resource-"
+)
