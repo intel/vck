@@ -4,6 +4,7 @@
     * [Before You Begin](#before-you-begin)
     * [Create a Volume Manager Custom Resource](#create-a-volume-manager-custom-resource)
     * [Create a Pod using the PVC as a Volume.](#create-a-pod-using-the-pvc-as-a-volume)
+    * [Types of sources](#types-of-sources)
 
 
 ## Prerequisites
@@ -115,7 +116,7 @@ To add a new source type, a new handler specific to the source type is required.
 [ops-doc]: ops.md
 [dev-doc]: dev.md
 [arch-doc]: arch.md
-[resources-dir]: resources/customresources
+[resources-dir]: ../resources/customresources
 [vol-sched]: https://github.com/kubernetes/features/issues/490
 [helm]: https://docs.helm.sh/using_helm/
 [kubectl]: https://kubernetes.io/docs/tasks/tools/install-kubectl/

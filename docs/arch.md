@@ -5,9 +5,11 @@
     * [Concepts](#concepts)
     * [Overview](#overview)
       * [Goals](#goals)
+      * [Non-Goals](#non-goals)
     * [API Schema](#api-schema)
     * [The KVC Controller](#the-kvc-controller)
     * [Relationship Between Volume and Data](#relationship-between-volume-and-data)
+    * [Source Type Support Status](#source-type-support-status)
 
 ## Acronyms
 
@@ -24,14 +26,15 @@
 | Term           | Meaning |
 | :------------- | :------ |
 | Controller | The process which drives a Kubernetes object from its _current_ state to the _desired_ state |
-| volumemanager | The CRD `Kind` for KVC |
+| Source Type| The source type for the data being stored (e.g., S3, NFS) |
+| `volumemanager` | The CRD `Kind` for KVC |
 
 ## Overview
 
 KVC provides basic volume management using PVs and PVCs in a Kubernetes cluster.
 It uses CRDs and controllers to create the PVs and PVCs and perform operations
 necessary for the data to be available to users. The user needs to have
-interactions only with with the PVs and PVCs. The rest of the details are
+interactions only with CRs and PVCs. The rest of the details are
 abstracted away by KVC.
 
 ### Goals 
@@ -39,25 +42,25 @@ The end goals of this project are listed below:
 
 - __Data source support:__ KVC should support exposing data from different sources such as S3, NFS and
 local disk as volumes.
-
 - __Data distribution:__ KVC should support data replication for distributed job types.
-
 - __Data affinity:__ KVC should enable data affinity and gravity. It should use
-existing mechanisms such as Volume Scheduling when possible.
-
+existing mechanisms such as [Volume Scheduling][vol-sched] when possible.
 - __Data caching:__ KVC should enable the pre-population of data if required.
-
 - __Data streaming:__ KVC should provide abstraction for streaming data 
 services. Jobs should be able to start as soon as the first stream or batch of 
 data is available.
-
 - __Job output:__ KVC should allow output data to be gathered when required.
-
 - __Garbage collection:__ KVC should evict data in case of disk pressure.
+
+### Non-Goals
+- KVC does not aim to be a solution to all your volume and data
+management problems.
+- KVC does not solve any of the shortcomings or drawbacks with Kubernetes. If
+there is an issue in Kubernetes, the same issue exists with KVC.
 
 ## API Schema
 
-Using KVC we extend the Kubernetes API to include a new resource called 
+Using KVC we extend the Kubernetes API to include a new CRD called 
 `volumemanager`. The schema to create a `volumemanager` CR is described 
 below:
 
@@ -106,7 +109,7 @@ If the data is stored somewhere else (e.g., S3) and it needs to be available in
 the source path, the controller is responsible to download the data and
 replicate it across `N` number of nodes as specified by the 
 `volumeConfig.replicas` field in the API schema. PVs are then created using the
-`local` volume source type. 
+[local][local-pv-type] volume source type. 
 
 __Data affinity:__ When required, data affinity will be transparently supported
 using the [volume scheduling][vol-sched] feature in Kubernetes.
@@ -122,13 +125,11 @@ location and size of the cache is determined by the parameters provided by the
 job and it is located in the local host. When possible Aeon uses these cache
 for data caching. 
 
-For supporting data streaming in the above cases, a fixed `hostPath` or `local`
-volume source type backed PV can act as a cache for the data. So all future
-streaming requests on the same dataset should be able to use the cached data.
+For supporting data streaming in the above cases, a fixed
+[hostPath][hostpath-pv-type] or [local][local-pv-type]
+volume source type backed PV can act as a cache for the data.
 In this case, controller will be responsible to make the PVC ready as soon as a
-`hostPath` or `local` backed PV is created. If the volume is used for streaming
-purposes, it should set `stream:true` key-value pair in the 
-`volumeConfig.options` field for the volume.
+`hostPath` or `local` backed PV is created.
 
 __Job output:__ When required, the job output can be gathered in a volume as 
 long as the backing file system supports `ReadWriteOnce` or `ReadWriteMany` access
@@ -146,7 +147,7 @@ PV and PVCs should be evicted.
 The relationship between a volume and data is established using
 `volumeConfig.sourceType` and a new data handler for that source type. 
 
-As the name implies, `volumeConfig.sourceType` provides the type of the source
+As the name implies, `volumeConfig.sourceType` provides the type of the data source
 (e.g., S3 or NFS). The data handler for each source type provides the call-back
 functions for a `volumeConfig` of that particular source type. These call-back
 functions provide the logic to be executed when the CR containing the
@@ -156,12 +157,23 @@ the `DataHandler` interface in [handlers.go][handler-interface].
 For each `sourceType`, a new data handler must be implemented. For more
 information on adding a new data handler, read the [developer manual][dev-doc].
 
+## Source Type Support Status
+
+Brief description of source type support is provided below. For more 
+information on usage, refer to the [user manual][user-doc].
+
+| Source Type | Phase | Description |
+| :------------- | :------ | :----------- |
+| S3 | Supported | KVC will download the files from a specified S3 bucket and make it available for consumption in a node. |
+| NFS | Supported | KVC will make the specified path from an NFS server available for consumption. |
+| [Aeon][aeon] | Design | - |
 
 [pv]: https://kubernetes.io/docs/concepts/storage/persistent-volumes/
 [pvc]: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims
 [crd]: https://kubernetes.io/docs/tasks/access-kubernetes-api/extend-api-custom-resource-definitions/
 [cr]: https://kubernetes.io/docs/concepts/api-extension/custom-resources/
 [local-pv-type]: https://kubernetes.io/docs/concepts/storage/volumes/#local
+[hostpath-pv-type]: https://kubernetes.io/docs/concepts/storage/volumes/#hostpath
 [vol-sched]: https://github.com/kubernetes/features/issues/490
 [aeon]: https://github.com/NervanaSystems/aeon
 [handler-interface]: ../pkg/handlers/handlers.go

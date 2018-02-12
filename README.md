@@ -2,8 +2,12 @@
 
 ## Overview
 
-This project provides basic volume management in Kubernetes v1.9+ using custom 
-resource definitions (CRDs) and controllers.
+This project provides basic volume and data management in Kubernetes v1.9+
+using [custom resource definitions][crd] (CRDs), custom controllers, [persistent
+volumes][pv] (PVs) and [persistent volume claims][pvc] (PVCs). It also 
+establishes a relationship between volumes and data and provides a way to
+abstract the details away from the user. When using KVC, users 
+are expected to only interact with [custom resources][cr] (CRs) and PVCs.
 
 ## Further Reading
 
@@ -11,8 +15,16 @@ resource definitions (CRDs) and controllers.
 - [Developer Manual][dev-doc]
 - [Operator Manual][ops-doc]
 - [User Manual][user-doc]
+- [Best Practices][best-practices-doc]
+- [FAQs][faqs-doc]
 
 [arch-doc]: docs/arch.md
 [dev-doc]: docs/dev.md
 [ops-doc]: docs/ops.md
 [user-doc]: docs/user.md
+[faqs-doc]: docs/faq.md
+[best-practices-doc]: docs/best-practices.md
+[pv]: https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+[pvc]: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims
+[crd]: https://kubernetes.io/docs/tasks/access-kubernetes-api/extend-api-custom-resource-definitions/
+[cr]: https://kubernetes.io/docs/concepts/api-extension/custom-resources/
