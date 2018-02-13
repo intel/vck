@@ -2,7 +2,9 @@
 
 ## Deploying KVC
 
-We recommend a KVC deployment per namespace.
+We recommend a KVC deployment per namespace. The namespace for the deployment
+of the controller and the namespace being watched by the controller should
+be the same.
 
 ## Stock Datasets and Models
 

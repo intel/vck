@@ -2,6 +2,7 @@
   
   * [Operator Manual: Kubernetes Volume Controller (KVC)](#operator-manual-kubernetes-volume-controller-kvc)
     * [Prerequisites](#prerequisites)
+    * [Before You Begin](#before-you-begin)
     * [Installing the Controller](#installing-the-controller)
 
 ## Prerequisites
@@ -9,6 +10,17 @@
 - Kubernetes v1.9+ with [`VolumeScheduling`][vol-sched] feature gate enabled
 - [Kubectl][kubectl]
 - [Helm][helm]
+
+## Before You Begin
+
+Create your own namespace and set your current context to use that namespace.
+The following commands can be used after editing the comments within `<>`.
+
+```sh
+$ kubectl create namespace <insert-namespace-here>
+
+$ kubectl config set-context $(kubectl config current-context) --namespace=<insert-namespace-here>
+```
 
 ## Installing the Controller
 

@@ -1,7 +1,7 @@
 registry: "gcr.io/"
 org: "constant-cubist-173123"
 repo: "kube-volume-controller"
-tag: "master"
+tag: "v0.1.0"
 
 ## Flags used for kube-volume-controller command
 flags:

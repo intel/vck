@@ -30,6 +30,13 @@ No resources found.
 
 If not follow the instructions in the [operator manual][ops-doc] first.
 
+Set your current context to use the same namespace as the controller.
+The following commands can be used after editing the comments within `<>`.
+
+```sh
+$ kubectl config set-context $(kubectl config current-context) --namespace=<insert-namespace-here>
+```
+
 ## Create a Volume Manager Custom Resource
 
 Using the [example custom resource manifest][cr-example], create a custom
@@ -37,7 +44,7 @@ resource. Example commands are shown below. Before using the command below,
 make sure to replace the comments within `<>` with appropriate values.
 
 ```sh
-$ kubectl create -f resources/customresources/one-sourcetype-one-vc.yaml
+$ kubectl create -f resources/customresources/s3/one-vc.yaml
 volumemanager "kvc-example" created
 
 $ kubectl describe volumemanager kvc-example
