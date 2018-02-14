@@ -15,3 +15,6 @@ flags:
 rbac:
   install: true
   apiVersion: v1
+
+storageclass:
+  install: false

@@ -24,9 +24,10 @@ $ kubectl config set-context $(kubectl config current-context) --namespace=<inse
 
 ## Installing the Controller
 
-Edit the `tag`, `--namespace` `flag` and `rbac.install` field in the [Helm
+Edit the `tag`, `--namespace` `flag`, `rbac.install` and `storageclass.install` fields in the [Helm
 values configuration file][helm-values] and deploy the helm chart provided.
 
+`Note`: If the storage class is not installed in the cluster, make sure `storageclass.install` is set to true.
 ```sh
 $ helm install helm-charts/kube-volume-controller/ -n kvc --wait
 NAME:   kvc
