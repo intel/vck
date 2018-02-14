@@ -8,7 +8,7 @@ import (
 
 type DataHandler interface {
 	GetSourceType() crv1.DataSourceType
-	OnAdd(namespace string, vc crv1.VolumeConfig, controllerRef metav1.OwnerReference) crv1.VolumeClaim
+	OnAdd(namespace string, vc crv1.VolumeConfig, controllerRef metav1.OwnerReference) crv1.Volume
 	OnDelete(namespace string, vc crv1.VolumeConfig, controllerRef metav1.OwnerReference)
 }
 

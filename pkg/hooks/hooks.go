@@ -69,23 +69,23 @@ func (h *VolumeManagerHooks) Add(obj interface{}) {
 
 	controllerRef := metav1.NewControllerRef(volumeManagerCopy, crv1.GVK)
 
-	vClaims := []crv1.VolumeClaim{}
+	vStatuses := []crv1.Volume{}
 	for _, handler := range h.dataHandlers {
 		for _, vConfig := range volumeManagerCopy.Spec.VolumeConfigs {
 			if handler.GetSourceType() == vConfig.SourceType {
-				vClaim := handler.OnAdd(volumeManagerCopy.Namespace(), vConfig, *controllerRef)
-				vClaims = append(vClaims, vClaim)
+				vStatus := handler.OnAdd(volumeManagerCopy.Namespace(), vConfig, *controllerRef)
+				vStatuses = append(vStatuses, vStatus)
 			}
 		}
 	}
 
-	for _, vClaim := range vClaims {
+	for _, vStatus := range vStatuses {
 		// If any of the volume claim was not successful, mark the CR as Failed.
-		if vClaim.Message != crv1.SuccessfulVolumeClaimMessage {
+		if vStatus.Message != crv1.SuccessfulVolumeStatusMessage {
 			volumeManagerCopy.Status = crv1.VolumeManagerStatus{
-				VolumeClaims: vClaims,
-				State:        states.Failed,
-				Message:      fmt.Sprintf("failed to deploy all the sub-resources"),
+				Volumes: vStatuses,
+				State:   states.Failed,
+				Message: fmt.Sprintf("failed to deploy all the sub-resources"),
 			}
 
 			_, err := h.crdClient.Update(volumeManagerCopy)
@@ -98,9 +98,9 @@ func (h *VolumeManagerHooks) Add(obj interface{}) {
 
 	// Mark the CR as Running.
 	volumeManagerCopy.Status = crv1.VolumeManagerStatus{
-		VolumeClaims: vClaims,
-		State:        states.Running,
-		Message:      fmt.Sprintf("successfully deployed all sub-resources"),
+		Volumes: vStatuses,
+		State:   states.Running,
+		Message: fmt.Sprintf("successfully deployed all sub-resources"),
 	}
 
 	_, err = h.crdClient.Update(volumeManagerCopy)

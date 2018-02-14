@@ -82,6 +82,7 @@ func main() {
 
 	dataHandlers := []handlers.DataHandler{
 		handlers.NewS3Handler(k8sClientset, resourceClients),
+		handlers.NewS3DevHandler(k8sClientset, resourceClients),
 		handlers.NewNFSHandler(k8sClientset, resourceClients),
 	}
 

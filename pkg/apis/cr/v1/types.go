@@ -19,6 +19,7 @@ package v1
 import (
 	"encoding/json"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,8 +41,8 @@ const (
 	// The plural form of the crd.
 	VolumeManagerResourcePlural string = "volumemanagers"
 
-	// The message for a successful volume claim.
-	SuccessfulVolumeClaimMessage string = "success"
+	// The message for a successful volumemanager status.
+	SuccessfulVolumeStatusMessage string = "success"
 )
 
 var (
@@ -112,19 +113,19 @@ type VolumeManagerSpec struct {
 	State         states.State   `json:"state"`
 }
 
-// VolumeClaim provides the details on PVC to claim for corresponding
-// volumes.
-type VolumeClaim struct {
-	ID       string   `json:"id"`
-	PVCNames []string `json:"pvcName"`
-	Message  string   `json:"message,omitempty"`
+// Volume provides the details on volume source and node affinity.
+type Volume struct {
+	ID           string              `json:"id"`
+	VolumeSource corev1.VolumeSource `json:"volumeSource"`
+	NodeAffinity corev1.NodeAffinity `json:"nodeAffinity"`
+	Message      string              `json:"message,omitempty"`
 }
 
 // VolumeManagerStatus is the status for the crd.
 type VolumeManagerStatus struct {
-	VolumeClaims []VolumeClaim `json:"volumeClaims"`
-	State        states.State  `json:"state,omitempty"`
-	Message      string        `json:"message,omitempty"`
+	Volumes []Volume     `json:"volumes"`
+	State   states.State `json:"state,omitempty"`
+	Message string       `json:"message,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
