@@ -31,8 +31,8 @@
 
 ## Overview
 
-KVC provides basic volume management using PVs and PVCs in a Kubernetes cluster.
-It uses CRDs and controllers to create the PVs and PVCs and perform operations
+KVC provides basic volume management using PVs, PVCs and Volumes in a Kubernetes cluster.
+It uses CRDs and controllers to create the PVs, PVCs and Volumes and perform operations
 necessary for the data to be available to users. The user needs to have
 interactions only with CRs and PVCs. The rest of the details are
 abstracted away by KVC.
@@ -44,7 +44,7 @@ The end goals of this project are listed below:
 local disk as volumes.
 - __Data distribution:__ KVC should support data replication for distributed job types.
 - __Data affinity:__ KVC should enable data affinity and gravity. It should use
-existing mechanisms such as [Volume Scheduling][vol-sched] when possible.
+existing mechanisms such as [Volume Scheduling][vol-sched] and [Node Affinity][node-aff] when possible.
 - __Data caching:__ KVC should enable the pre-population of data if required.
 - __Data streaming:__ KVC should provide abstraction for streaming data 
 services. Jobs should be able to start as soon as the first stream or batch of 
@@ -64,32 +64,33 @@ Using KVC we extend the Kubernetes API to include a new CRD called
 `volumemanager`. The schema to create a `volumemanager` CR is described 
 below:
 
-| Field Name           | Type| definition|
-| :------------- | :------ | :----------- |
-| `apiVersion`* | `string` | API version of volume manager |
-|`kind`* | enum: `VolumeManager` | Type. Only allowed value is `VolumeManager` |
-| `metadata.name`* | `string` | Name of the volume manager instance |
-| `spec.volumes`* | array of `volumeConfig` | Volumes and data information |
-| `volumeConfig.id`* | `string` | An identifier for the volume |
-| `volumeConfig.replicas`* | `int` | Number of replicas required on distinct compute nodes|
-| `volumeConfig.sourceType`* | `string`| Source type of the dataset to be used by the volume (e.g., S3, NFS)|
-| `volumeConfig.sourceURL` | `string`| Source URL of the data set |
-| `volumeConfig.accessMode`* | `string` | Type of access mode |
-| `volumeConfig.capacity`* | `string` | Size requested for the volume |
-| `volumeConfig.labels`* | `map[string]string` | Any labels required for the volume |
-| `volumeConfig.options` | `map[string]string`| Any options required for the volume |
-| `spec.state*` | enum: `Pending`, `Running`, `Failed`, `Completed` |  The desired state for this volume manager instance |
-| `status.volumeClaims` | array of `volumeClaim` | volume claim information |
-| `volumeClaim.id` | `string` | An identifier for the volume. There is a one-to-one mapping between `volumeConfig.id` and `volumeClaim.id` |
-| `volumeClaim.pvcNames` | array of `strings` | Names of all the PVCs associated with a `volumeClaim` |
-| `volumeClaim.message` | `string` | A message associated with the state of this `volumeClaim` |
-| `status.state` | enum: `Pending`, `Running`, `Failed`, `Completed` |  The  current state of this volume manger instance |
-| `status.message` | `string` | A message associated with the current state of this volume manager instance |
+| Field Name                    | Type                                              | definition                                                                                                 |
+| :-----------------------------| :-------------------------------------------------| :----------------------------------------------------------------------------------------------------------|
+| `apiVersion`*                 | `string`                                          | API version of volume manager                                                                              |
+| `kind`*                       | enum: `VolumeManager`                             | Type. Only allowed value is `VolumeManager`                                                                |
+| `metadata.name`*              | `string`                                          | Name of the volume manager instance                                                                        |
+| `spec.volumes`*               | array of `volumeConfig`                           | Volumes and data information                                                                               |
+| `volumeConfig.id`*            | `string`                                          | An identifier for the volume                                                                               |
+| `volumeConfig.replicas`*      | `int`                                             | Number of replicas required on distinct compute nodes                                                      |
+| `volumeConfig.sourceType`*    | `string`                                          | Source type of the dataset to be used by the volume (e.g., S3, NFS)                                        |
+| `volumeConfig.sourceURL`      | `string`                                          | Source URL of the data set                                                                                 |
+| `volumeConfig.accessMode`*    | `string`                                          | Type of access mode                                                                                        |
+| `volumeConfig.capacity`*      | `string`                                          | Size requested for the volume                                                                              |
+| `volumeConfig.labels`*        | `map[string]string`                               | Any labels required for the volume                                                                         |
+| `volumeConfig.options`        | `map[string]string`                               | Any options required for the volume                                                                        |
+| `spec.state*`                 | enum: `Pending`, `Running`, `Failed`, `Completed` |  The desired state for this volume manager instance                                                        |
+| `status.volumes`              | array of `volume`                                 | volume information                                                                                         |
+| `volume.id`                   | `string`                                          | An identifier for the volume. There is a one-to-one mapping between `volumeConfig.id` and `volumeClaim.id` |
+| `volume.volumeSource`         | `corev1.VolumeSource`                             | A `corev1.VolumeSource` associated with the `volume`                                                       |
+| `volume.message`              | `string`                                          | A message associated with the state of this `volume`                                                       |
+| `volume.nodeAffinity`         | `corev1.NodeAffinity`                             | A `corev1.NodeAffinity`to guide the pod scheduling for data gravity                                        |
+| `status.state`                | enum: `Pending`, `Running`, `Failed`, `Completed` |  The  current state of this volume manger instance                                                         |
+| `status.message`              | `string`                                          | A message associated with the current state of this volume manager instance                                |
 
 Fields marked with `*` are mandatory.
 ## The KVC Controller
 
-The KVC controller uses PVs, PVCs and Pods to manage volumes and the associated
+The KVC controller uses PVs, PVCs, Volumes and Pods to manage volumes and the associated
 data in Kubernetes. The following are the responsibilities of the controller:
 
 __Data source support:__ The controller will transparently support different 
@@ -108,15 +109,17 @@ These access modes can be used as long as the shared file system supports it.
 If the data is stored somewhere else (e.g., S3) and it needs to be available in
 the source path, the controller is responsible to download the data and
 replicate it across `N` number of nodes as specified by the 
-`volumeConfig.replicas` field in the API schema. PVs are then created using the
-[local][local-pv-type] volume source type. 
+`volumeConfig.replicas` field in the API schema. Depending on the source type, either 
+PVs of  [local][local-pv-type] volume source type or [hostPath][hostPath] volumes are 
+created.
 
 __Data affinity:__ When required, data affinity will be transparently supported
-using the [volume scheduling][vol-sched] feature in Kubernetes.
+using either [volume scheduling][vol-sched] or [Node Affinity][node-aff] features 
+in Kubernetes.
 
-__Data caching:__ As long as the PV is available, it can be used as volumes in 
-any pod. The controller will be responsible to provide the PVC associated with
-a `volumeConfig`. 
+__Data caching:__ As long as the PV or Volume is available, it can be used as volumes in 
+any pod. The controller will be responsible to provide the PVC and the node associated with
+a `volume`. 
 
 __Data streaming:__ Data services, such as [Aeon][aeon], use a caching mechanism to 
 provide data streaming services. As an example, if Aeon is used for data 
@@ -162,11 +165,12 @@ information on adding a new data handler, read the [developer manual][dev-doc].
 Brief description of source type support is provided below. For more 
 information on usage, refer to the [user manual][user-doc].
 
-| Source Type | Phase | Description |
-| :------------- | :------ | :----------- |
-| S3 | Supported | KVC will download the files from a specified S3 bucket and make it available for consumption in a node. |
-| NFS | Supported | KVC will make the specified path from an NFS server available for consumption. |
-| [Aeon][aeon] | Design | - |
+| Source Type    | Phase    | Description                                                                                                   |
+| :------------- | :--------| :-------------------------------------------------------------------------------------------------------------|
+| S3-Dev         | Supported| KVC will download the files from a specified S3 bucket and make it available for consumption in a node.       |
+| S3             | Supported| KVC will download the files from a specified S3 bucket and provide nodes where hostPath volumes can be used.  |
+| NFS            | Supported| KVC will make the specified path from an NFS server available for consumption.                                |
+| [Aeon][aeon]   | Design   | -                                                                                                             |
 
 [pv]: https://kubernetes.io/docs/concepts/storage/persistent-volumes/
 [pvc]: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims
@@ -178,3 +182,5 @@ information on usage, refer to the [user manual][user-doc].
 [aeon]: https://github.com/NervanaSystems/aeon
 [handler-interface]: ../pkg/handlers/handlers.go
 [dev-doc]: dev.md
+[node-aff]: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#node-affinity-beta-feature
+[hostPath]: https://kubernetes.io/docs/concepts/storage/volumes/#hostpath
