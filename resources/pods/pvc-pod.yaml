@@ -3,10 +3,11 @@ kind: Pod
 metadata:
   name: kvc-claim-pod
 spec:
+  affinity:
+    <insert-node-affinity-from-cr-status>
   volumes:
     - name: dataset-claim
-      persistentVolumeClaim:
-        claimName: <insert-claim-name-here>
+      <insert-volume-source-from-cr-status>
   containers:
   - image: busybox
     command: ["/bin/sh"]

@@ -74,7 +74,7 @@ Spec:
       Aws Access Key:     foobarbazfoobarbazfoobarbaz
       Aws Access Key ID:  FOOBARFOOBAR
     Replicas:             1
-    Source Type:          S3-Dev
+    Source Type:          S3
     Source URL:           s3://stockdatasets/cifar-100-python.tar.gz
 Status:
   Message:  successfully deployed all sub-resources
@@ -103,30 +103,31 @@ pod "kvc-claim-pod" created
 
 ## Types of sources
 The following source types are currently implemented:
-* S3-Dev: Files present in the bucket and provided as `volumeConfig.sourceURL` in the CR are downloaded/synced and made available as a PVC. Only 1 replica is allowed.
-* S3: Files present in the bucket and provided as `volumeConfig.sourceURL` in the CR are downloaded/synced onto the number of nodes equal to `volumeConfig.replicas` and made available as a hostPath. `NodeAffinity` is provided through `volume.nodeAffinity` to guide the scheduling of pods.
+* S3-Dev: Files present in the bucket and provided as `volumeConfig.sourceURL` in the CR are downloaded/synced and made available as a PVC. Only 1 replica is allowed. This source type should only be used for development and testing purposes.
+* S3: Files present in the bucket and provided as `volumeConfig.sourceURL` in the CR are downloaded/synced onto the number of nodes equal to `volumeConfig.replicas` and made available as a hostPath volume. Node affinity details are provided through `volume.nodeAffinity` to guide the scheduling of pods.
 * NFS: The path exported by an NFS server is mounted and made available as a PVC.
 
 For examples on how to define and use the different types, please refer to the examples in [resources][resources-dir].
 
 Each source type differs in the requirements of the fields which is given below:
 
-| Type           | Required Fields                                    |  Description                                          | 
-|:---------------|:---------------------------------------------------|:------------------------------------------------------|
-| `S3-Dev`       | `volumeConfig.sourceURL`                           | The s3 url to download the data from                  |
-|                | `volumeConfig.options["awsAccessKeyID]`            | The aws access key to access the s3 data              |
-|                | `volumeConfig.options["awsAccessKey"]`             | The aws secret key to access the s3 data              |
-|                | `volumeConfig.replicas`                            | Field is ignored for this source type                 |
-| `S3`           | `volumeConfig.sourceURL`                           | The s3 url to download the data from                  |
-|                | `volumeConfig.replicas`                            | The number of nodes this data should be replicated on |
-|                | `volumeConfig.options["awsAccessKeyID]`            | The aws access key to access the s3 data              |
-|                | `volumeConfig.options["awsAccessKey"]`             | The aws secret key to access the s3 data              |
-| `NFS`          | `volumeConfig.options["server"]`                   | Address of the NFS server                             |
-|                | `volumeConfig.options["path"]`                     | The path exported by the NFS server                   |
-|                | `volumeConfig.accessMode     `                     | Only `ReadWriteMany` and `ReadOnlyMany` are supported |
+| Type           | Required Fields                                    |  Description                                          | Supported Access Modes | 
+|:---------------|:---------------------------------------------------|:------------------------------------------------------|:-----------------------|
+| `S3-Dev`       | `volumeConfig.sourceURL`                           | The s3 url to download the data from                  |`ReadWriteOnce`         |
+|                | `volumeConfig.options["awsAccessKeyID]`            | The aws access key to access the s3 data              |                        |
+|                | `volumeConfig.options["awsAccessKey"]`             | The aws secret key to access the s3 data              |                        |
+|                | `volumeConfig.replicas`                            | Field is ignored for this source type                 |                        |
+| `S3`           | `volumeConfig.sourceURL`                           | The s3 url to download the data from                  | `ReadWriteOnce`        |
+|                | `volumeConfig.replicas`                            | The number of nodes this data should be replicated on |                        |
+|                | `volumeConfig.options["awsAccessKeyID]`            | The aws access key to access the s3 data              |                        |
+|                | `volumeConfig.options["awsAccessKey"]`             | The aws secret key to access the s3 data              |                        |
+| `NFS`          | `volumeConfig.options["server"]`                   | Address of the NFS server                             |`ReadWriteMany`         |
+|                | `volumeConfig.options["path"]`                     | The path exported by the NFS server                   |`ReadOnlyMany`          |
+|                | `volumeConfig.accessMode     `                     | Only `ReadWriteMany` and `ReadOnlyMany` are supported |                        |
 
 
-Status of the CR provides information of the `volume`. This status field for the different source types is given below:
+Status of the CR provides information on the volume source and node affinity.
+Example status field for the different source types is given below:
 
 * S3-Dev:
   ```yaml

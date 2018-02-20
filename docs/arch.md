@@ -31,11 +31,11 @@
 
 ## Overview
 
-KVC provides basic volume management using PVs, PVCs and Volumes in a Kubernetes cluster.
-It uses CRDs and controllers to create the PVs, PVCs and Volumes and perform operations
+KVC provides basic volume and data management using [volumes][vols] and
+[volume sources][volsources] in a Kubernetes cluster. It uses CRDs and
+controllers to create the [volumes][vols] and [volume sources][volsources] and perform operations
 necessary for the data to be available to users. The user needs to have
-interactions only with CRs and PVCs. The rest of the details are
-abstracted away by KVC.
+interactions only with CRs. The rest of the details are abstracted away by KVC.
 
 ### Goals 
 The end goals of this project are listed below:
@@ -44,7 +44,7 @@ The end goals of this project are listed below:
 local disk as volumes.
 - __Data distribution:__ KVC should support data replication for distributed job types.
 - __Data affinity:__ KVC should enable data affinity and gravity. It should use
-existing mechanisms such as [Volume Scheduling][vol-sched] and [Node Affinity][node-aff] when possible.
+existing mechanisms such as [volume scheduling][vol-sched] and [node affinity][node-aff] when possible.
 - __Data caching:__ KVC should enable the pre-population of data if required.
 - __Data streaming:__ KVC should provide abstraction for streaming data 
 services. Jobs should be able to start as soon as the first stream or batch of 
@@ -81,16 +81,16 @@ below:
 | `spec.state*`                 | enum: `Pending`, `Running`, `Failed`, `Completed` |  The desired state for this volume manager instance                                                        |
 | `status.volumes`              | array of `volume`                                 | volume information                                                                                         |
 | `volume.id`                   | `string`                                          | An identifier for the volume. There is a one-to-one mapping between `volumeConfig.id` and `volumeClaim.id` |
-| `volume.volumeSource`         | `corev1.VolumeSource`                             | A `corev1.VolumeSource` associated with the `volume`                                                       |
+| `volume.volumeSource`         | [VolumeSource][volsources]                                    | A volume source associated with the `volume`                                                       |
 | `volume.message`              | `string`                                          | A message associated with the state of this `volume`                                                       |
-| `volume.nodeAffinity`         | `corev1.NodeAffinity`                             | A `corev1.NodeAffinity`to guide the pod scheduling for data gravity                                        |
-| `status.state`                | enum: `Pending`, `Running`, `Failed`, `Completed` |  The  current state of this volume manger instance                                                         |
+| `volume.nodeAffinity`         | [NodeAffinity][node-aff]                             | A node affinity to guide the pod scheduling for data gravity                                        |
+| `status.state`                | enum: `Pending`, `Running`, `Failed`, `Completed` |  The  current state of this volume manager instance                                                         |
 | `status.message`              | `string`                                          | A message associated with the current state of this volume manager instance                                |
 
 Fields marked with `*` are mandatory.
 ## The KVC Controller
 
-The KVC controller uses PVs, PVCs, Volumes and Pods to manage volumes and the associated
+The KVC controller uses [volumes][vols], [volume sources][volsources], Pods to manage volumes and the associated
 data in Kubernetes. The following are the responsibilities of the controller:
 
 __Data source support:__ The controller will transparently support different 
@@ -98,7 +98,7 @@ data sources. Some of the data sources such as NFS are natively supported
 by PVs.
 
 __Data distribution:__ In case of a shared file system, data distribution will
-be handled using access modes in PV. There are three different types of access 
+be handled using access modes in volumes. There are three different types of access 
 modes:
 - ReadWriteOnce – the volume can be mounted as read-write by a single node.
 - ReadOnlyMany – the volume can be mounted read-only by many nodes.
@@ -110,16 +110,16 @@ If the data is stored somewhere else (e.g., S3) and it needs to be available in
 the source path, the controller is responsible to download the data and
 replicate it across `N` number of nodes as specified by the 
 `volumeConfig.replicas` field in the API schema. Depending on the source type, either 
-PVs of  [local][local-pv-type] volume source type or [hostPath][hostPath] volumes are 
+PVs of [local][local-pv-type] volume source type or [hostPath][hostPath] volumes are 
 created.
 
 __Data affinity:__ When required, data affinity will be transparently supported
-using either [volume scheduling][vol-sched] or [Node Affinity][node-aff] features 
+using either [volume scheduling][vol-sched] or [node affinity][node-aff] features 
 in Kubernetes.
 
-__Data caching:__ As long as the PV or Volume is available, it can be used as volumes in 
-any pod. The controller will be responsible to provide the PVC and the node associated with
-a `volume`. 
+__Data caching:__ As long as the backing volume is available, it can be used
+in any pod. The controller will be responsible to provide the volume source
+and the node affinity associated with a `volume`. 
 
 __Data streaming:__ Data services, such as [Aeon][aeon], use a caching mechanism to 
 provide data streaming services. As an example, if Aeon is used for data 
@@ -167,7 +167,7 @@ information on usage, refer to the [user manual][user-doc].
 
 | Source Type    | Phase    | Description                                                                                                   |
 | :------------- | :--------| :-------------------------------------------------------------------------------------------------------------|
-| S3-Dev         | Supported| KVC will download the files from a specified S3 bucket and make it available for consumption in a node.       |
+| S3-Dev         | Supported| KVC will download the files from a specified S3 bucket and make it available for consumption in a node. This source type should only be used for development and testing purposes.      |
 | S3             | Supported| KVC will download the files from a specified S3 bucket and provide nodes where hostPath volumes can be used.  |
 | NFS            | Supported| KVC will make the specified path from an NFS server available for consumption.                                |
 | [Aeon][aeon]   | Design   | -                                                                                                             |
@@ -184,3 +184,5 @@ information on usage, refer to the [user manual][user-doc].
 [dev-doc]: dev.md
 [node-aff]: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#node-affinity-beta-feature
 [hostPath]: https://kubernetes.io/docs/concepts/storage/volumes/#hostpath
+[vols]: https://kubernetes.io/docs/concepts/storage/volumes/
+[volsources]: https://github.com/kubernetes/api/blob/master/core/v1/types.go#L250
