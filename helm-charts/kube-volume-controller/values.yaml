@@ -3,7 +3,7 @@ org: "constant-cubist-173123"
 repo: "kube-volume-controller"
 tag: "v0.1.0"
 
-## Flags used for kube-volume-controller command
+## Flags used for kube-volume-controller command.
 flags:
 - "--podFile=/kvc-templates/pod.tmpl"
 - "--pvFile=/kvc-templates/pv.tmpl"
@@ -11,10 +11,12 @@ flags:
 #- "--namespace=<insert-namespace-here>"
 #- "--v=4"
 
-## Install Default RBAC roles and bindings
-rbac:
-  install: true
-  apiVersion: v1
+## Install cluster role if necessary.
+## Note: ClusterRole is a cluster-scoped object. It might already be installed.
+clusterrole:
+  install: false
 
+## Install storage class when necessary.
+## Note: StorageClass is a cluster-scoped object. It might already be installed.
 storageclass:
   install: false
