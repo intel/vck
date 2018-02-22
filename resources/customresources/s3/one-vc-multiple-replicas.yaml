@@ -9,11 +9,11 @@ spec:
       replicas: 3
       sourceType: "S3"
       sourceURL: "s3://neon-stockdatasets/cifar-100-python.tar.gz"
-      AccessMode: "ReadWriteOnce"
-      Capacity: 5Gi
-      Labels:
+      accessMode: "ReadWriteOnce"
+      capacity: 5Gi
+      labels:
         key1: val1
         key2: val2
-      Options:
+      options:
         awsAccessKeyID: <insert-aws-access-key-id-here>
         awsAccessKey: <insert-aws-secret-access-key-here>

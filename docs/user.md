@@ -3,8 +3,9 @@
     * [Prerequisites](#prerequisites)
     * [Before You Begin](#before-you-begin)
     * [Create a Volume Manager Custom Resource](#create-a-volume-manager-custom-resource)
-    * [Create a Pod using the PVC as a Volume.](#create-a-pod-using-the-pvc-as-a-volume)
-    * [Types of sources](#types-of-sources)
+    * [Create a Pod using the Custom Resource Status](#create-a-pod-using-the-custom-resource-status)
+    * [Create a Deployment using the Custom Resource Status](#create-a-deployment-using-the-custom-resource-status)
+    * [Types of Sources](#types-of-sources)
 
 
 ## Prerequisites
@@ -47,87 +48,114 @@ make sure to replace the comments within `<>` with appropriate values.
 $ kubectl create -f resources/customresources/s3/one-vc.yaml
 volumemanager "kvc-example" created
 
-$ kubectl describe volumemanager kvc-example
-Name:         kvc-example
-Namespace:    kvc-testing
-Labels:       <none>
-Annotations:  <none>
-API Version:  aipg.intel.com/v1
-Kind:         VolumeManager
-Metadata:
-  Cluster Name:
-  Creation Timestamp:  2018-02-03T00:44:45Z
-  Generation:          0
-  Resource Version:    1174103
-  Self Link:           /apis/aipg.intel.com/v1/namespaces/kvc-testing/volumemanagers/kvc-example
-  UID:                 6e4e2901-087b-11e8-9cc4-42010a8a026b
-Spec:
-  State:
-  Volume Configs:
-    Access Mode:  ReadWriteOnce
-    Capacity:     5Gi
-    Id:           vol1
-    Labels:
-      Key 1:  val1
-      Key 2:  val2
-    Options:
-      Aws Access Key:     foobarbazfoobarbazfoobarbaz
-      Aws Access Key ID:  FOOBARFOOBAR
-    Replicas:             1
-    Source Type:          S3
-    Source URL:           s3://stockdatasets/cifar-100-python.tar.gz
-Status:
-  Message:  successfully deployed all sub-resources
-  State:    Running
-  Volume Claims:
-    Id:       vol1
-    Message:  success
-    Pvc Name:
-      kvc-resource-6e514b6b-087b-11e8-82f6-0a580a44052f
-Events:  <none>
+$ kubectl get volumemanager kvc-example -o yaml
+apiVersion: aipg.intel.com/v1
+kind: VolumeManager
+metadata:
+  clusterName: ""
+  creationTimestamp: 2018-02-21T20:22:30Z
+  generation: 0
+  name: kvc-example
+  namespace: kvc-testing
+  resourceVersion: "4722186"
+  selfLink: /apis/aipg.intel.com/v1/namespaces/kvc-testing/volumemanagers/kvc-example
+  uid: f0e352bd-1744-11e8-9cc4-42010a8a026b
+spec:
+  state: ""
+  volumeConfigs:
+  - accessMode: ReadWriteOnce
+    capacity: 5Gi
+    id: vol1
+    labels:
+      key1: val1
+      key2: val2
+    options:
+      awsAccessKey: foobarbazfoobarbazfoobarbazfoobarbaz
+      awsAccessKeyID: FOOBARBAZFOOBARBAZ
+    replicas: 1
+    sourceType: S3
+    sourceURL: s3://neon-stockdatasets/cifar-100-python.tar.gz
+status:
+  message: successfully deployed all sub-resources
+  state: Running
+  volumes:
+  - id: vol1
+    message: success
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - cluster-node-1
+    volumeSource:
+      hostPath:
+        path: /var/datasets/kvc-resource-f0e5a3ba-1744-11e8-a808-0a580a44065b
 ```
 
 Other examples on custom resource manifest can be found in [resources][resources-dir]
 directory. For details about source types and their fields, refer [types of sources](#types-of-sources).
 
-## Create a Pod using the PVC as a Volume. 
+## Create a Pod using the Custom Resource Status 
 
-Using the [example pod manifest][pod-example], create a custom resource.
+Using the [example pod manifest][pod-example], create a pod.
 Example commands are shown below. Before using the command below, make sure to
-replace the comments within `<>` with appropriate values.
+replace the comments within `<>` with appropriate values of node affinity and
+the volume source from the CR status. Depending upon the source type, node
+affinity might not be required. [Types of sources][#types-of-sources] provides
+details on which field(s) need to filled in the pod template before using the
+command below.
 
 ```sh
-$ kubectl create -f resources/pods/pvc-pod.yaml
+$ kubectl create -f resources/pods/kvc-pod.yaml
 pod "kvc-claim-pod" created
 ```
 
-## Types of sources
+## Create a Deployment using the Custom Resource Status 
+
+Using the [example deployment manifest][dep-example], create a deployment.
+Example commands are shown below. Before using the command below, make sure to
+replace the comments within `<>` with appropriate values of node affinity and
+the volume source from the CR status. Depending upon the source type, node
+affinity might not be required. [Types of sources][#types-of-sources] provides
+details on which field(s) need to filled in the deployment template before using the
+command below.
+
+```sh
+$ kubectl create -f resources/deployments/kvc-deployment.yaml
+deployment "kvc-example-deployment" created
+```
+
+## Types of Sources
 The following source types are currently implemented:
-* S3-Dev: Files present in the bucket and provided as `volumeConfig.sourceURL` in the CR are downloaded/synced and made available as a PVC. Only 1 replica is allowed. This source type should only be used for development and testing purposes.
-* S3: Files present in the bucket and provided as `volumeConfig.sourceURL` in the CR are downloaded/synced onto the number of nodes equal to `volumeConfig.replicas` and made available as a hostPath volume. Node affinity details are provided through `volume.nodeAffinity` to guide the scheduling of pods.
+* S3-Dev: Files present in an S3 bucket and provided as `volumeConfig.sourceURL` in the CR are downloaded/synced and made available as a PVC. Only 1 replica is allowed. This source type should only be used for development and testing purposes.
+* S3: Files present in an S3 bucket and provided as `volumeConfig.sourceURL` in the CR are downloaded/synced onto the number of nodes equal to `volumeConfig.replicas` and made available as a hostPath volume. Node affinity details are provided through `volume.nodeAffinity` to guide the scheduling of pods.
 * NFS: The path exported by an NFS server is mounted and made available as a PVC.
 
 For examples on how to define and use the different types, please refer to the examples in [resources][resources-dir].
 
-Each source type differs in the requirements of the fields which is given below:
+A brief description of each source type is provided below.
 
-| Type           | Required Fields                                    |  Description                                          | Supported Access Modes | 
-|:---------------|:---------------------------------------------------|:------------------------------------------------------|:-----------------------|
-| `S3-Dev`       | `volumeConfig.sourceURL`                           | The s3 url to download the data from                  |`ReadWriteOnce`         |
-|                | `volumeConfig.options["awsAccessKeyID]`            | The aws access key to access the s3 data              |                        |
-|                | `volumeConfig.options["awsAccessKey"]`             | The aws secret key to access the s3 data              |                        |
-|                | `volumeConfig.replicas`                            | Field is ignored for this source type                 |                        |
-| `S3`           | `volumeConfig.sourceURL`                           | The s3 url to download the data from                  | `ReadWriteOnce`        |
-|                | `volumeConfig.replicas`                            | The number of nodes this data should be replicated on |                        |
-|                | `volumeConfig.options["awsAccessKeyID]`            | The aws access key to access the s3 data              |                        |
-|                | `volumeConfig.options["awsAccessKey"]`             | The aws secret key to access the s3 data              |                        |
-| `NFS`          | `volumeConfig.options["server"]`                   | Address of the NFS server                             |`ReadWriteMany`         |
-|                | `volumeConfig.options["path"]`                     | The path exported by the NFS server                   |`ReadOnlyMany`          |
-|                | `volumeConfig.accessMode     `                     | Only `ReadWriteMany` and `ReadOnlyMany` are supported |                        |
+| Type    | Required Fields                         |  Description                                          | Supported Access Modes | Field(s) provided in CR status | 
+|:--------|:----------------------------------------|:------------------------------------------------------|:-----------------------|:-------------------------------|
+| `S3-Dev`| `volumeConfig.sourceURL`                | The s3 url to download the data from                  |`ReadWriteOnce`         | `volumeSource`                 |
+|         | `volumeConfig.options["awsAccessKeyID]` | The aws access key to access the s3 data              |                        | |
+|         | `volumeConfig.options["awsAccessKey"]`  | The aws secret key to access the s3 data              |                        | |
+|         | `volumeConfig.replicas`                 | Field is ignored for this source type                 |                        | |
+| `S3`    | `volumeConfig.sourceURL`                | The s3 url to download the data from                  | `ReadWriteOnce`        | `volumeSource`                 |
+|         | `volumeConfig.replicas`                 | The number of nodes this data should be replicated on |                        | `nodeAffinity`                 |
+|         | `volumeConfig.options["awsAccessKeyID]` | The aws access key to access the s3 data              |                        | |
+|         | `volumeConfig.options["awsAccessKey"]`  | The aws secret key to access the s3 data              |                        | |
+| `NFS`   | `volumeConfig.options["server"]`        | Address of the NFS server                             |`ReadWriteMany`         | `volumeSource`                 |
+|         | `volumeConfig.options["path"]`          | The path exported by the NFS server                   |`ReadOnlyMany`          | |
+|         | `volumeConfig.accessMode     `          | Only `ReadWriteMany` and `ReadOnlyMany` are supported |                        | |
 
 
 Status of the CR provides information on the volume source and node affinity.
-Example status field for the different source types is given below:
+Example status fields for the different source types and a description on 
+what needs to be changed in the [pod template][pod-example] to use these
+source types is given below.
 
 * S3-Dev:
   ```yaml
@@ -138,7 +166,16 @@ Example status field for the different source types is given below:
       persistentVolumeClaim:
         claimName: kvc-resource-a150fd63-11c4-11e8-8397-0a580a440340
   ```
-  The claim can be used in a pod to access the data.
+  The claim can be used in a pod to access the data. More specifically, the
+  snippet below from the CR status above needs to inserted in the 
+  [volumes field][pod-example-vol] of the example [pod template][pod-example]
+  in order to use it with the pod.
+
+  ```yaml
+      persistentVolumeClaim:
+        claimName: kvc-resource-a150fd63-11c4-11e8-8397-0a580a440340
+  ```
+
 * S3:
   ```yaml
   - id: vol1
@@ -156,18 +193,47 @@ Example status field for the different source types is given below:
       hostPath:
         path: /var/datasets/kvc-resource-a2140d72-11c2-11e8-8397-0a580a440340
   ```
-  The [node affinity][node-affinity] above can be used as-is in a pod spec along with the host path above as a volume to access the s3 data.
+  The [node affinity][node-affinity] above can be used as-is in a pod spec
+  along with the host path above as a volume to access the s3 data.
+  More specifically, the snippets below from the CR status above needs to
+  inserted in the [volumes field][pod-example-vol] and [affinity field][pod-example-aff]
+  of the example [pod template][pod-example], respectively, in order to use it with the pod.
+      
+  ```yaml
+      hostPath:
+        path: /var/datasets/kvc-resource-a2140d72-11c2-11e8-8397-0a580a440340
+  ```
+    
+  ```yaml
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - cluster-node-1
+            - cluster-node-2
+  ```
 
 * NFS
-    ```yaml
-    - id: vol2
+  ```yaml
+  - id: vol2
         message: success
         nodeAffinity: {}
         volumeSource:
           persistentVolumeClaim:
             claimName: kvc-resource-a216ed4a-11c2-11e8-8397-0a580a440340
-    ```
-    The claim can be used in a pod to access the data.
+  ```
+  The claim can be used in a pod to access the data.
+  More specifically, the snippet below from the CR status above needs to inserted in the 
+  [volumes field][pod-example-vol] of the example [pod template][pod-example]
+  in order to use it with the pod.
+  
+  ```yaml
+      persistentVolumeClaim:
+        claimName: kvc-resource-a150fd63-11c4-11e8-8397-0a580a440340
+  ```
 
 To add a new source type, a new handler specific to the source type is required. Please refer to the [developer manual][dev-doc] for more details.
 
@@ -176,8 +242,11 @@ To add a new source type, a new handler specific to the source type is required.
 [arch-doc]: arch.md
 [resources-dir]: ../resources/customresources
 [vol-sched]: https://github.com/kubernetes/features/issues/490
+[node-affinity]: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#node-affinity-beta-feature
 [helm]: https://docs.helm.sh/using_helm/
 [kubectl]: https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [cr-example]: ../resources/customresources/s3/one-vc.yaml
-[pod-example]: ../resources/pods/pvc-pod.yaml
-[node-affinity]: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#node-affinity-beta-feature
+[pod-example]: ../resources/pods/kvc-pod.yaml
+[pod-example-vol]: ../resources/pods/kvc-pod.yaml#L10
+[pod-example-aff]: ../resources/pods/kvc-pod.yaml#L7
+[dep-example]: ../resources/deployments/kvc-deployment.yaml
