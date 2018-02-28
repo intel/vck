@@ -124,3 +124,17 @@ Run `./docker_make build` from the root directory.
 [handler-interface]: ../pkg/handlers/handlers.go
 [s3-handler]: ../pkg/handlers/s3_handler.go
 [arch-doc-why-dh]: arch.md#relationship-between-volume-and-data
+
+## Docker Containers
+
+The [docker](../docker) directory containers dockerfiles for:
+
+* aws-cli: aws cli tools with a wrapper to support minio
+* golang: the build container used by `docker_make`
+
+To build and push the containers to docker hub:
+```
+cd docker
+./build
+./push
+```

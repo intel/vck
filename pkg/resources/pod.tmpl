@@ -21,7 +21,7 @@ spec:
       hostPath:
         path: /var/datasets
   initContainers:
-  - image: balajismaniam/aws-cli
+  - image: volumecontroller/aws-cli
     imagePullPolicy: "Always"
     command: ["/bin/sh"]
     args: ["-c", "mkdir -p $DATA_PATH"]
@@ -33,7 +33,7 @@ spec:
     - name: DATA_PATH
       value: {{ index .KVCOptions "path" }}
   containers:
-  - image: balajismaniam/aws-cli
+  - image: volumecontroller/aws-cli
     imagePullPolicy: "Always"
     command: ["/bin/sh"]
     args: ["-c", "aws s3 cp $RECURSIVE_OPTION $S3_URL $DATA_PATH"]
