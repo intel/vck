@@ -44,17 +44,10 @@ func (h *s3Handler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef metav1.
 		}
 	}
 
-	if _, ok := vc.Options["awsAccessKeyID"]; !ok {
+	if _, ok := vc.Options["awsCredentialsSecretName"]; !ok {
 		return crv1.Volume{
 			ID:      vc.ID,
-			Message: fmt.Sprintf("awsAccessKeyID key has to be set in options"),
-		}
-	}
-
-	if _, ok := vc.Options["awsAccessKey"]; !ok {
-		return crv1.Volume{
-			ID:      vc.ID,
-			Message: fmt.Sprintf("awsAccessKey key has to be set in options"),
+			Message: fmt.Sprintf("awsCredentialsSecretName key has to be set in options"),
 		}
 	}
 

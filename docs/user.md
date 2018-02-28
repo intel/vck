@@ -2,11 +2,11 @@
   * [User Manual: Kubernetes Volume Controller (KVC)](#user-manual-kubernetes-volume-controller-kvc)
     * [Prerequisites](#prerequisites)
     * [Before You Begin](#before-you-begin)
+    * [Create a Secret with your AWS Credentials](#create-a-secret-with-your-aws-credentials)
     * [Create a Volume Manager Custom Resource](#create-a-volume-manager-custom-resource)
     * [Create a Pod using the Custom Resource Status](#create-a-pod-using-the-custom-resource-status)
     * [Create a Deployment using the Custom Resource Status](#create-a-deployment-using-the-custom-resource-status)
     * [Types of Sources](#types-of-sources)
-
 
 ## Prerequisites
 
@@ -38,11 +38,27 @@ The following commands can be used after editing the comments within `<>`.
 $ kubectl config set-context $(kubectl config current-context) --namespace=<insert-namespace-here>
 ```
 
+## Create a Secret with your AWS Credentials
+_Note: This secret is only required when using the `S3` and `S3-Dev` data source type._
+
+Use the commands below to create a secret with your AWS credentials. Before
+using the command below, make sure to replace the comments within `<>` with
+appropriate values.
+
+```sh
+$ export AWS_ACCESS_KEY_ID="<insert-your-aws-access-key-id>"
+$ export AWS_SECRET_ACCESS_KEY="<insert-your-aws-secret-access-key>"
+$ kubectl create secret generic aws-creds --from-literal=awsAccessKeyID=${AWS_ACCESS_KEY_ID} --from-literal=awsSecretAccessKey=${AWS_SECRET_ACCESS_KEY} 
+```
+
 ## Create a Volume Manager Custom Resource
 
 Using the [example custom resource manifest][cr-example], create a custom
 resource. Example commands are shown below. Before using the command below,
 make sure to replace the comments within `<>` with appropriate values.
+For the `S3` or `S3-Dev` data source types, the value of `spec.options.awsCredentialsSecretName`
+in the custom resource should be set to the secret name created using the
+instructions [above](#create-a-secret-with-your-aws-credentials).
 
 ```sh
 $ kubectl create -f resources/customresources/s3/one-vc.yaml
@@ -70,8 +86,7 @@ spec:
       key1: val1
       key2: val2
     options:
-      awsAccessKey: foobarbazfoobarbazfoobarbazfoobarbaz
-      awsAccessKeyID: FOOBARBAZFOOBARBAZ
+      awsCredentialsSecretName: foobarbaz
     replicas: 1
     sourceType: S3
     sourceURL: s3://neon-stockdatasets/cifar-100-python.tar.gz
@@ -140,13 +155,11 @@ A brief description of each source type is provided below.
 | Type    | Required Fields                         |  Description                                          | Supported Access Modes | Field(s) provided in CR status | 
 |:--------|:----------------------------------------|:------------------------------------------------------|:-----------------------|:-------------------------------|
 | `S3-Dev`| `volumeConfig.sourceURL`                | The s3 url to download the data from                  |`ReadWriteOnce`         | `volumeSource`                 |
-|         | `volumeConfig.options["awsAccessKeyID]` | The aws access key to access the s3 data              |                        | |
-|         | `volumeConfig.options["awsAccessKey"]`  | The aws secret key to access the s3 data              |                        | |
+|         | `volumeConfig.options["awsCredentialsSecretName]` | The name of the secret with AWS credentials to access the s3 data              |                        | |
 |         | `volumeConfig.replicas`                 | Field is ignored for this source type                 |                        | |
 | `S3`    | `volumeConfig.sourceURL`                | The s3 url to download the data from                  | `ReadWriteOnce`        | `volumeSource`                 |
 |         | `volumeConfig.replicas`                 | The number of nodes this data should be replicated on |                        | `nodeAffinity`                 |
-|         | `volumeConfig.options["awsAccessKeyID]` | The aws access key to access the s3 data              |                        | |
-|         | `volumeConfig.options["awsAccessKey"]`  | The aws secret key to access the s3 data              |                        | |
+|         | `volumeConfig.options["awsCredentialsSecretName]` | The name of the secret with AWS credentials to access the s3 data              |                        | |
 | `NFS`   | `volumeConfig.options["server"]`        | Address of the NFS server                             |`ReadWriteMany`         | `volumeSource`                 |
 |         | `volumeConfig.options["path"]`          | The path exported by the NFS server                   |`ReadOnlyMany`          | |
 |         | `volumeConfig.accessMode     `          | Only `ReadWriteMany` and `ReadOnlyMany` are supported |                        | |
@@ -250,3 +263,5 @@ To add a new source type, a new handler specific to the source type is required.
 [pod-example-vol]: ../resources/pods/kvc-pod.yaml#L10
 [pod-example-aff]: ../resources/pods/kvc-pod.yaml#L7
 [dep-example]: ../resources/deployments/kvc-deployment.yaml
+[secret-example]: ../resources/secrets/aws-secret.yaml
+[secret-encoding]: https://kubernetes.io/docs/concepts/configuration/secret/#creating-a-secret-manually 

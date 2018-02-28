@@ -26,5 +26,4 @@ spec:
         key3: val3
         key4: val4
       options:
-        awsAccessKeyID: <insert-aws-access-key-id-here>
-        awsAccessKey: <insert-aws-secret-access-key-here>
+        awsCredentialsSecretName: <insert-secret-name-for-aws-credentials>

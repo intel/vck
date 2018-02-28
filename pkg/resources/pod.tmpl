@@ -43,9 +43,15 @@ spec:
       name: dataset-root
     env:
     - name: AWS_ACCESS_KEY_ID
-      value: {{index .Options "awsAccessKeyID"}}
+      valueFrom:
+        secretKeyRef:
+          name: {{index .Options "awsCredentialsSecretName"}}
+          key: awsAccessKeyID
     - name: AWS_SECRET_ACCESS_KEY
-      value: {{index .Options "awsAccessKey"}}
+      valueFrom:
+        secretKeyRef:
+          name: {{index .Options "awsCredentialsSecretName"}}
+          key: awsSecretAccessKey
     - name: S3_URL
       value: {{.SourceURL}}
     - name: DATA_PATH
