@@ -24,12 +24,16 @@ $ kubectl config set-context $(kubectl config current-context) --namespace=<inse
 
 ## Installing the Controller
 
-Edit the `tag`, `--namespace` `flag`, `rbac.install` and `storageclass.install` fields in the [Helm
-values configuration file][helm-values] and deploy the helm chart provided.
+Edit the `flags` and configure the `--namespace` in the [Helm values configuration file][helm-values] and deploy the helm chart provided.
 
 `Note`: If the storage class is not installed in the cluster, make sure `storageclass.install` is set to true.
+
 ```sh
-$ helm install helm-charts/kube-volume-controller/ -n kvc --wait
+$ helm install helm-charts/kube-volume-controller/ -n kvc \
+  --set tag="v0.1.0" \
+  --set clusterrole.install=true \
+  --set storageclass.install=true \
+  --wait
 NAME:   kvc
 LAST DEPLOYED: Tue Feb  6 12:58:50 2018
 NAMESPACE: kvc-testing
@@ -59,6 +63,13 @@ kube-volume-controller  1        1        1           1          11s
 ==> v1/Pod(related)
 NAME                                    READY  STATUS   RESTARTS  AGE
 kube-volume-controller-84bc5789c-9wtsr  1/1    Running  0         11s
+
+Notes:
+Kube-Volume-Controller v0.1.0
+
+* Installed in kvc
+* Cluster Role: true
+* Storage Class: true
 ```
 
 The above command will install the KVC controller as a deployment, the storage
