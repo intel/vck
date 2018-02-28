@@ -154,10 +154,10 @@ A brief description of each source type is provided below.
 
 | Type    | Required Fields                         |  Description                                          | Supported Access Modes | Field(s) provided in CR status | 
 |:--------|:----------------------------------------|:------------------------------------------------------|:-----------------------|:-------------------------------|
-| `S3-Dev`| `volumeConfig.sourceURL`                | The s3 url to download the data from                  |`ReadWriteOnce`         | `volumeSource`                 |
+| `S3-Dev`| `volumeConfig.sourceURL`                | The s3 url to download the data from. End the sourceURL with a `/` to recursively copy.                  |`ReadWriteOnce`         | `volumeSource`                 |
 |         | `volumeConfig.options["awsCredentialsSecretName]` | The name of the secret with AWS credentials to access the s3 data              |                        | |
 |         | `volumeConfig.replicas`                 | Field is ignored for this source type                 |                        | |
-| `S3`    | `volumeConfig.sourceURL`                | The s3 url to download the data from                  | `ReadWriteOnce`        | `volumeSource`                 |
+| `S3`    | `volumeConfig.sourceURL`                | The s3 url to download the data from. End the sourceURL with a `/` to recursively copy.                  | `ReadWriteOnce`        | `volumeSource`                 |
 |         | `volumeConfig.replicas`                 | The number of nodes this data should be replicated on |                        | `nodeAffinity`                 |
 |         | `volumeConfig.options["awsCredentialsSecretName]` | The name of the secret with AWS credentials to access the s3 data              |                        | |
 | `NFS`   | `volumeConfig.options["server"]`        | Address of the NFS server                             |`ReadWriteMany`         | `volumeSource`                 |

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -70,6 +71,10 @@ func (h *s3Handler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef metav1.
 	}
 
 	nodeNames := getNodeNames(nodeList)
+	recursiveFlag := ""
+	if strings.HasSuffix(vc.SourceURL, "/") {
+		recursiveFlag = "--recursive"
+	}
 
 	usedNodeNames := []string{}
 	podClient := h.getK8SResourceClientFromPlural("pods")
@@ -86,6 +91,7 @@ func (h *s3Handler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef metav1.
 			KVCName             string
 			KVCStorageClassName string
 			PVType              string
+			RecursiveOption     string
 			KVCOptions          map[string]string
 		}{
 			vc,
@@ -95,6 +101,7 @@ func (h *s3Handler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef metav1.
 			kvcName,
 			"kvc",
 			"",
+			recursiveFlag,
 			map[string]string{
 				"path": fmt.Sprintf("/var/datasets/%s", kvcDataPathSuffix),
 			},

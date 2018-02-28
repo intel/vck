@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -72,6 +73,10 @@ func (h *s3DevHandler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef meta
 	}
 
 	nodeNames := getNodeNames(nodeList)
+	recursiveFlag := ""
+	if strings.HasSuffix(vc.SourceURL, "/") {
+		recursiveFlag = "--recursive"
+	}
 
 	kvcName := fmt.Sprintf("%s%s", kvcNamePrefix, uuid.NewUUID())
 	kvcDataPathSuffix := fmt.Sprintf("%s%s", kvcNamePrefix, uuid.NewUUID())
@@ -89,6 +94,7 @@ func (h *s3DevHandler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef meta
 			KVCName             string
 			KVCStorageClassName string
 			PVType              string
+			RecursiveOption     string
 			KVCOptions          map[string]string
 		}{
 			vc,
@@ -98,6 +104,7 @@ func (h *s3DevHandler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef meta
 			kvcName,
 			"kvc",
 			"local",
+			recursiveFlag,
 			map[string]string{
 				"path": fmt.Sprintf("/var/datasets/%s", kvcDataPathSuffix),
 			},
