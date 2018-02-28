@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -52,7 +53,20 @@ func (h *s3Handler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef metav1.
 		}
 	}
 
-	nodeClient := h.getK8SResourceClientFromPlural("nodes")
+	// Set the default timeout for data download using a pod to 5 minutes.
+	timeout, err := time.ParseDuration("5m")
+	// Check if timeout for data download was set and use it.
+	if _, ok := vc.Options["timeoutForDataDownload"]; ok {
+		timeout, err = time.ParseDuration(vc.Options["timeoutForDataDownload"])
+		if err != nil {
+			return crv1.Volume{
+				ID:      vc.ID,
+				Message: fmt.Sprintf("error while parsing timeout for data download: %v", err),
+			}
+		}
+	}
+
+	nodeClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "nodes")
 	nodeList, err := nodeClient.List(ns, map[string]string{})
 	if err != nil {
 		return crv1.Volume{
@@ -77,10 +91,14 @@ func (h *s3Handler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef metav1.
 	}
 
 	usedNodeNames := []string{}
-	podClient := h.getK8SResourceClientFromPlural("pods")
+	kvcNames := []string{}
+	podClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "pods")
 	kvcDataPathSuffix := fmt.Sprintf("%s%s", kvcNamePrefix, uuid.NewUUID())
 	for i := 0; i < vc.Replicas; i++ {
 		kvcName := fmt.Sprintf("%s%s", kvcNamePrefix, uuid.NewUUID())
+		kvcNames = append(kvcNames, kvcName)
+
+		// Collect node names for providing node affinity details.
 		usedNodeNames = append(usedNodeNames, nodeNames[i])
 
 		err := podClient.Create(ns, struct {
@@ -115,6 +133,16 @@ func (h *s3Handler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef metav1.
 		}
 	}
 
+	for _, kvcName := range kvcNames {
+		err := waitForPodSuccess(podClient, kvcName, ns, timeout)
+		if err != nil {
+			return crv1.Volume{
+				ID:      vc.ID,
+				Message: fmt.Sprintf("error during data download using pod [name: %v]: %v", kvcName, err),
+			}
+		}
+	}
+
 	return crv1.Volume{
 		ID: vc.ID,
 		VolumeSource: corev1.VolumeSource{
@@ -142,8 +170,7 @@ func (h *s3Handler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef metav1.
 }
 
 func (h *s3Handler) OnDelete(ns string, vc crv1.VolumeConfig, controllerRef metav1.OwnerReference) {
-
-	podClient := h.getK8SResourceClientFromPlural("pods")
+	podClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "pods")
 	podList, err := podClient.List(ns, vc.Labels)
 	if err != nil {
 		glog.Warningf("[s3-handler] OnDelete: error while listing resource [%s], %v", podClient.Plural(), err)
@@ -156,14 +183,4 @@ func (h *s3Handler) OnDelete(ns string, vc crv1.VolumeConfig, controllerRef meta
 		}
 	}
 
-}
-
-func (h *s3Handler) getK8SResourceClientFromPlural(plural string) resource.Client {
-	for _, client := range h.k8sResourceClients {
-		if plural == client.Plural() {
-			return client
-		}
-	}
-
-	return nil
 }

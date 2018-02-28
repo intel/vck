@@ -152,18 +152,19 @@ For examples on how to define and use the different types, please refer to the e
 
 A brief description of each source type is provided below.
 
-| Type    | Required Fields                         |  Description                                          | Supported Access Modes | Field(s) provided in CR status | 
-|:--------|:----------------------------------------|:------------------------------------------------------|:-----------------------|:-------------------------------|
-| `S3-Dev`| `volumeConfig.sourceURL`                | The s3 url to download the data from. End the sourceURL with a `/` to recursively copy.                  |`ReadWriteOnce`         | `volumeSource`                 |
-|         | `volumeConfig.options["awsCredentialsSecretName]` | The name of the secret with AWS credentials to access the s3 data              |                        | |
-|         | `volumeConfig.replicas`                 | Field is ignored for this source type                 |                        | |
-| `S3`    | `volumeConfig.sourceURL`                | The s3 url to download the data from. End the sourceURL with a `/` to recursively copy.                  | `ReadWriteOnce`        | `volumeSource`                 |
-|         | `volumeConfig.replicas`                 | The number of nodes this data should be replicated on |                        | `nodeAffinity`                 |
-|         | `volumeConfig.options["awsCredentialsSecretName]` | The name of the secret with AWS credentials to access the s3 data              |                        | |
-| `NFS`   | `volumeConfig.options["server"]`        | Address of the NFS server                             |`ReadWriteMany`         | `volumeSource`                 |
-|         | `volumeConfig.options["path"]`          | The path exported by the NFS server                   |`ReadOnlyMany`          | |
-|         | `volumeConfig.accessMode     `          | Only `ReadWriteMany` and `ReadOnlyMany` are supported |                        | |
-
+| Type    | Fields | Required                         |  Description                                          | Supported Access Modes | Field(s) provided in CR status | 
+|:--------|:----------------------------------------|:----|:--------------------------------------------------|:-----------------------|:-------------------------------|
+| `S3-Dev`| `volumeConfig.sourceURL`                | Yes | The s3 url to download the data from. End the sourceURL with a `/` to recursively copy |`ReadWriteOnce`         | `volumeSource`                 |
+|         | `volumeConfig.replicas`                 | No | Field is ignored for this source type.                 |                        | |
+|         | `volumeConfig.options["awsCredentialsSecretName]` | Yes | The name of the secret with AWS credentials to access the s3 data              |                        | |
+|         | `volumeConfig.options["timeoutForDataDownload"]`  | No | The timeout for download of s3 data. Defaults to 5 minutes. [[Format]](https://golang.org/pkg/time/#ParseDuration) |                        | |
+| `S3`    | `volumeConfig.sourceURL`                | Yes | The s3 url to download the data from. End the sourceURL with a `/` to recursively copy | `ReadWriteOnce`        | `volumeSource`                 |
+|         | `volumeConfig.replicas`                 | Yes | The number of nodes this data should be replicated on. |                        | `nodeAffinity`                 |
+|         | `volumeConfig.options["awsCredentialsSecretName]` | Yes | The name of the secret with AWS credentials to access the s3 data              |                        | |
+|         | `volumeConfig.options["timeoutForDataDownload"]`  | No | The timeout for download of s3 data. Defaults to 5 minutes. [[Format]](https://golang.org/pkg/time/#ParseDuration) |                        | |
+| `NFS`   | `volumeConfig.options["server"]`        | Yes | Address of the NFS server.                             |`ReadWriteMany`         | `volumeSource`                 |
+|         | `volumeConfig.options["path"]`          | Yes | The path exported by the NFS server.                   |`ReadOnlyMany`          | |
+|         | `volumeConfig.accessMode     `          | Yes | Access mode for the volume config.                     |                        | |
 
 Status of the CR provides information on the volume source and node affinity.
 Example status fields for the different source types and a description on 

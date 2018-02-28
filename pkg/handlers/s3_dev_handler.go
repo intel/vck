@@ -54,7 +54,20 @@ func (h *s3DevHandler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef meta
 		}
 	}
 
-	nodeClient := h.getK8SResourceClientFromPlural("nodes")
+	// Set the default timeout for data download using a pod to 5 minutes.
+	timeout, err := time.ParseDuration("5m")
+	// Check if timeout for data download was set and use it.
+	if _, ok := vc.Options["timeoutForDataDownload"]; ok {
+		timeout, err = time.ParseDuration(vc.Options["timeoutForDataDownload"])
+		if err != nil {
+			return crv1.Volume{
+				ID:      vc.ID,
+				Message: fmt.Sprintf("error while parsing timeout for data download: %v", err),
+			}
+		}
+	}
+
+	nodeClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "nodes")
 	nodeList, err := nodeClient.List(ns, map[string]string{})
 	if err != nil {
 		return crv1.Volume{
@@ -118,6 +131,15 @@ func (h *s3DevHandler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef meta
 		}
 	}
 
+	podClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "pods")
+	err = waitForPodSuccess(podClient, kvcName, ns, timeout)
+	if err != nil {
+		return crv1.Volume{
+			ID:      vc.ID,
+			Message: fmt.Sprintf("error during data download using pod [name: %v]: %v", kvcName, err),
+		}
+	}
+
 	return crv1.Volume{
 		ID: vc.ID,
 		VolumeSource: corev1.VolumeSource{
@@ -148,14 +170,4 @@ func (h *s3DevHandler) OnDelete(ns string, vc crv1.VolumeConfig, controllerRef m
 		}
 	}
 
-}
-
-func (h *s3DevHandler) getK8SResourceClientFromPlural(plural string) resource.Client {
-	for _, client := range h.k8sResourceClients {
-		if plural == client.Plural() {
-			return client
-		}
-	}
-
-	return nil
 }
