@@ -53,8 +53,15 @@ func (h *s3DevHandler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef meta
 			Message: fmt.Sprintf("awsCredentialsSecretName key has to be set in options"),
 		}
 	}
-
-	// Set the default timeout for data download using a pod to 5 minutes.
+   
+        if vc.AccessMode != "ReadWriteOnce" {
+                 return crv1.Volume{
+                         ID:      vc.ID,
+                         Message: fmt.Sprintf("access mode has to be ReadWriteOnce"),
+                 }
+         }
+	 
+        // Set the default timeout for data download using a pod to 5 minutes.
 	timeout, err := time.ParseDuration("5m")
 	// Check if timeout for data download was set and use it.
 	if _, ok := vc.Options["timeoutForDataDownload"]; ok {
