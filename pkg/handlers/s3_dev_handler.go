@@ -13,8 +13,8 @@ import (
 
 	"github.com/golang/glog"
 
-	"github.com/NervanaSystems/kube-controllers-go/pkg/resource"
 	crv1 "github.com/NervanaSystems/kube-volume-controller/pkg/apis/cr/v1"
+	"github.com/NervanaSystems/kube-volume-controller/pkg/resource"
 )
 
 const (
@@ -27,6 +27,7 @@ type s3DevHandler struct {
 	k8sResourceClients []resource.Client
 }
 
+// NewS3DevHandler creates and returns an instance of the NFS handler.
 func NewS3DevHandler(k8sClientset *kubernetes.Clientset, resourceClients []resource.Client) DataHandler {
 	return &s3DevHandler{
 		sourceType:         s3DevSourceType,
@@ -53,15 +54,15 @@ func (h *s3DevHandler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef meta
 			Message: fmt.Sprintf("awsCredentialsSecretName key has to be set in options"),
 		}
 	}
-   
-        if vc.AccessMode != "ReadWriteOnce" {
-                 return crv1.Volume{
-                         ID:      vc.ID,
-                         Message: fmt.Sprintf("access mode has to be ReadWriteOnce"),
-                 }
-         }
-	 
-        // Set the default timeout for data download using a pod to 5 minutes.
+
+	if vc.AccessMode != "ReadWriteOnce" {
+		return crv1.Volume{
+			ID:      vc.ID,
+			Message: fmt.Sprintf("access mode has to be ReadWriteOnce"),
+		}
+	}
+
+	// Set the default timeout for data download using a pod to 5 minutes.
 	timeout, err := time.ParseDuration("5m")
 	// Check if timeout for data download was set and use it.
 	if _, ok := vc.Options["timeoutForDataDownload"]; ok {

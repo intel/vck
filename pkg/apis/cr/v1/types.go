@@ -24,7 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/NervanaSystems/kube-controllers-go/pkg/states"
+	"github.com/NervanaSystems/kube-volume-controller/pkg/states"
 )
 
 const (
@@ -54,6 +54,7 @@ var (
 	}
 )
 
+// +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type VolumeManager struct {
 	metav1.TypeMeta   `json:",inline"`

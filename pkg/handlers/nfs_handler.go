@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+
 	"github.com/golang/glog"
 
 	corev1 "k8s.io/api/core/v1"
@@ -9,8 +10,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/NervanaSystems/kube-controllers-go/pkg/resource"
 	crv1 "github.com/NervanaSystems/kube-volume-controller/pkg/apis/cr/v1"
+	"github.com/NervanaSystems/kube-volume-controller/pkg/resource"
 )
 
 const (
@@ -23,6 +24,7 @@ type nfsHandler struct {
 	k8sResourceClients []resource.Client
 }
 
+// NewNFSHandler creates and returns an instance of the NFS handler.
 func NewNFSHandler(k8sClientset *kubernetes.Clientset, resourceClients []resource.Client) DataHandler {
 	return &nfsHandler{
 		sourceType:         nfsSourceType,

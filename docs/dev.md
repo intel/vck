@@ -8,6 +8,8 @@
       * [Create a new data handler](#create-a-new-data-handler)
       * [Register the new handler in main.go](#register-the-new-handler-in-maingo)
       * [Test and build your changes](#test-and-build-your-changes)
+      * [Adding a new sub resource client](#adding-a-new-sub-resource-client)
+    * [Docker Containers](#docker-containers)
 
 ## Testing and Building
 The best way to build and test your changes is to use the `docker_make` script.
@@ -20,7 +22,25 @@ $ ./docker_make dep-ensure
 dep ensure
 
 $ ./docker_make code-generation
-/go/bin/deepcopy-gen --output-base=/go/src --input-dirs=github.com/NervanaSystems/kube-volume-controller/pkg/apis/cr/v1/...
+./hack/update-codegen.sh
+/go/src/github.com/NervanaSystems/kube-volume-controller/vendor/k8s.io/code-generator /go/src/github.com/NervanaSystems/kube-volume-controller
+Note: checking out 'kubernetes-1.9.2'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by performing another checkout.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -b with the checkout command again. Example:
+
+  git checkout -b <new-branch-name>
+
+HEAD is now at 91d3f6a... Merge pull request #57767 from mbohlool/automated-cherry-pick-of-#57735-upstream-release-1.9
+/go/src/github.com/NervanaSystems/kube-volume-controller
+Generating deepcopy funcs
+Generating clientset for cr:v1 at github.com/nervanasystems/kubevolumecontroller/pkg/client/clientset
+Generating listers for cr:v1 at github.com/nervanasystems/kubevolumecontroller/pkg/client/listers
+Generating informers for cr:v1 at github.com/nervanasystems/kubevolumecontroller/pkg/client/informers
 
 $ ./docker_make lint
 gometalinter --config=./lint.json --vendor .
@@ -107,7 +127,8 @@ func (h *<insert-data-source-name>Handler) OnDelete(ns string, vc crv1.VolumeCon
 ### Register the new handler in `main.go`
 
 Replace all the comments within `<>` with appropriate values and the following
-code snippet in [main.go][main-file].
+code snippet in [main.go][main-file]. If you need additional clients apart from 
+the ones already present, please refer to [Adding a new client](#adding-a-new-client) section below.
 
 ```go
 Handlers := []handlers.DataHandler{
@@ -120,10 +141,38 @@ Handlers := []handlers.DataHandler{
 
 Run `./docker_make build` from the root directory. 
 
-[main-file]: ../main.go
-[handler-interface]: ../pkg/handlers/handlers.go
-[s3-handler]: ../pkg/handlers/s3_handler.go
-[arch-doc-why-dh]: arch.md#relationship-between-volume-and-data
+### Adding a new sub resource client
+
+[Dynamic client][dyn-client] is used to create and use the clients required to handle kubernetes resources.
+For example, to create a pod client the steps below should be followed:
+1. Create the [APIResource][apiresource]: 
+```go
+podAPIResource := &metav1.APIResource{
+		Kind:       "Pod",
+		Name:       "pods",
+		Group:      "v1",
+		Namespaced: true,
+	}
+``` 
+2. Create the dynamic client:
+```go
+	config.GroupVersion = &corev1.SchemeGroupVersion
+	dynClient, err := dynamic.NewClient(config)
+```
+Note: The same dynamic client can be used if clients for other resources belonging to the same 
+group version are to be created.
+
+3. Create a scheme to help the conversion of an [unstructured object][unstructured] to the typed object.
+```go
+corev1Scheme.AddKnownTypes(corev1.SchemeGroupVersion, &corev1.Pod{})
+```
+
+4. Create the client:
+```go
+    dynClient.Resource(nodeAPIResource, *namespace)
+```
+
+Note: See [main.go][main-file] for examples on how to create clients for pod, nodes, pv and pvc using a [dynamic client][dyn-client].
 
 ## Docker Containers
 
@@ -138,3 +187,11 @@ cd docker
 ./build
 ./push
 ```
+
+[main-file]: ../main.go
+[handler-interface]: ../pkg/handlers/handlers.go
+[s3-handler]: ../pkg/handlers/s3_handler.go
+[arch-doc-why-dh]: arch.md#relationship-between-volume-and-data
+[dyn-client]: https://github.com/kubernetes/client-go/tree/master/dynamic
+[apiresource]: https://github.com/kubernetes/apimachinery/blob/master/pkg/apis/meta/v1/types.go#L825
+[unstructured]: https://github.com/kubernetes/apimachinery/blob/master/pkg/apis/meta/v1/unstructured/unstructured.go#L41

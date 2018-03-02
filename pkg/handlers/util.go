@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"github.com/NervanaSystems/kube-controllers-go/pkg/resource"
+	"github.com/NervanaSystems/kube-volume-controller/pkg/resource"
 )
 
 func getNodeNames(nodeList []metav1.Object) []string {

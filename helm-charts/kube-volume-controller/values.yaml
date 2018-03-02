@@ -20,3 +20,6 @@ clusterrole:
 ## Note: StorageClass is a cluster-scoped object. It might already be installed.
 storageclass:
   install: false
+
+crd:
+  install: false

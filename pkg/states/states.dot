@@ -1,0 +1,19 @@
+digraph JobStates {
+
+    rankdir = LR;
+
+    node [shape = point]; init;
+    node [shape = ellipse];
+
+    Failed     [shape = doublecircle];
+    Completed [shape = doublecircle];
+
+    init -> Pending;
+
+    Pending -> Running   [label = "deploy complete"];
+    Pending -> Failed    [label = "deploy failed"];
+    Running -> Completed [label = "undeploy"];
+    Pending -> Completed [label = "undeploy"];
+    Running -> Failed    [label = "errored"];
+    Running -> Pending   [label = "detect recoverable error"];
+}

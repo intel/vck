@@ -6,6 +6,7 @@ import (
 	crv1 "github.com/NervanaSystems/kube-volume-controller/pkg/apis/cr/v1"
 )
 
+// DataHandler is the interface which defines the handler methods
 type DataHandler interface {
 	GetSourceType() crv1.DataSourceType
 	OnAdd(namespace string, vc crv1.VolumeConfig, controllerRef metav1.OwnerReference) crv1.Volume

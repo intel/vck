@@ -26,8 +26,7 @@ jobs:
           name: get dependencies and generate
           command: |
             dep ensure
-            # NOTE: different from Makefile since input must be relative to execution path
-            /go/bin/deepcopy-gen --output-base=/go/src --input-dirs=./pkg/apis/cr/v1/...
+            make code-generation
       - run:
           name: Run lint tests
           command: |
@@ -45,4 +44,3 @@ jobs:
             cp /go/bin/kube-volume-controller ./
             make docker
             make push-image
-

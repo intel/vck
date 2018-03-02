@@ -4,20 +4,19 @@ import (
 	"context"
 	"flag"
 
-	"github.com/golang/glog"
-
 	apiv1 "k8s.io/api/core/v1"
-	extv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-	extclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/NervanaSystems/kube-controllers-go/pkg/controller"
-	"github.com/NervanaSystems/kube-controllers-go/pkg/crd"
-	"github.com/NervanaSystems/kube-controllers-go/pkg/resource"
-	"github.com/NervanaSystems/kube-controllers-go/pkg/util"
-	crv1 "github.com/NervanaSystems/kube-volume-controller/pkg/apis/cr/v1"
+	crv1_client "github.com/NervanaSystems/kube-volume-controller/pkg/client/clientset/versioned"
+	"github.com/NervanaSystems/kube-volume-controller/pkg/controller"
 	"github.com/NervanaSystems/kube-volume-controller/pkg/handlers"
 	"github.com/NervanaSystems/kube-volume-controller/pkg/hooks"
+	"github.com/NervanaSystems/kube-volume-controller/pkg/resource"
+	"github.com/NervanaSystems/kube-volume-controller/pkg/util"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/dynamic"
 )
 
 func main() {
@@ -26,16 +25,10 @@ func main() {
 	podTemplateFile := flag.String("podFile", "/etc/volumemanagers/pod.tmpl", "Path to a job template file")
 	pvTemplateFile := flag.String("pvFile", "/etc/volumemangers/pv.tmpl", "Path to a job template file")
 	pvcTemplateFile := flag.String("pvcFile", "/etc/volumemangers/pvc.tmpl", "Path to a job template file")
-	schemaFile := flag.String("schema", "", "Path to a custom resource schema file")
 	flag.Set("logtostderr", "true")
 	flag.Parse()
 
 	config, err := util.BuildConfig(*kubeconfig)
-	if err != nil {
-		panic(err)
-	}
-
-	clientset, err := extclient.NewForConfig(config)
 	if err != nil {
 		panic(err)
 	}
@@ -45,39 +38,54 @@ func main() {
 		panic(err)
 	}
 
-	// Create new CRD handle for the volume manager resource type.
-	crdHandle := crd.New(
-		&crv1.VolumeManager{},
-		&crv1.VolumeManagerList{},
-		crv1.GroupName,
-		crv1.Version,
-		crv1.VolumeManagerResourceKind,
-		crv1.VolumeManagerResourceSingular,
-		crv1.VolumeManagerResourcePlural,
-		extv1beta1.NamespaceScoped,
-		*schemaFile,
-	)
-
-	err = crd.WriteDefinition(clientset, crdHandle)
-	if err != nil {
-		// NOTE: We don't panic here, as an existing CRD is absolutely fine.
-		// TODO: Validate that the existing CRD is the version we expect.
-		glog.Warningf("error while writing %s CRD in namespace %s: %s", crv1.VolumeManagerResourceKind, *namespace, err)
-	}
-
-	crdClient, err := crd.NewClient(*config, crdHandle)
+	crdClient, err := crv1_client.NewForConfig(config)
 	if err != nil {
 		panic(err)
 	}
 
-	globalTemplateValues := resource.GlobalTemplateValues{}
+	podAPIResource := &metav1.APIResource{
+		Kind:       "Pod",
+		Name:       "pods",
+		Group:      "v1",
+		Namespaced: true,
+	}
+	nodeAPIResource := &metav1.APIResource{
+		Kind:       "Node",
+		Name:       "nodes",
+		Group:      "v1",
+		Namespaced: false,
+	}
+	pvAPIResource := &metav1.APIResource{
+		Kind:       "PersistentVolume",
+		Name:       "persistentvolumes",
+		Group:      "v1",
+		Namespaced: false,
+	}
+	pvcAPIResource := &metav1.APIResource{
+		Kind:       "PersistentVolumeClaim",
+		Name:       "persistentvolumeclaims",
+		Group:      "v1",
+		Namespaced: true,
+	}
+
+	// Since all the clients belong to the same gvk, only one dynamic client is needed in this case.
+	config.GroupVersion = &corev1.SchemeGroupVersion
+	dynClient, err := dynamic.NewClient(config)
+	if err != nil {
+		panic(err)
+	}
+
+	// Generate runtime.scheme to convert from unstructured to an object.
+	corev1Scheme := runtime.NewScheme()
+	corev1Scheme.AddKnownTypes(corev1.SchemeGroupVersion, &corev1.PersistentVolume{}, &corev1.Pod{}, &corev1.Node{}, &corev1.PersistentVolumeClaim{})
+
 	// The ordering of these resource clients matters. We want the pod to be
 	// deployed last as it will use the PVC created before it.
 	resourceClients := []resource.Client{
-		resource.NewNodeClient(globalTemplateValues, k8sClientset, ""),
-		resource.NewPersistentVolumeClient(globalTemplateValues, k8sClientset, *pvTemplateFile),
-		resource.NewPersistentVolumeClaimClient(globalTemplateValues, k8sClientset, *pvcTemplateFile),
-		resource.NewPodClient(globalTemplateValues, k8sClientset, *podTemplateFile),
+		resource.NewGenericClient(dynClient.Resource(nodeAPIResource, *namespace), "", nodeAPIResource.Name, corev1Scheme, corev1.SchemeGroupVersion),
+		resource.NewGenericClient(dynClient.Resource(pvAPIResource, *namespace), *pvTemplateFile, pvAPIResource.Name, corev1Scheme, corev1.SchemeGroupVersion),
+		resource.NewGenericClient(dynClient.Resource(pvcAPIResource, *namespace), *pvcTemplateFile, pvcAPIResource.Name, corev1Scheme, corev1.SchemeGroupVersion),
+		resource.NewGenericClient(dynClient.Resource(podAPIResource, *namespace), *podTemplateFile, podAPIResource.Name, corev1Scheme, corev1.SchemeGroupVersion),
 	}
 
 	dataHandlers := []handlers.DataHandler{
@@ -87,13 +95,13 @@ func main() {
 	}
 
 	// Create hooks
-	hooks := hooks.NewVolumeManagerHooks(crdClient, dataHandlers)
+	hooks := hooks.NewVolumeManagerHooks(crdClient.CrV1().VolumeManagers(*namespace), dataHandlers)
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
 
 	// Start a controller for instances of our custom resource.
-	controller := controller.New(crdHandle, hooks, crdClient.RESTClient())
+	controller := controller.New(hooks, crdClient)
 	go controller.Run(ctx, *namespace)
 
 	<-ctx.Done()

@@ -20,10 +20,7 @@
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
-
-[[constraint]]
-  branch = "add-pv-pvc-client"
-  name = "github.com/NervanaSystems/kube-controllers-go"
+required = ["k8s.io/apiextensions-apiserver"]
 
 [[constraint]]
   branch = "master"

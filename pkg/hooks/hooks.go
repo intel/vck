@@ -2,24 +2,25 @@ package hooks
 
 import (
 	"fmt"
+
 	"github.com/golang/glog"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/NervanaSystems/kube-controllers-go/pkg/crd"
-	"github.com/NervanaSystems/kube-controllers-go/pkg/states"
 	crv1 "github.com/NervanaSystems/kube-volume-controller/pkg/apis/cr/v1"
+	crv1_volume_manager "github.com/NervanaSystems/kube-volume-controller/pkg/client/clientset/versioned/typed/cr/v1"
 	"github.com/NervanaSystems/kube-volume-controller/pkg/handlers"
+	"github.com/NervanaSystems/kube-volume-controller/pkg/states"
 )
 
 // VolumeManagerHooks implements controller.Hooks interface
 type VolumeManagerHooks struct {
-	crdClient    crd.Client
+	crdClient    crv1_volume_manager.VolumeManagerInterface
 	dataHandlers []handlers.DataHandler
 }
 
 // NewVolumeManagerHooks creates and returns a new instance of the VolumeManagerHooks
-func NewVolumeManagerHooks(crdClient crd.Client, dataHandlers []handlers.DataHandler) *VolumeManagerHooks {
+func NewVolumeManagerHooks(crdClient crv1_volume_manager.VolumeManagerInterface, dataHandlers []handlers.DataHandler) *VolumeManagerHooks {
 	return &VolumeManagerHooks{
 		crdClient:    crdClient,
 		dataHandlers: dataHandlers,
@@ -64,15 +65,9 @@ func (h *VolumeManagerHooks) Add(obj interface{}) {
 			Message: fmt.Sprintf("Beginning sub-resource deployment"),
 		}
 
-		obj, err := h.crdClient.Update(volumeManagerCopy)
+		volumeManagerCopy, err := h.crdClient.Update(volumeManagerCopy)
 		if err != nil {
 			glog.Warningf("error updating status for volume manager %s: %v\n", volumeManagerCopy.Name(), err)
-			return
-		}
-
-		volumeManagerCopy, ok = obj.(*crv1.VolumeManager)
-		if !ok {
-			glog.Errorf("object received is not of type VolumeManager %v", obj)
 			return
 		}
 
