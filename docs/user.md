@@ -86,7 +86,7 @@ spec:
       key1: val1
       key2: val2
     options:
-      awsCredentialsSecretName: foobarbaz
+      awsCredentialsSecretName: aws-creds
     replicas: 1
     sourceType: S3
     sourceURL: s3://neon-stockdatasets/cifar-100-python.tar.gz
@@ -117,9 +117,28 @@ directory. For details about source types and their fields, refer [types of sour
 Using the [example pod manifest][pod-example], create a pod.
 Example commands are shown below. Before using the command below, make sure to
 replace the comments within `<>` with appropriate values of node affinity and
-the volume source from the CR status. Depending upon the source type, node
-affinity might not be required. [Types of sources][#types-of-sources] provides
-details on which field(s) need to filled in the pod template before using the
+the volume source from the CR status. Here is an example of an edited spec for a S3
+data source type:
+
+```yaml
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - cluster-node-1
+  volumes:
+    - name: dataset-claim
+      hostPath:
+        path: /var/datasets/kvc-resource-f0e5a3ba-1744-11e8-a808-0a580a44065b
+```
+
+Depending upon the source type, node
+affinity might not be required. [Types of sources](#types-of-sources) provides
+more details on how to edit the field(s) in the pod template spec before using the
 command below.
 
 ```sh
