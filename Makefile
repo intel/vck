@@ -47,6 +47,8 @@ push-image-preflight:
 
 push-image: push-image-preflight docker
 	@ echo "tagging container"
+	docker tag $(IMAGE_NAME):$(VERSION) volumecontroller/$(IMAGE_NAME):$(VERSION)
 	docker tag $(IMAGE_NAME):$(VERSION) gcr.io/$(GOOGLE_PROJECT_ID)/$(IMAGE_NAME):$(VERSION)
 	@ echo "pushing container to gcr.io"
+	docker push volumecontroller/$(IMAGE_NAME):$(VERSION)
 	gcloud docker -- push gcr.io/$(GOOGLE_PROJECT_ID)/$(IMAGE_NAME):$(VERSION)

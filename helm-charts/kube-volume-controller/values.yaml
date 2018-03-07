@@ -1,5 +1,5 @@
-registry: "gcr.io/"
-org: "constant-cubist-173123"
+registry: ""
+org: "volumecontroller"
 repo: "kube-volume-controller"
 tag: "v0.1.0"
 

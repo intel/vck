@@ -43,4 +43,5 @@ jobs:
             go install -gcflags "-N -l" github.com/NervanaSystems/kube-volume-controller
             cp /go/bin/kube-volume-controller ./
             make docker
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
             make push-image
