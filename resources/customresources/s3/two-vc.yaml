@@ -16,6 +16,7 @@ spec:
         key2: val2
       options:
         awsCredentialsSecretName: <insert-secret-name-for-aws-credentials>
+        # dataPath: <insert-data-path-here-optional>
     - id: "vol1"
       replicas: 1
       sourceType: "S3"
@@ -27,3 +28,4 @@ spec:
         key4: val4
       options:
         awsCredentialsSecretName: <insert-secret-name-for-aws-credentials>
+        # dataPath: <insert-data-path-here-optional>

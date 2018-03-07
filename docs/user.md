@@ -178,11 +178,13 @@ A brief description of each source type is provided below.
 | `S3-Dev`| `volumeConfig.sourceURL`                | Yes | The s3 url to download the data from. End the sourceURL with a `/` to recursively copy |`ReadWriteOnce`         | `volumeSource`                 |
 |         | `volumeConfig.endpointURL`              | No | The s3 compatible service endpoint (i.e. minio url)         |                        | |
 |         | `volumeConfig.replicas`                 | No | Field is ignored for this source type.                 |                        | |
-|         | `volumeConfig.options["awsCredentialsSecretName]` | Yes | The name of the secret with AWS credentials to access the s3 data              |                        | |
+|         | `volumeConfig.options["dataPath"]`                 | No | The  data path on the node where s3 data would be downloaded  |                        | `volumeSource`                 |
+|         | `volumeConfig.options["awsCredentialsSecretName"]` | Yes | The name of the secret with AWS credentials to access the s3 data              |                        | |
 |         | `volumeConfig.options["timeoutForDataDownload"]`  | No | The timeout for download of s3 data. Defaults to 5 minutes. [[Format]](https://golang.org/pkg/time/#ParseDuration) |                        | |
 | `S3`    | `volumeConfig.sourceURL`                | Yes | The s3 url to download the data from. End the sourceURL with a `/` to recursively copy | `ReadWriteOnce`        | `volumeSource`                 |
 |         | `volumeConfig.endpointURL`              | No | The s3 compatible service endpoint (i.e. minio url)          |                        | |
 |         | `volumeConfig.replicas`                 | Yes | The number of nodes this data should be replicated on. |                        | `nodeAffinity`                 |
+|         | `volumeConfig.options["dataPath"]`                 | No | The  data path on the node where s3 data would be downloaded |                        | `volumeSource`                 |
 |         | `volumeConfig.options["awsCredentialsSecretName]` | Yes | The name of the secret with AWS credentials to access the s3 data              |                        | |
 |         | `volumeConfig.options["timeoutForDataDownload"]`  | No | The timeout for download of s3 data. Defaults to 5 minutes. [[Format]](https://golang.org/pkg/time/#ParseDuration) |                        | |
 | `NFS`   | `volumeConfig.options["server"]`        | Yes | Address of the NFS server.                             |`ReadWriteMany`         | `volumeSource`                 |

@@ -19,7 +19,7 @@ spec:
   volumes:
     - name: dataset-root
       hostPath:
-        path: /var/datasets
+        path: {{index .Options "dataPath"}}
   initContainers:
   - image: volumecontroller/aws-cli
     imagePullPolicy: "Always"
@@ -27,7 +27,7 @@ spec:
     args: ["-c", "mkdir -p $DATA_PATH"]
     name: kvc-s3-init-container
     volumeMounts:
-    - mountPath: /var/datasets
+    - mountPath: {{index .Options "dataPath"}}
       name: dataset-root
     env:
     - name: DATA_PATH
@@ -39,7 +39,7 @@ spec:
     args: ["-c", "aws s3 cp $RECURSIVE_OPTION $S3_URL $DATA_PATH"]
     name: kvc-s3-sync-container
     volumeMounts:
-    - mountPath: /var/datasets
+    - mountPath: {{index .Options "dataPath"}}
       name: dataset-root
     env:
     - name: AWS_ACCESS_KEY_ID

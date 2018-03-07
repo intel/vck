@@ -61,6 +61,11 @@ func (h *s3Handler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef metav1.
 		}
 	}
 
+	// Check if dataPath  was set and  if not set default to /var/datasets.
+	if _, ok := vc.Options["dataPath"]; !ok {
+		vc.Options["dataPath"] = "/var/datasets"
+	}
+
 	// Set the default timeout for data download using a pod to 5 minutes.
 	timeout, err := time.ParseDuration("5m")
 	// Check if timeout for data download was set and use it.
@@ -129,7 +134,7 @@ func (h *s3Handler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef metav1.
 			"",
 			recursiveFlag,
 			map[string]string{
-				"path": fmt.Sprintf("/var/datasets/%s", kvcDataPathSuffix),
+				"path": fmt.Sprintf("%s/%s", vc.Options["dataPath"], kvcDataPathSuffix),
 			},
 		})
 
@@ -155,7 +160,7 @@ func (h *s3Handler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef metav1.
 		ID: vc.ID,
 		VolumeSource: corev1.VolumeSource{
 			HostPath: &corev1.HostPathVolumeSource{
-				Path: fmt.Sprintf("/var/datasets/%s", kvcDataPathSuffix),
+				Path: fmt.Sprintf("%s/%s", vc.Options["dataPath"], kvcDataPathSuffix),
 			},
 		},
 		NodeAffinity: corev1.NodeAffinity{
