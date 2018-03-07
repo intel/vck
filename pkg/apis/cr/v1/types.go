@@ -98,14 +98,15 @@ type DataSourceType string
 
 // VolumeConfig contains all the configuration required for a volume.
 type VolumeConfig struct {
-	ID         string            `json:"id"`
-	Replicas   int               `json:"replicas"`
-	SourceType DataSourceType    `json:"sourceType"`
-	SourceURL  string            `json:"sourceURL"`
-	AccessMode string            `json:"accessMode"`
-	Capacity   string            `json:"capacity"`
-	Labels     map[string]string `json:"labels"`
-	Options    map[string]string `json:"options"`
+	ID          string            `json:"id"`
+	Replicas    int               `json:"replicas"`
+	SourceType  DataSourceType    `json:"sourceType"`
+	EndpointURL string            `json:"endpointURL"`
+	SourceURL   string            `json:"sourceURL"`
+	AccessMode  string            `json:"accessMode"`
+	Capacity    string            `json:"capacity"`
+	Labels      map[string]string `json:"labels"`
+	Options     map[string]string `json:"options"`
 }
 
 // VolumeManagerSpec is the spec for the crd.
