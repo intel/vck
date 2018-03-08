@@ -29,3 +29,7 @@ spec:
           {{- range .Values.flags }}
           - {{ . | quote }}
           {{- end }}
+          {{- if .Values.log_level }}
+          - "--v={{ .Values.log_level }}"
+          {{- end }}
+          - {{ required "valid namespace required" .Values.namespace | printf "--namespace=%s" | quote }}

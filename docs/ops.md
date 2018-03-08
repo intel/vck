@@ -4,6 +4,8 @@
     * [Prerequisites](#prerequisites)
     * [Before You Begin](#before-you-begin)
     * [Installing the Controller](#installing-the-controller)
+      * [Installing KVC in multiple namespaces](#installing-kvc-in-multiple-namespaces)
+      * [Custom Helm Options in KVC](#custom-helm-options-in-kvc)
 
 ## Prerequisites
 
@@ -24,16 +26,14 @@ $ kubectl config set-context $(kubectl config current-context) --namespace=<inse
 
 ## Installing the Controller
 
-Edit the `flags` and configure the `--namespace` in the [Helm values configuration file][helm-values] and deploy the helm chart provided.
-
-`Note`: If the storage class is not installed in the cluster, make sure `storageclass.install` is set to true.
+Clone the repo and specify the namespace within `<>` to install KVC:
 
 ```sh
-$ helm install helm-charts/kube-volume-controller/ -n kvc \
-  --set tag="v0.1.0" \
-  --set clusterrole.install=true \
-  --set storageclass.install=true \
-  --wait
+$ git clone git@github.com:NervanaSystems/kube-volume-controller.git
+$ cd kube-volume-controller
+$ helm install helm-charts/kube-volume-controller/ -n kvc --wait \
+  --set namespace=<kvc_namespace>
+
 NAME:   kvc
 LAST DEPLOYED: Tue Feb  6 12:58:50 2018
 NAMESPACE: kvc-testing
@@ -85,6 +85,31 @@ $ kubectl get crd
 NAME                            AGE
 volumemanagers.aipg.intel.com   1h
 ```
+
+### Installing KVC in multiple namespaces
+
+KVC can be installed in multiple namespaces on a Kubernetes cluster. Once KVC is installed in one Kubernetes namespace, subsequent installations in additional namespaces no longer require the `clusterrole`, or `storageclass` to be enabled:
+
+```
+$ helm install helm-charts/kube-volume-controller/ -n kvc --wait \
+  --set clusterrole.install=false \
+  --set storageclass.install=false \
+  --set crd.install=false \
+  --set namespace=<kvc_namespace>
+```
+
+### Custom Helm Options in KVC
+
+Any helm chart values can be configured via `--set key=value` in the helm command. For example, you can specify KVC version via `--set tag="v0.1.0"` and enable logging via `--set log_level=4`:
+
+```
+$ helm install helm-charts/kube-volume-controller/ -n kvc --wait \
+  --set tag="v0.1.0" \
+  --set log_level=4 \
+  --set namespace=<kvc_namespace>
+```
+
+For a complete list of parameters, please review the [helm values file][helm-values] for additional information.
 
 See [user manual][user-doc] for details on how to use KVC.
 
