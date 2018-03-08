@@ -1,5 +1,8 @@
 FROM golang:1.9.2
 
+ARG GCLOUD_SDK_VERSION="192.0.0"
+ARG HELM_VERSION="v2.6.1"
+
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Set timezone to UTC by default
@@ -20,3 +23,34 @@ RUN go get -u \
     github.com/alecthomas/gometalinter \
     github.com/kubernetes/gengo/examples/deepcopy-gen \
     && gometalinter --install
+
+# NOTE: Install gcloud sdk
+RUN curl -sSLo google-cloud-sdk.tar.gz https://storage.googleapis.com/cloud-sdk-release/google-cloud-sdk-${GCLOUD_SDK_VERSION}-linux-x86_64.tar.gz &&\
+    tar zxf google-cloud-sdk.tar.gz && rm google-cloud-sdk.tar.gz &&\
+    ./google-cloud-sdk/install.sh --usage-reporting=true --path-update=true --quiet && \
+    /go/google-cloud-sdk/bin/gcloud components install kubectl &&\
+    ln -s "/go/google-cloud-sdk/bin/gcloud" /usr/local/bin/ &&\
+    ln -s "/go/google-cloud-sdk/bin/kubectl" /usr/local/bin/
+
+# NOTE: Install helm
+RUN curl -sfL http://storage.googleapis.com/kubernetes-helm/helm-${HELM_VERSION}-linux-amd64.tar.gz -o /tmp/helm-${HELM_VERSION}-linux-amd64.tar.gz && \
+    tar xzf /tmp/helm-${HELM_VERSION}-linux-amd64.tar.gz && \
+    mv linux-amd64/helm /usr/local/bin && \
+    rm /tmp/helm-${HELM_VERSION}-linux-amd64.tar.gz && rm -r linux-amd64
+
+# NOTE: Install docker/docker-compose same as circleci
+RUN set -ex \
+  && export DOCKER_VERSION=$(curl --silent --fail --retry 3 https://download.docker.com/linux/static/stable/x86_64/ | grep -o -e 'docker-[.0-9]*-ce\.tgz' | sort -r | head -n 1) \
+  && DOCKER_URL="https://download.docker.com/linux/static/stable/x86_64/${DOCKER_VERSION}" \
+  && echo Docker URL: $DOCKER_URL \
+  && curl --silent --show-error --location --fail --retry 3 --output /tmp/docker.tgz "${DOCKER_URL}" \
+  && ls -lha /tmp/docker.tgz \
+  && tar -xz -C /tmp -f /tmp/docker.tgz \
+  && mv /tmp/docker/* /usr/bin \
+  && rm -rf /tmp/docker /tmp/docker.tgz \
+  && which docker \
+  && (docker version || true)
+RUN COMPOSE_URL="https://circle-downloads.s3.amazonaws.com/circleci-images/cache/linux-amd64/docker-compose-latest" \
+  && curl --silent --show-error --location --fail --retry 3 --output /usr/bin/docker-compose $COMPOSE_URL \
+  && chmod +x /usr/bin/docker-compose \
+  && docker-compose version

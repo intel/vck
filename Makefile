@@ -41,7 +41,7 @@ code-generation:
 	./hack/update-codegen.sh
 
 push-image-preflight:
-	echo "$(GOOGLE_AUTH)" | base64 --decode > /tmp/gcp-key.json
+	@ echo "$(GOOGLE_AUTH)" | base64 --decode > /tmp/gcp-key.json
 	gcloud auth activate-service-account --key-file /tmp/gcp-key.json
 	gcloud config set project "$(GOOGLE_PROJECT_ID)"
 	docker login -u "$(DOCKER_USER)" -p "$(DOCKER_PASS)"
