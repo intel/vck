@@ -18,7 +18,6 @@ package v1
 
 import (
 	"encoding/json"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,7 +27,7 @@ import (
 )
 
 const (
-	GroupName string = "aipg.intel.com"
+	GroupName string = "kvc.intel.com"
 
 	Version string = "v1"
 
@@ -55,7 +54,10 @@ var (
 )
 
 // +genclient
+// +genclient:noStatus
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Volumemanager is the spec for a VolumeManager CR
 type VolumeManager struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
@@ -63,20 +65,11 @@ type VolumeManager struct {
 	Status            VolumeManagerStatus `json:"status,omitempty"`
 }
 
-func (s *VolumeManager) Name() string {
-	return s.ObjectMeta.Name
-}
-
-func (s *VolumeManager) Namespace() string {
-	return s.ObjectMeta.Namespace
-}
-
 func (s *VolumeManager) JSON() (string, error) {
 	data, err := json.Marshal(s)
 	if err != nil {
 		return "", err
 	}
-
 	return string(data), nil
 }
 
@@ -85,6 +78,7 @@ func (s *VolumeManager) GetStatusState() states.State {
 }
 
 func (s *VolumeManager) GetSpecState() states.State {
+
 	return s.Spec.State
 }
 
@@ -131,6 +125,7 @@ type VolumeManagerStatus struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// VolumemanagerList is the list of VolumeManager resources
 type VolumeManagerList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`

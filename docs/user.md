@@ -23,7 +23,7 @@ this is shown below.
 ```sh
 $ kubectl get crd
 NAME                            AGE
-volumemanagers.aipg.intel.com   1h
+volumemanagers.kvc.intel.com   1h
 
 $ kubectl get volumemanagers
 No resources found.
@@ -65,7 +65,7 @@ $ kubectl create -f resources/customresources/s3/one-vc.yaml
 volumemanager "kvc-example" created
 
 $ kubectl get volumemanager kvc-example -o yaml
-apiVersion: aipg.intel.com/v1
+apiVersion: kvc.intel.com/v1
 kind: VolumeManager
 metadata:
   clusterName: ""
@@ -74,7 +74,7 @@ metadata:
   name: kvc-example
   namespace: kvc-testing
   resourceVersion: "4722186"
-  selfLink: /apis/aipg.intel.com/v1/namespaces/kvc-testing/volumemanagers/kvc-example
+  selfLink: /apis/kvc.intel.com/v1/namespaces/kvc-testing/volumemanagers/kvc-example
   uid: f0e352bd-1744-11e8-9cc4-42010a8a026b
 spec:
   state: ""

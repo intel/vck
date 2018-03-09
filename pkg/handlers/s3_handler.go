@@ -12,22 +12,22 @@ import (
 
 	"github.com/golang/glog"
 
-	crv1 "github.com/NervanaSystems/kube-volume-controller/pkg/apis/cr/v1"
+	kvcv1 "github.com/NervanaSystems/kube-volume-controller/pkg/apis/kvc/v1"
 	"github.com/NervanaSystems/kube-volume-controller/pkg/resource"
 )
 
 const (
-	s3SourceType crv1.DataSourceType = "S3"
+	s3SourceType kvcv1.DataSourceType = "S3"
 )
 
 type s3Handler struct {
-	sourceType         crv1.DataSourceType
-	k8sClientset       *kubernetes.Clientset
+	sourceType         kvcv1.DataSourceType
+	k8sClientset       kubernetes.Interface
 	k8sResourceClients []resource.Client
 }
 
 // NewS3Handler creates and returns an instance of the NFS handler.
-func NewS3Handler(k8sClientset *kubernetes.Clientset, resourceClients []resource.Client) DataHandler {
+func NewS3Handler(k8sClientset kubernetes.Interface, resourceClients []resource.Client) DataHandler {
 	return &s3Handler{
 		sourceType:         s3SourceType,
 		k8sClientset:       k8sClientset,
@@ -35,27 +35,27 @@ func NewS3Handler(k8sClientset *kubernetes.Clientset, resourceClients []resource
 	}
 }
 
-func (h *s3Handler) GetSourceType() crv1.DataSourceType {
+func (h *s3Handler) GetSourceType() kvcv1.DataSourceType {
 	return h.sourceType
 }
 
-func (h *s3Handler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef metav1.OwnerReference) crv1.Volume {
+func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1.OwnerReference) kvcv1.Volume {
 	if len(vc.Labels) == 0 {
-		return crv1.Volume{
+		return kvcv1.Volume{
 			ID:      vc.ID,
 			Message: fmt.Sprintf("labels cannot be empty"),
 		}
 	}
 
 	if _, ok := vc.Options["awsCredentialsSecretName"]; !ok {
-		return crv1.Volume{
+		return kvcv1.Volume{
 			ID:      vc.ID,
 			Message: fmt.Sprintf("awsCredentialsSecretName key has to be set in options"),
 		}
 	}
 
 	if vc.AccessMode != "ReadWriteOnce" {
-		return crv1.Volume{
+		return kvcv1.Volume{
 			ID:      vc.ID,
 			Message: fmt.Sprintf("access mode has to be ReadWriteOnce"),
 		}
@@ -72,7 +72,7 @@ func (h *s3Handler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef metav1.
 	if _, ok := vc.Options["timeoutForDataDownload"]; ok {
 		timeout, err = time.ParseDuration(vc.Options["timeoutForDataDownload"])
 		if err != nil {
-			return crv1.Volume{
+			return kvcv1.Volume{
 				ID:      vc.ID,
 				Message: fmt.Sprintf("error while parsing timeout for data download: %v", err),
 			}
@@ -82,7 +82,7 @@ func (h *s3Handler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef metav1.
 	nodeClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "nodes")
 	nodeList, err := nodeClient.List(ns, map[string]string{})
 	if err != nil {
-		return crv1.Volume{
+		return kvcv1.Volume{
 			ID:      vc.ID,
 			Message: fmt.Sprintf("error getting node list: %v", err),
 		}
@@ -90,7 +90,7 @@ func (h *s3Handler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef metav1.
 
 	// If number of nodes < replicas, then return immediately.
 	if len(nodeList) < vc.Replicas {
-		return crv1.Volume{
+		return kvcv1.Volume{
 			ID: vc.ID,
 			Message: fmt.Sprintf("replicas [%v] greater than number of nodes [%v]",
 				vc.Replicas, len(nodeList)),
@@ -115,7 +115,7 @@ func (h *s3Handler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef metav1.
 		usedNodeNames = append(usedNodeNames, nodeNames[i])
 
 		err := podClient.Create(ns, struct {
-			crv1.VolumeConfig
+			kvcv1.VolumeConfig
 			metav1.OwnerReference
 			NS                  string
 			NodeName            string
@@ -139,7 +139,7 @@ func (h *s3Handler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef metav1.
 		})
 
 		if err != nil {
-			return crv1.Volume{
+			return kvcv1.Volume{
 				ID:      vc.ID,
 				Message: fmt.Sprintf("error during sub-resource [%s] creation: %v", podClient.Plural(), err),
 			}
@@ -149,14 +149,14 @@ func (h *s3Handler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef metav1.
 	for _, kvcName := range kvcNames {
 		err := waitForPodSuccess(podClient, kvcName, ns, timeout)
 		if err != nil {
-			return crv1.Volume{
+			return kvcv1.Volume{
 				ID:      vc.ID,
 				Message: fmt.Sprintf("error during data download using pod [name: %v]: %v", kvcName, err),
 			}
 		}
 	}
 
-	return crv1.Volume{
+	return kvcv1.Volume{
 		ID: vc.ID,
 		VolumeSource: corev1.VolumeSource{
 			HostPath: &corev1.HostPathVolumeSource{
@@ -178,11 +178,11 @@ func (h *s3Handler) OnAdd(ns string, vc crv1.VolumeConfig, controllerRef metav1.
 				},
 			},
 		},
-		Message: crv1.SuccessfulVolumeStatusMessage,
+		Message: kvcv1.SuccessfulVolumeStatusMessage,
 	}
 }
 
-func (h *s3Handler) OnDelete(ns string, vc crv1.VolumeConfig, controllerRef metav1.OwnerReference) {
+func (h *s3Handler) OnDelete(ns string, vc kvcv1.VolumeConfig, controllerRef metav1.OwnerReference) {
 	podClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "pods")
 	podList, err := podClient.List(ns, vc.Labels)
 	if err != nil {

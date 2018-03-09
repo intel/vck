@@ -10,9 +10,15 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
+type Reify struct{}
+
+type ReifyInterface interface {
+	Reify(templateFileName string, templateValues interface{}) (json []byte, err error)
+}
+
 // Reify returns the resulting JSON by expanding the template using the
 // supplied data.
-func Reify(templateFileName string, templateValues interface{}) (json []byte, err error) {
+func (r *Reify) Reify(templateFileName string, templateValues interface{}) (json []byte, err error) {
 	// Due to a weird quirk of go templates, we must pass the base name of the
 	// template file to template.New otherwise execute can fail!
 	baseFileName := filepath.Base(templateFileName)

@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/NervanaSystems/kube-volume-controller/pkg/resource/reify"
 
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	crv1_client "github.com/NervanaSystems/kube-volume-controller/pkg/client/clientset/versioned"
+	kvcv1_client "github.com/NervanaSystems/kube-volume-controller/pkg/client/clientset/versioned"
 	"github.com/NervanaSystems/kube-volume-controller/pkg/controller"
 	"github.com/NervanaSystems/kube-volume-controller/pkg/handlers"
 	"github.com/NervanaSystems/kube-volume-controller/pkg/hooks"
@@ -38,33 +39,39 @@ func main() {
 		panic(err)
 	}
 
-	crdClient, err := crv1_client.NewForConfig(config)
+	crdClient, err := kvcv1_client.NewForConfig(config)
 	if err != nil {
 		panic(err)
 	}
 
+	// ApiResources for all the clients we need.
+	// NOTE: If new clients are added here, make sure they get reflected in the tests.
 	podAPIResource := &metav1.APIResource{
 		Kind:       "Pod",
 		Name:       "pods",
-		Group:      "v1",
+		Group:      "",
+		Version:    "v1",
 		Namespaced: true,
 	}
 	nodeAPIResource := &metav1.APIResource{
 		Kind:       "Node",
 		Name:       "nodes",
-		Group:      "v1",
+		Group:      "",
+		Version:    "v1",
 		Namespaced: false,
 	}
 	pvAPIResource := &metav1.APIResource{
 		Kind:       "PersistentVolume",
 		Name:       "persistentvolumes",
-		Group:      "v1",
+		Group:      "",
+		Version:    "v1",
 		Namespaced: false,
 	}
 	pvcAPIResource := &metav1.APIResource{
 		Kind:       "PersistentVolumeClaim",
 		Name:       "persistentvolumeclaims",
-		Group:      "v1",
+		Group:      "",
+		Version:    "v1",
 		Namespaced: true,
 	}
 
@@ -79,13 +86,14 @@ func main() {
 	corev1Scheme := runtime.NewScheme()
 	corev1Scheme.AddKnownTypes(corev1.SchemeGroupVersion, &corev1.PersistentVolume{}, &corev1.Pod{}, &corev1.Node{}, &corev1.PersistentVolumeClaim{})
 
+	reify := &reify.Reify{}
 	// The ordering of these resource clients matters. We want the pod to be
 	// deployed last as it will use the PVC created before it.
 	resourceClients := []resource.Client{
-		resource.NewGenericClient(dynClient.Resource(nodeAPIResource, *namespace), "", nodeAPIResource.Name, corev1Scheme, corev1.SchemeGroupVersion),
-		resource.NewGenericClient(dynClient.Resource(pvAPIResource, *namespace), *pvTemplateFile, pvAPIResource.Name, corev1Scheme, corev1.SchemeGroupVersion),
-		resource.NewGenericClient(dynClient.Resource(pvcAPIResource, *namespace), *pvcTemplateFile, pvcAPIResource.Name, corev1Scheme, corev1.SchemeGroupVersion),
-		resource.NewGenericClient(dynClient.Resource(podAPIResource, *namespace), *podTemplateFile, podAPIResource.Name, corev1Scheme, corev1.SchemeGroupVersion),
+		resource.NewGenericClient(dynClient.Resource(nodeAPIResource, *namespace), "", nodeAPIResource.Name, corev1Scheme, corev1.SchemeGroupVersion, reify),
+		resource.NewGenericClient(dynClient.Resource(pvAPIResource, *namespace), *pvTemplateFile, pvAPIResource.Name, corev1Scheme, corev1.SchemeGroupVersion, reify),
+		resource.NewGenericClient(dynClient.Resource(pvcAPIResource, *namespace), *pvcTemplateFile, pvcAPIResource.Name, corev1Scheme, corev1.SchemeGroupVersion, reify),
+		resource.NewGenericClient(dynClient.Resource(podAPIResource, *namespace), *podTemplateFile, podAPIResource.Name, corev1Scheme, corev1.SchemeGroupVersion, reify),
 	}
 
 	dataHandlers := []handlers.DataHandler{
@@ -95,7 +103,7 @@ func main() {
 	}
 
 	// Create hooks
-	hooks := hooks.NewVolumeManagerHooks(crdClient.CrV1().VolumeManagers(*namespace), dataHandlers)
+	hooks := hooks.NewVolumeManagerHooks(crdClient.KvcV1().VolumeManagers(*namespace), dataHandlers)
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()

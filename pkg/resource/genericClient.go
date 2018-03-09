@@ -18,21 +18,23 @@ type genericClient struct {
 	templateFileName   string
 	scheme             *runtime.Scheme
 	groupversion       runtime.GroupVersioner
+	reify              reify.ReifyInterface
 }
 
 // NewGenericClient returns a new horizontal pod autoscaler client.
-func NewGenericClient(resource dynamic.ResourceInterface, templateFileName string, resourcePluralForm string, scheme *runtime.Scheme, groupversion runtime.GroupVersioner) Client {
+func NewGenericClient(resource dynamic.ResourceInterface, templateFileName string, resourcePluralForm string, scheme *runtime.Scheme, groupversion runtime.GroupVersioner, reify reify.ReifyInterface) Client {
 	return &genericClient{
 		resource:           resource,
 		resourcePluralForm: resourcePluralForm,
 		templateFileName:   templateFileName,
 		scheme:             scheme,
 		groupversion:       groupversion,
+		reify:              reify,
 	}
 }
 
 func (c *genericClient) Reify(templateValues interface{}) ([]byte, error) {
-	result, err := reify.Reify(c.templateFileName, templateValues)
+	result, err := c.reify.Reify(c.templateFileName, templateValues)
 	if err != nil {
 		return nil, err
 	}

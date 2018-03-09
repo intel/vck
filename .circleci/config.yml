@@ -25,6 +25,7 @@ jobs:
       - run:
           name: Build container
           command: |
+            git status
             go install -gcflags "-N -l" github.com/NervanaSystems/kube-volume-controller
             cp /go/bin/kube-volume-controller ./
             make docker

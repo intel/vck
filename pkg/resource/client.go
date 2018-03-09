@@ -21,6 +21,3 @@ type Client interface {
 	// Plural returns the plural form of the resource.
 	Plural() string
 }
-
-// GlobalTemplateValues encodes values which will be available to all template specializations.
-type GlobalTemplateValues map[string]string

@@ -87,7 +87,8 @@ func TestReify(t *testing.T) {
 		}
 
 		t.Logf("TestReify: %s", tc.description)
-		result, err := Reify(templateFile.Name(), tc.templateValues)
+		reify := &Reify{}
+		result, err := reify.Reify(templateFile.Name(), tc.templateValues)
 		if err != tc.expectedError {
 			if err != nil && tc.expectedError != nil && strings.Contains(err.Error(), tc.expectedError.Error()) {
 				// Do nothing; although inequal, the error contains the expected error text.

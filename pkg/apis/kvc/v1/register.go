@@ -32,7 +32,6 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&VolumeManager{},
 		&VolumeManagerList{},
 	)
-
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil
 }

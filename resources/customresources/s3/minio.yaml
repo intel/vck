@@ -1,4 +1,4 @@
-apiVersion: aipg.intel.com/v1
+apiVersion: kvc.intel.com/v1
 kind: VolumeManager
 metadata:
   name: kvc-example1

@@ -83,7 +83,7 @@ verified using the command shown below.
 ```sh
 $ kubectl get crd
 NAME                            AGE
-volumemanagers.aipg.intel.com   1h
+volumemanagers.kvc.intel.com   1h
 ```
 
 ### Installing KVC in multiple namespaces
