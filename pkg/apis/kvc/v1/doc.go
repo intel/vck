@@ -1,3 +1,3 @@
 // +k8s:deepcopy-gen=package
-// +groupName=kvc.intel.com
+// +groupName=kvc.kubeflow.org
 package v1

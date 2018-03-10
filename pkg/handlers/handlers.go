@@ -3,7 +3,7 @@ package handlers
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	kvcv1 "github.com/NervanaSystems/kube-volume-controller/pkg/apis/kvc/v1"
+	kvcv1 "github.com/kubeflow/experimental-kvc/pkg/apis/kvc/v1"
 )
 
 // DataHandler is the interface which defines the handler methods

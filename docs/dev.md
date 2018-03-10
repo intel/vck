@@ -23,7 +23,7 @@ dep ensure
 
 $ ./docker_make code-generation
 ./hack/update-codegen.sh
-/go/src/github.com/NervanaSystems/kube-volume-controller/vendor/k8s.io/code-generator /go/src/github.com/NervanaSystems/kube-volume-controller
+/go/src/github.com/kubeflow/experimental-kvc/vendor/k8s.io/code-generator /go/src/github.com/kubeflow/experimental-kvc
 Note: checking out 'kubernetes-1.9.2'.
 
 You are in 'detached HEAD' state. You can look around, make experimental
@@ -36,11 +36,11 @@ do so (now or later) by using -b with the checkout command again. Example:
   git checkout -b <new-branch-name>
 
 HEAD is now at 91d3f6a... Merge pull request #57767 from mbohlool/automated-cherry-pick-of-#57735-upstream-release-1.9
-/go/src/github.com/NervanaSystems/kube-volume-controller
+/go/src/github.com/kubeflow/experimental-kvc
 Generating deepcopy funcs
-Generating clientset for cr:v1 at github.com/nervanasystems/kubevolumecontroller/pkg/client/clientset
-Generating listers for cr:v1 at github.com/nervanasystems/kubevolumecontroller/pkg/client/listers
-Generating informers for cr:v1 at github.com/nervanasystems/kubevolumecontroller/pkg/client/informers
+Generating clientset for cr:v1 at github.com/kubeflow/experimental-kvc/pkg/client/clientset
+Generating listers for cr:v1 at github.com/kubeflow/experimental-kvc/pkg/client/listers
+Generating informers for cr:v1 at github.com/kubeflow/experimental-kvc/pkg/client/informers
 
 $ ./docker_make lint
 gometalinter --config=./lint.json --vendor .
@@ -52,17 +52,17 @@ gometalinter --config=./lint.json ./pkg/hooks/...
 
 $ ./docker_make test
 go test --cover ./...
-?   	github.com/NervanaSystems/kube-volume-controller	[no test files]
-ok  	github.com/NervanaSystems/kube-volume-controller/pkg/apis/cr/v1	0.166s	coverage: 53.4% of statements
-?   	github.com/NervanaSystems/kube-volume-controller/pkg/hooks	[no test files]
+?   	github.com/kubeflow/experimental-kvc	[no test files]
+ok  	github.com/kubeflow/experimental-kvc/pkg/apis/cr/v1	0.166s	coverage: 53.4% of statements
+?   	github.com/kubeflow/experimental-kvc/pkg/hooks	[no test files]
 # go test --cover .
 # go test --cover ./pkg/apis/...
 # go test --cover ./pkg/hooks/...
 
 $ ./docker_make build
 dep ensure
-/go/bin/deepcopy-gen --output-base=/go/src --input-dirs=github.com/NervanaSystems/kube-volume-controller/pkg/apis/cr/v1/...
-go build -gcflags "-N -l" github.com/NervanaSystems/kube-volume-controller
+/go/bin/deepcopy-gen --output-base=/go/src --input-dirs=github.com/kubeflow/experimental-kvc/pkg/apis/cr/v1/...
+go build -gcflags "-N -l" github.com/kubeflow/experimental-kvc
 ```
 
 ## Adding a New Data Handler
@@ -89,7 +89,7 @@ replacing all the comments within `<>` with the appropriate value.
 package handlers
 
 import (
-    crv1 "github.com/NervanaSystems/kube-volume-controller/pkg/apis/cr/v1"
+    crv1 "github.com/kubeflow/experimental-kvc/pkg/apis/cr/v1"
 )
 
 const (

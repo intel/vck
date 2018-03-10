@@ -13,8 +13,8 @@ import (
 
 	"github.com/golang/glog"
 
-	kvcv1 "github.com/NervanaSystems/kube-volume-controller/pkg/apis/kvc/v1"
-	"github.com/NervanaSystems/kube-volume-controller/pkg/resource"
+	kvcv1 "github.com/kubeflow/experimental-kvc/pkg/apis/kvc/v1"
+	"github.com/kubeflow/experimental-kvc/pkg/resource"
 )
 
 const (

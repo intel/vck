@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	kvcv1_client "github.com/NervanaSystems/kube-volume-controller/pkg/client/clientset/versioned"
-	kvcv1_informer "github.com/NervanaSystems/kube-volume-controller/pkg/client/informers/externalversions"
+	kvcv1_client "github.com/kubeflow/experimental-kvc/pkg/client/clientset/versioned"
+	kvcv1_informer "github.com/kubeflow/experimental-kvc/pkg/client/informers/externalversions"
 	"k8s.io/client-go/tools/cache"
 )
 

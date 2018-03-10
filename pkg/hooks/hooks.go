@@ -7,10 +7,10 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	kvcv1 "github.com/NervanaSystems/kube-volume-controller/pkg/apis/kvc/v1"
-	kvcv1_volume_manager "github.com/NervanaSystems/kube-volume-controller/pkg/client/clientset/versioned/typed/kvc/v1"
-	"github.com/NervanaSystems/kube-volume-controller/pkg/handlers"
-	"github.com/NervanaSystems/kube-volume-controller/pkg/states"
+	kvcv1 "github.com/kubeflow/experimental-kvc/pkg/apis/kvc/v1"
+	kvcv1_volume_manager "github.com/kubeflow/experimental-kvc/pkg/client/clientset/versioned/typed/kvc/v1"
+	"github.com/kubeflow/experimental-kvc/pkg/handlers"
+	"github.com/kubeflow/experimental-kvc/pkg/states"
 )
 
 // VolumeManagerHooks implements controller.Hooks interface

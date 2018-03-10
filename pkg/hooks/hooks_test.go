@@ -1,10 +1,10 @@
 package hooks
 
 import (
-	kvcv1 "github.com/NervanaSystems/kube-volume-controller/pkg/apis/kvc/v1"
-	kvcv1_fake "github.com/NervanaSystems/kube-volume-controller/pkg/client/clientset/versioned/fake"
-	"github.com/NervanaSystems/kube-volume-controller/pkg/handlers"
-	"github.com/NervanaSystems/kube-volume-controller/pkg/states"
+	kvcv1 "github.com/kubeflow/experimental-kvc/pkg/apis/kvc/v1"
+	kvcv1_fake "github.com/kubeflow/experimental-kvc/pkg/client/clientset/versioned/fake"
+	"github.com/kubeflow/experimental-kvc/pkg/handlers"
+	"github.com/kubeflow/experimental-kvc/pkg/states"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"

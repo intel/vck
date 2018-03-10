@@ -1,4 +1,4 @@
-apiVersion: kvc.intel.com/v1
+apiVersion: kvc.kubeflow.org/v1
 kind: VolumeManager
 metadata:
   name: kvc-example

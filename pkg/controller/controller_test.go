@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	kvcv1 "github.com/NervanaSystems/kube-volume-controller/pkg/apis/kvc/v1"
-	"github.com/NervanaSystems/kube-volume-controller/pkg/client/clientset/versioned/fake"
+	kvcv1 "github.com/kubeflow/experimental-kvc/pkg/apis/kvc/v1"
+	"github.com/kubeflow/experimental-kvc/pkg/client/clientset/versioned/fake"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

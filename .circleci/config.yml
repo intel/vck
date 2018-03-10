@@ -2,9 +2,8 @@ version: 2
 jobs:
   build:
     docker:
-      # CircleCI Go images available at: https://hub.docker.com/r/circleci/golang/
       - image: volumecontroller/golang:1.9.2
-    working_directory: /go/src/github.com/NervanaSystems/kube-volume-controller
+    working_directory: /go/src/github.com/kubeflow/experimental-kvc
     steps:
       - checkout
       - run:
@@ -26,47 +25,17 @@ jobs:
           name: Build container
           command: |
             git status
-            go install -gcflags "-N -l" github.com/NervanaSystems/kube-volume-controller
-            cp /go/bin/kube-volume-controller ./
-            make docker
+            go install -gcflags "-N -l" github.com/kubeflow/experimental-kvc
+            cp /go/bin/experimental-kvc ./kvc
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
             make push-image
-  e2e:
-    docker:
-      - image: volumecontroller/golang:1.9.2
-    working_directory: ~/repo
-    steps:
-      - checkout
-      - run:
-          name: install chart
-          command: |
-            mkdir -p $HOME/.kube
-            KUBE_CONFIG=${GKE_KUBECONFIG_KVCCI}
-            echo "${KUBE_CONFIG}" | base64 --decode > "${HOME}/.kube/config"
-            context=$(kubectl config current-context)
-            kubectl create ns "kvc-${CIRCLE_BUILD_NUM}"
-            kubectl config set-context "${context}" --namespace="kvc-${CIRCLE_BUILD_NUM}"
-            helm install ~/repo/helm-charts/kube-volume-controller/ -n "kvc-${CIRCLE_BUILD_NUM}" --wait \
-              --set namespace="kvc-${CIRCLE_BUILD_NUM}" \
-              --set clusterrole.install=false \
-              --set storageclass.install=false \
-              --set crd.install=true \
-              --set tag=$(git describe --tags --always --dirty)
-      - run:
-          name: cleanup
-          command: |
-            helm delete --purge kvc-${CIRCLE_BUILD_NUM} || true
-            kubectl delete ns kvc-${CIRCLE_BUILD_NUM} || true
-          when: always
 
 workflows:
   version: 2
   build_and_test:
     jobs:
-      - build
-      - e2e_approval:
+      - ci_approval:
           type: approval
+      - build:
           requires:
-            - build
-      - e2e:
-          requires:
-            - e2e_approval
+            - ci_approval

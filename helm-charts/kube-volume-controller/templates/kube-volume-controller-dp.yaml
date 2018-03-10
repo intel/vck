@@ -1,10 +1,10 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: kube-volume-controller
+  name: kvc
   namespace: {{ .Release.Namespace }}
   labels:
-    app: kube-volume-controller
+    app: kvc
     servicetype: controller
 spec:
   replicas: 1
@@ -16,16 +16,16 @@ spec:
   template:
     metadata:
       labels:
-        app: kube-volume-controller
+        app: kvc
         servicetype: controller
     spec:
-      serviceAccountName: kube-volume-controller
+      serviceAccountName: kvc
       containers:
-      - name: kube-volume-controller
+      - name: kvc
         image: {{ .Values.registry }}{{ .Values.org }}/{{ .Values.repo }}:{{ .Values.tag }}
         imagePullPolicy: IfNotPresent
         command:
-          - "/kube-volume-controller"
+          - "/kvc"
           {{- range .Values.flags }}
           - {{ . | quote }}
           {{- end }}

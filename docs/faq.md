@@ -9,4 +9,4 @@ and data management. If a feature is not available in Kubernetes, we don't
 provide it. In the future, if feature X is available in Kubernetes and it is
 relevant to KVC, we will adapt the feature.
 
-[issues]: https://github.com/NervanaSystems/kube-volume-controller/issues
+[issues]: https://github.com/kubeflow/experimental-kvc/issues

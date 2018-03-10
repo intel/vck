@@ -23,11 +23,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/NervanaSystems/kube-volume-controller/pkg/states"
+	"github.com/kubeflow/experimental-kvc/pkg/states"
 )
 
 const (
-	GroupName string = "kvc.intel.com"
+	GroupName string = "kvc.kubeflow.org"
 
 	Version string = "v1"
 

@@ -22,8 +22,8 @@ prereq:
 dep-ensure:
 	dep ensure
 
-build: prereq dep-ensure code-generation lint
-	go build -gcflags "-N -l" github.com/NervanaSystems/kube-volume-controller
+build: prereq dep-ensure code-generation lint test
+	go build -gcflags "-N -l" github.com/kubeflow/experimental-kvc -o kvc
 
 lint:
 	gometalinter --config=./lint.json --vendor .
@@ -43,16 +43,8 @@ test:
 code-generation:
 	./hack/update-codegen.sh
 
-push-image-preflight:
-	@ echo "$(GOOGLE_AUTH)" | base64 --decode > /tmp/gcp-key.json
-	gcloud auth activate-service-account --key-file /tmp/gcp-key.json
-	gcloud config set project "$(GOOGLE_PROJECT_ID)"
-	docker login -u "$(DOCKER_USER)" -p "$(DOCKER_PASS)"
-
-push-image: push-image-preflight docker
+push-image: docker
 	@ echo "tagging container"
 	docker tag $(IMAGE_NAME):$(VERSION) volumecontroller/$(IMAGE_NAME):$(VERSION)
-	docker tag $(IMAGE_NAME):$(VERSION) gcr.io/$(GOOGLE_PROJECT_ID)/$(IMAGE_NAME):$(VERSION)
 	@ echo "pushing container to gcr.io"
 	docker push volumecontroller/$(IMAGE_NAME):$(VERSION)
-	gcloud docker -- push gcr.io/$(GOOGLE_PROJECT_ID)/$(IMAGE_NAME):$(VERSION)

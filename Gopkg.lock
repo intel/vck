@@ -53,8 +53,8 @@
     "pkg/types",
     "version"
   ]
-  revision = "28f3f26c0e303392556035b694f75768d449d33d"
-  version = "v3.3.1"
+  revision = "c9d46ab3799b7f2174268e75f72d01e6d6aac953"
+  version = "v3.3.2"
 
 [[projects]]
   name = "github.com/coreos/go-semver"
@@ -92,8 +92,8 @@
     ".",
     "log"
   ]
-  revision = "2dd44038f0b95ae693b266c5f87593b5d2fdd78d"
-  version = "v2.5.0"
+  revision = "26b41036311f2da8242db402557a0dbd09dc83da"
+  version = "v2.6.0"
 
 [[projects]]
   name = "github.com/emicklei/go-restful-swagger12"
@@ -153,7 +153,7 @@
   branch = "master"
   name = "github.com/go-openapi/spec"
   packages = ["."]
-  revision = "f3499b5df53897321d6f5e9c22cf19309d41d3bc"
+  revision = "d8000b5bfbd1147255710505a27c735b6b2ae2ac"
 
 [[projects]]
   branch = "master"
@@ -165,7 +165,7 @@
   branch = "master"
   name = "github.com/go-openapi/swag"
   packages = ["."]
-  revision = "84f4bee7c0a6db40e3166044c7983c1c32125429"
+  revision = "ceb469cb0fdf2d792f28d771bc05da6c606f55e5"
 
 [[projects]]
   branch = "master"
@@ -231,7 +231,7 @@
     ".",
     "diskcache"
   ]
-  revision = "2bcd89a1743fd4b373f7370ce8ddc14dfbd18229"
+  revision = "9cad4c3443a7200dd6400aef47183728de563a38"
 
 [[projects]]
   branch = "master"
@@ -263,8 +263,8 @@
 [[projects]]
   name = "github.com/json-iterator/go"
   packages = ["."]
-  revision = "28452fcdec4e44348d2af0d91d1e9e38da3a9e0a"
-  version = "1.0.5"
+  revision = "3353055b2a1a5ae1b6a8dfde887a524e7088f3a2"
+  version = "1.1.2"
 
 [[projects]]
   name = "github.com/juju/ratelimit"
@@ -280,7 +280,7 @@
     "jlexer",
     "jwriter"
   ]
-  revision = "32fa128f234d041f196a9f3e0fea5ac9772c08e1"
+  revision = "4a8a4c12c4d1b0c0a7de630426ce6dcb07141b17"
 
 [[projects]]
   name = "github.com/matttproud/golang_protobuf_extensions"
@@ -293,6 +293,18 @@
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
   revision = "00c29f56e2386353d58c599509e8dc3801b0d716"
+
+[[projects]]
+  name = "github.com/modern-go/concurrent"
+  packages = ["."]
+  revision = "bacd9c7ef1dd9b15be4a9909b8ac7a4e313eec94"
+  version = "1.0.3"
+
+[[projects]]
+  name = "github.com/modern-go/reflect2"
+  packages = ["."]
+  revision = "1df9eeb2bb81f327b96228865c5687bc2194af3f"
+  version = "1.0.0"
 
 [[projects]]
   branch = "master"
@@ -355,7 +367,7 @@
     "nfs",
     "xfs"
   ]
-  revision = "d274e363d5759d1c916232217be421f1cc89c5fe"
+  revision = "1c7ff3de94ae006f58cba483a4c9c6d7c61e1d98"
 
 [[projects]]
   name = "github.com/spf13/cobra"
@@ -388,7 +400,7 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "1875d0a70c90e57f11972aefd42276df65e895b9"
+  revision = "c7dcf104e3a7a1417abc0230cb0d5240d764159d"
 
 [[projects]]
   branch = "master"
@@ -405,7 +417,7 @@
     "trace",
     "websocket"
   ]
-  revision = "b417086c80e91bfa321ef761574721644b8b9f61"
+  revision = "d0aafc73d5cdc42264b0af071c261abac580695e"
 
 [[projects]]
   branch = "master"
@@ -414,10 +426,9 @@
     "unix",
     "windows"
   ]
-  revision = "37707fdb30a5b38865cfb95e5aab41707daec7fd"
+  revision = "7dca6fe1f43775aa6d1334576870ff63f978f539"
 
 [[projects]]
-  branch = "master"
   name = "golang.org/x/text"
   packages = [
     "collate",
@@ -436,13 +447,14 @@
     "unicode/rangetable",
     "width"
   ]
-  revision = "e19ae1496984b1c655b8044a65c0300a3c878dd3"
+  revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
+  version = "v0.3.0"
 
 [[projects]]
   branch = "master"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
-  revision = "2d9486acae19cf9bd0c093d7dc236a323726a9e4"
+  revision = "df60624c1e9b9d2973e889c7a1cff73155da81c4"
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -497,10 +509,10 @@
   version = "v2.1"
 
 [[projects]]
-  branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
-  revision = "d670f9405373e636a5a2765eea47fac0c9bc91a4"
+  revision = "7f97868eec74b32b0982dd158a51a446d1da7eb5"
+  version = "v2.1.1"
 
 [[projects]]
   name = "k8s.io/api"
@@ -894,11 +906,11 @@
     "pkg/util",
     "pkg/util/proto"
   ]
-  revision = "275e2ce91dec4c05a4094a7b1daee5560b555ac9"
+  revision = "50ae88d24ede7b8bad68e23c805b5d3da5c8abaf"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "13d3eac75fdb6637f3141d35cd39cb77f80d4617207752b1c770321e42125eab"
+  inputs-digest = "ac843a0d48316d8ab422f00d960bd96ff4fc2ef3f716f6afb93166f32d140ea9"
   solver-name = "gps-cdcl"
   solver-version = 1

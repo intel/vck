@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"fmt"
-	kvcv1 "github.com/NervanaSystems/kube-volume-controller/pkg/apis/kvc/v1"
-	"github.com/NervanaSystems/kube-volume-controller/pkg/resource"
+	kvcv1 "github.com/kubeflow/experimental-kvc/pkg/apis/kvc/v1"
+	"github.com/kubeflow/experimental-kvc/pkg/resource"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

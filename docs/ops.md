@@ -29,7 +29,7 @@ $ kubectl config set-context $(kubectl config current-context) --namespace=<inse
 Clone the repo and specify the namespace within `<>` to install KVC:
 
 ```sh
-$ git clone git@github.com:NervanaSystems/kube-volume-controller.git
+$ git clone git@github.com:kubeflow/experimental-kvc.git
 $ cd kube-volume-controller
 $ helm install helm-charts/kube-volume-controller/ -n kvc --wait \
   --set namespace=<kvc_namespace>
@@ -83,7 +83,7 @@ verified using the command shown below.
 ```sh
 $ kubectl get crd
 NAME                            AGE
-volumemanagers.kvc.intel.com   1h
+volumemanagers.kvc.kubeflow.org   1h
 ```
 
 ### Installing KVC in multiple namespaces

@@ -5,7 +5,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"encoding/json"
-	"github.com/NervanaSystems/kube-volume-controller/pkg/resource/reify"
+	"github.com/kubeflow/experimental-kvc/pkg/resource/reify"
 	"github.com/golang/glog"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
