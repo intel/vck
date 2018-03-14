@@ -1,0 +1,41 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: volumecontroller/golang:1.9.2
+    working_directory: /go/src/github.com/kubeflow/experimental-kvc
+    steps:
+      - checkout
+      - run:
+          name: get dependencies and generate
+          command: |
+            dep ensure
+            make code-generation
+      - run:
+          name: Run lint tests
+          command: |
+            gometalinter --install
+            make lint
+      - run:
+          name: Run unit tests
+          command: |
+            make test
+      - setup_remote_docker
+      - run:
+          name: Build container
+          command: |
+            git status
+            go install -gcflags "-N -l" github.com/kubeflow/experimental-kvc
+            cp /go/bin/experimental-kvc ./kvc
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            make push-image
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - ci_approval:
+          type: approval
+      - build:
+          requires:
+            - ci_approval

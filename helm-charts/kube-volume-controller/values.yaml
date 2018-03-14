@@ -1,0 +1,31 @@
+registry: ""
+org: "volumecontroller"
+repo: "kube-volume-controller"
+tag: "v0.1.0"
+
+# Installation namespace (required value)
+namespace:
+
+# Enable for verbose log
+# log_level: 5
+
+# Additional flags used for kube-volume-controller command
+flags:
+- "--podFile=/kvc-templates/pod.tmpl"
+- "--pvFile=/kvc-templates/pv.tmpl"
+- "--pvcFile=/kvc-templates/pvc.tmpl"
+
+# Install cluster role if necessary.
+# Note: ClusterRole is a cluster-scoped object. It might already be installed.
+clusterrole:
+  install: true
+
+# Install storage class when necessary.
+# Note: StorageClass is a cluster-scoped object. It might already be installed.
+storageclass:
+  install: true
+
+# Install CRD when necessary.
+# Note: CRD is a cluster-scoped object. It might already be installed.
+crd:
+  install: true

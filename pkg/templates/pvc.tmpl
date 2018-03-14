@@ -1,0 +1,23 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: "{{.KVCName}}"
+  namespace: "{{.NS}}"
+  ownerReferences:
+  - apiVersion: {{.APIVersion}}
+    kind: {{.Kind}}
+    name: {{.Name}}
+    uid: {{.UID}}
+    controller: {{.Controller}}
+    blockOwnerDeletion: {{.BlockOwnerDeletion}}
+  labels:
+{{ range $key, $val := .Labels }}
+    "{{ $key }}": "{{ $val }}"
+{{ end }}
+spec:
+  accessModes:
+  - "{{.AccessMode}}"
+  resources:
+    requests:
+      storage: "{{.Capacity}}"
+  storageClassName: "{{.KVCStorageClassName}}"

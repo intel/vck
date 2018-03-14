@@ -1,0 +1,19 @@
+apiVersion: kvc.kubeflow.org/v1
+kind: VolumeManager
+metadata:
+  name: kvc-example1
+  namespace: <insert-namespace-here>
+spec:
+  volumeConfigs:
+    - id: "vol1"
+      replicas: 1
+      sourceType: "S3"
+      sourceURL: "s3://neon-stockdatasets/cifar-100-python.tar.gz"
+      endpointURL: "minio-svc.default:9000"
+      accessMode: "ReadWriteOnce"
+      capacity: 5Gi
+      labels:
+        key1: val1
+        key2: val2
+      options:
+        awsCredentialsSecretName: <insert-secret-name-for-aws-credentials>

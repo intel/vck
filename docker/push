@@ -1,0 +1,5 @@
+#!/bin/bash
+set -eu
+
+docker push volumecontroller/aws-cli
+docker push volumecontroller/golang:1.9.2

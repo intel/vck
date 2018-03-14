@@ -1,0 +1,29 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: kvc-example-deployment
+  labels:
+    app: kvc-example
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: kvc-example
+  template:
+    metadata:
+      labels:
+        app: kvc-example
+    spec:
+      affinity:
+        <insert-node-affinity-from-cr-status>
+      volumes:
+        - name: dataset-claim
+          <insert-volume-source-from-cr-status>
+      containers:
+      - image: busybox
+        command: ["/bin/sh"]
+        args: ["-c", "sleep 1d"]
+        name: kvc-sleep
+        volumeMounts:
+        - mountPath: /var/data
+          name: dataset-claim
