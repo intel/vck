@@ -56,6 +56,10 @@ spec:
       value: {{.EndpointURL}}
     - name: S3_URL
       value: {{.SourceURL}}
+    - name: BUCKET_NAME
+      value: {{.BucketName}}
+    - name: BUCKET_PATH
+      value: {{.BucketPath}}
     - name: DATA_PATH
       value: {{ index .KVCOptions "path" }}
     - name: RECURSIVE_OPTION
