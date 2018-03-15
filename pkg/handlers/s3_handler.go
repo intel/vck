@@ -104,10 +104,10 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 		recursiveFlag = "--recursive"
 	}
 
-        s3re := regexp.MustCompile("s3://(\\w+)/(.*)")
-	bucket_array := s3re.FindAllStringSubmatch(vc.SourceURL, -1) 
-        bucket_name := bucket_array[0][1]
-        bucketPath := bucket_array[0][2]
+	s3Regexp := regexp.MustCompile("s3://(\\w+)/(.*)")
+	bucketArray := s3Regexp.FindAllStringSubmatch(vc.SourceURL, -1)
+	bucketName := bucketArray[0][1]
+	bucketPath := bucketArray[0][2]
 
 	usedNodeNames := []string{}
 	kvcNames := []string{}
