@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
-        "regexp"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -130,7 +130,7 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 			PVType              string
 			RecursiveOption     string
 			BucketName          string
-                        BucketPath          string
+			BucketPath          string
 			KVCOptions          map[string]string
 		}{
 			vc,
@@ -141,8 +141,8 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 			"kvc",
 			"",
 			recursiveFlag,
-                        bucketName,
-                        bucketPath,
+			bucketName,
+			bucketPath,
 			map[string]string{
 				"path": fmt.Sprintf("%s/%s", vc.Options["dataPath"], kvcDataPathSuffix),
 			},
