@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+        "regexp"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -103,6 +104,11 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 		recursiveFlag = "--recursive"
 	}
 
+        s3re := regexp.MustCompile("s3://(\\w+)/(.*)")
+	bucket_array := s3re.FindAllStringSubmatch(vc.SourceURL, -1) 
+        bucket_name := bucket_array[0][1]
+        bucketPath := bucket_array[0][2]
+
 	usedNodeNames := []string{}
 	kvcNames := []string{}
 	podClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "pods")
@@ -123,6 +129,8 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 			KVCStorageClassName string
 			PVType              string
 			RecursiveOption     string
+			BucketName          string
+                        BucketPath          string
 			KVCOptions          map[string]string
 		}{
 			vc,
@@ -133,6 +141,8 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 			"kvc",
 			"",
 			recursiveFlag,
+                        bucketName,
+                        bucketPath,
 			map[string]string{
 				"path": fmt.Sprintf("%s/%s", vc.Options["dataPath"], kvcDataPathSuffix),
 			},
