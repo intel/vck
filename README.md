@@ -1,7 +1,5 @@
 # Kubernetes Volume Controller (KVC)
 
-#again
-
 ## Overview
 
 This project provides basic volume and data management in Kubernetes v1.9+
