@@ -11,7 +11,8 @@ namespace:
 
 # Additional flags used for kube-volume-controller command
 flags:
-- "--podFile=/kvc-templates/pod.tmpl"
+- "--s3PodFile=/kvc-templates/pod_s3.tmpl"
+- "--aeonPodFile=/kvc-templates/pod_aeon.tmpl"
 - "--pvFile=/kvc-templates/pv.tmpl"
 - "--pvcFile=/kvc-templates/pvc.tmpl"
 

@@ -170,7 +170,7 @@ information on usage, refer to the [user manual][user-doc].
 | S3-Dev         | Supported| KVC will download the files from a specified S3 bucket and make it available for consumption in a node. This source type should only be used for development and testing purposes.      |
 | S3             | Supported| KVC will download the files from a specified S3 bucket and provide nodes where hostPath volumes can be used.  |
 | NFS            | Supported| KVC will make the specified path from an NFS server available for consumption.                                |
-| [Aeon][aeon]   | Design   | -                                                                                                             |
+| [Aeon][aeon]   | Supported| KVC will manage the cache directory for [Aeon][aeon] and make sure it's available in subsequent runs.         |
 
 [pv]: https://kubernetes.io/docs/concepts/storage/persistent-volumes/
 [pvc]: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims

@@ -1,0 +1,17 @@
+apiVersion: kvc.kubeflow.org/v1
+kind: VolumeManager
+metadata:
+  name: kvc-example1
+  namespace: <insert-namespace-here>
+spec:
+  volumeConfigs:
+    - id: "vol1"
+      replicas: 1
+      sourceType: "Aeon"
+      accessMode: "ReadWriteOnce"
+      capacity: 5Gi
+      labels:
+        key1: val1
+        key2: val2
+      options:
+        dataPath: "/var/datasets/cache"

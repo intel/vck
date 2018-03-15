@@ -1,9 +1,0 @@
-#!/bin/sh
-
-set -eu
-
-if [ -z "${AWS_ENDPOINT_URL:-}" ]; then
-  /usr/bin/aws "$@"
-else
-  /usr/bin/aws --endpoint-url "${AWS_ENDPOINT_URL}" "$@"
-fi

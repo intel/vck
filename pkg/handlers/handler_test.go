@@ -52,7 +52,7 @@ func (tc *testClient) Plural() string {
 	return tc.plural
 }
 
-func TestS3DevHandler(t *testing.T) {
+func TestHandlers(t *testing.T) {
 
 	namespace := "test"
 
@@ -239,6 +239,38 @@ func TestS3DevHandler(t *testing.T) {
 				AccessMode: "ReadWriteOnce",
 			},
 			handler: NewNFSHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, &testClient{plural: "persistentvolumeclaims", createShouldFail: true}, fakePVlient}),
+		},
+
+		// Aeon handler
+		"[aeon_handler] labels not set": {
+			volumeConfig: kvcv1.VolumeConfig{},
+			handler:      NewAeonHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
+		},
+		"[aeon_handler] Wrong access mode": {
+			volumeConfig: kvcv1.VolumeConfig{
+				Labels:     map[string]string{"foo": "bar"},
+				Options:    map[string]string{},
+				AccessMode: "ReadWriteMany",
+			},
+			handler: NewAeonHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
+		},
+		"[aeon_handler] replicas > Num nodes": {
+			volumeConfig: kvcv1.VolumeConfig{
+				Labels:     map[string]string{"foo": "bar"},
+				Options:    map[string]string{},
+				AccessMode: "ReadWriteOnce",
+				Replicas:   2,
+			},
+			handler: NewAeonHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
+		},
+		"[aeon_handler] Any create failed": {
+			volumeConfig: kvcv1.VolumeConfig{
+				Labels:     map[string]string{"foo": "bar"},
+				Options:    map[string]string{},
+				AccessMode: "ReadWriteOnce",
+				Replicas:   1,
+			},
+			handler: NewAeonHandler(fakek8sClient, []resource.Client{&testClient{plural: "pods", createShouldFail: true}, fakeNodeClient, fakePVClient, fakePVlient}),
 		},
 	}
 
