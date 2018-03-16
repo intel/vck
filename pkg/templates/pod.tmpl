@@ -36,7 +36,7 @@ spec:
   - image: minio/mc:RELEASE.2018-02-09T23-07-36Z
     imagePullPolicy: "Always"
     command: ["/bin/sh"]
-    args: ["-c", "mc config host add s3 ${AWS_ENDPOINT_URL} ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY}; mc cp ${RECURSIVE_OPTION} s3/${BUCKET_NAME}/${BUCKET_PATH} ${DATA_PATH}"]
+    args: ["-c", "mc config host add s3 ${AWS_ENDPOINT_URL} ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY}; mc cp ${RECURSIVE_OPTION} s3/${BUCKET_NAME}${BUCKET_PATH} ${DATA_PATH}"]
     name: kvc-s3-sync-container
     volumeMounts:
     - mountPath: {{index .Options "dataPath"}}
