@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -104,10 +105,12 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 		recursiveFlag = "--recursive"
 	}
 
-	s3Regexp := regexp.MustCompile("s3://(\\w+)/?(.*)")
-	bucketArray := s3Regexp.FindAllStringSubmatch(vc.SourceURL, -1)
-	bucketName := bucketArray[0][1]
-	bucketPath := bucketArray[0][2]
+	s3URL, err := url.Parse(vc.SourceURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	bucketName := s3URL.Host
+	bucketPath := s3URL.Path
 
 	usedNodeNames := []string{}
 	kvcNames := []string{}
