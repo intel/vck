@@ -104,7 +104,7 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 		recursiveFlag = "--recursive"
 	}
 
-	s3Regexp := regexp.MustCompile("s3://(\\w+)/(.*)")
+	s3Regexp := regexp.MustCompile("s3://(\\w+)/?(.*)")
 	bucketArray := s3Regexp.FindAllStringSubmatch(vc.SourceURL, -1)
 	bucketName := bucketArray[0][1]
 	bucketPath := bucketArray[0][2]
