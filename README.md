@@ -1,5 +1,6 @@
 # Kubernetes Volume Controller (KVC)
 
+[![CircleCI](https://circleci.com/gh/kubeflow/experimental-kvc.svg?style=svg)](https://circleci.com/gh/kubeflow/experimental-kvc)
 ## Overview
 
 This project provides basic volume and data management in Kubernetes v1.9+
