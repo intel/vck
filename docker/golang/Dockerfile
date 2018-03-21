@@ -10,7 +10,7 @@ RUN ln -sf /usr/share/zoneinfo/Etc/UTC /etc/localtime
 
 # Need socat to forward user ssh-agent
 RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y --no-install-recommends git socat && \
+    apt-get install -y --no-install-recommends git socat jq && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 

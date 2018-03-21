@@ -191,9 +191,12 @@ func (h *s3Handler) OnDelete(ns string, vc kvcv1.VolumeConfig, controllerRef met
 
 	for _, resource := range podList {
 		resControllerRef := metav1.GetControllerOf(resource)
+		if resControllerRef == nil {
+			continue
+		}
+
 		if resControllerRef.UID == controllerRef.UID {
 			podClient.Delete(ns, resource.GetName())
 		}
 	}
-
 }

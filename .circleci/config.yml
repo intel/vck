@@ -9,7 +9,7 @@ jobs:
       - run:
           name: get dependencies and generate
           command: |
-            dep ensure
+            dep ensure -vendor-only
             make code-generation
       - run:
           name: Run lint tests
@@ -24,18 +24,57 @@ jobs:
       - run:
           name: Build container
           command: |
-            git status
             go install -gcflags "-N -l" github.com/kubeflow/experimental-kvc
             cp /go/bin/experimental-kvc ./kvc
             docker login -u $DOCKER_USER -p $DOCKER_PASS
             make push-image
+  e2e:
+    docker:
+      - image: volumecontroller/golang:1.9.2
+    working_directory: /go/src/github.com/kubeflow/experimental-kvc
+    steps:
+      - checkout
+      - run:
+          name: install chart
+          command: |
+            mkdir -p $HOME/.kube
+            KUBE_CONFIG=${GKE_KUBECONFIG_KVCCI}
+            echo "${KUBE_CONFIG}" | base64 --decode > "${HOME}/.kube/config"
+            context=$(kubectl config current-context)
+            kubectl create ns "kvc-${CIRCLE_BUILD_NUM}"
+            kubectl create secret generic s3-creds \
+              --from-literal=awsAccessKeyID=${MINIO_ACCESS_KEY_ID} \
+              --from-literal=awsSecretAccessKey=${MINIO_SECRET_ACCESS_KEY} \
+              --namespace=kvc-${CIRCLE_BUILD_NUM}
+            helm install /go/src/github.com/kubeflow/experimental-kvc/helm-charts/kube-volume-controller/ \
+              -n "kvc-${CIRCLE_BUILD_NUM}" --wait \
+              --set namespace="kvc-${CIRCLE_BUILD_NUM}" \
+              --set clusterrole.install=true \
+              --set storageclass.install=true \
+              --set crd.install=true \
+              --set tag=$(git describe --tags --always --dirty) \
+              --set log_level=4
+            export S3_SERVER_IP=$(kubectl get svc ${S3_SVC_NAME} -o json | jq -r .spec.clusterIP)
+            export NFS_SERVER_IP=$(kubectl get svc ${NFS_SERVER_SVC_NAME} -o json | jq -r .spec.clusterIP)
+            make dep-ensure
+            make code-generation
+            go test -v ./test/e2e/... -args -namespace=kvc-${CIRCLE_BUILD_NUM} -s3serverip=${S3_SERVER_IP} -nfsserverip=${NFS_SERVER_IP}
+      - run:
+          name: cleanup
+          command: |
+            helm delete --purge kvc-${CIRCLE_BUILD_NUM} || true
+            kubectl delete ns kvc-${CIRCLE_BUILD_NUM} || true
+          when: always
 
 workflows:
   version: 2
   build_and_test:
     jobs:
-      - ci_approval:
+      - build
+      - e2e_approval:
           type: approval
-      - build:
           requires:
-            - ci_approval
+            - build
+      - e2e:
+          requires:
+            - e2e_approval
