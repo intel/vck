@@ -30,7 +30,7 @@ Clone the repo and specify the namespace within `<>` to install KVC:
 
 ```sh
 $ git clone git@github.com:kubeflow/experimental-kvc.git
-$ cd kube-volume-controller
+$ cd experimental-kvc
 $ helm install helm-charts/kube-volume-controller/ -n kvc --wait \
   --set namespace=<kvc_namespace>
 
