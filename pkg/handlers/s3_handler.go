@@ -106,7 +106,10 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 
 	s3URL, err := url.Parse(vc.SourceURL)
 	if err != nil {
-		glog.Warningf("[s3-handler] Error while parsing URL [%s], %v", vc.SourceURL, err)
+		return kvcv1.Volume{
+			ID:      vc.ID,
+			Message: fmt.Sprintf("error while parsing URL [%s]: %v", vc.SourceURL, err),
+		}
 	}
 	bucketName := s3URL.Host
 	bucketPath := s3URL.Path
