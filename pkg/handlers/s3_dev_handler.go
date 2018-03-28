@@ -165,22 +165,20 @@ func (h *s3DevHandler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef met
 }
 
 func (h *s3DevHandler) OnDelete(ns string, vc kvcv1.VolumeConfig, controllerRef metav1.OwnerReference) {
-	for _, client := range h.k8sResourceClients {
-		if client.Plural() == "nodes" {
+	podClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "pods")
+	podList, err := podClient.List(ns, vc.Labels)
+	if err != nil {
+		glog.Warningf("[s3-dev-handler] OnDelete: error while listing resource [%s], %v", podClient.Plural(), err)
+	}
+
+	for _, resource := range podList {
+		resControllerRef := metav1.GetControllerOf(resource)
+		if resControllerRef == nil {
 			continue
 		}
 
-		resourceList, err := client.List(ns, vc.Labels)
-		if err != nil {
-			glog.Warningf("[s3-handler] OnDelete: error while listing resource [%s], %v", client.Plural(), err)
-		}
-
-		for _, resource := range resourceList {
-			resControllerRef := metav1.GetControllerOf(resource)
-			if resControllerRef.UID == controllerRef.UID {
-				client.Delete(ns, resource.GetName())
-			}
+		if resControllerRef.UID == controllerRef.UID {
+			podClient.Delete(ns, resource.GetName())
 		}
 	}
-
 }

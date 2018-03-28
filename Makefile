@@ -23,7 +23,7 @@ dep-ensure:
 	dep ensure
 
 build: prereq dep-ensure code-generation lint test
-	go build -gcflags "-N -l" github.com/kubeflow/experimental-kvc -o kvc
+	go build -gcflags "-N -l" github.com/kubeflow/experimental-kvc
 
 lint:
 	gometalinter --config=./lint.json --vendor .
@@ -39,6 +39,9 @@ test:
 	go test -v --cover ./pkg/hooks/...
 	go test -v --cover ./pkg/handlers/...
 	go test -v --cover ./pkg/controller/...
+
+test-e2e:
+	go test -v ./test/e2e/...
 
 code-generation:
 	./hack/update-codegen.sh

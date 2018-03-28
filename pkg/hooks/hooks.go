@@ -84,7 +84,6 @@ func (h *VolumeManagerHooks) add(obj interface{}) {
 
 			_, err := h.crdClient.Update(volumeManagerCopy)
 			if err != nil {
-				fmt.Print("here 3")
 				glog.Warningf("error updating status for volume manager %s: %v\n", volumeManagerCopy.Name, err)
 				return
 			}
@@ -100,7 +99,6 @@ func (h *VolumeManagerHooks) add(obj interface{}) {
 
 	_, err = h.crdClient.Update(volumeManagerCopy)
 	if err != nil {
-		fmt.Print("here 4")
 		glog.Warningf("error updating status for volume manager %s: %v\n", volumeManagerCopy.Name, err)
 		return
 	}

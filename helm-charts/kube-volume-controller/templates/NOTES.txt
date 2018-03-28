@@ -1,5 +1,5 @@
 Kube-Volume-Controller {{ .Values.tag }}
 
-* Installed in {{ .Release.Namespace }}
+* Installed in {{ .Values.namespace }}
 * Cluster Role: {{ .Values.clusterrole.install }}
 * Storage Class: {{ .Values.storageclass.install }}
