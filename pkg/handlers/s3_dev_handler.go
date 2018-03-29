@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"math/rand"
+	"net/url"
 	"strings"
 	"time"
 
@@ -104,6 +105,16 @@ func (h *s3DevHandler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef met
 		recursiveFlag = "--recursive"
 	}
 
+	s3URL, err := url.Parse(vc.SourceURL)
+	if err != nil {
+		return kvcv1.Volume{
+			ID:      vc.ID,
+			Message: fmt.Sprintf("error while parsing URL [%s]: %v", vc.SourceURL, err),
+		}
+	}
+	bucketName := s3URL.Host
+	bucketPath := s3URL.Path
+
 	kvcName := fmt.Sprintf("%s%s", kvcNamePrefix, uuid.NewUUID())
 	kvcDataPathSuffix := fmt.Sprintf("%s%s", kvcNamePrefix, uuid.NewUUID())
 	rand.Seed(time.Now().Unix())
@@ -121,6 +132,8 @@ func (h *s3DevHandler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef met
 			KVCStorageClassName string
 			PVType              string
 			RecursiveOption     string
+			BucketName          string
+			BucketPath          string
 			KVCOptions          map[string]string
 		}{
 			vc,
@@ -131,6 +144,8 @@ func (h *s3DevHandler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef met
 			"kvc",
 			"local",
 			recursiveFlag,
+			bucketName,
+			bucketPath,
 			map[string]string{
 				"path": fmt.Sprintf("%s/%s", vc.Options["dataPath"], kvcDataPathSuffix),
 			},
