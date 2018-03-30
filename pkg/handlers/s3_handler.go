@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -103,6 +104,16 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 		recursiveFlag = "--recursive"
 	}
 
+	s3URL, err := url.Parse(vc.SourceURL)
+	if err != nil {
+		return kvcv1.Volume{
+			ID:      vc.ID,
+			Message: fmt.Sprintf("error while parsing URL [%s]: %v", vc.SourceURL, err),
+		}
+	}
+	bucketName := s3URL.Host
+	bucketPath := s3URL.Path
+
 	usedNodeNames := []string{}
 	kvcNames := []string{}
 	podClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "pods")
@@ -123,6 +134,8 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 			KVCStorageClassName string
 			PVType              string
 			RecursiveOption     string
+			BucketName          string
+			BucketPath          string
 			KVCOptions          map[string]string
 		}{
 			vc,
@@ -133,6 +146,8 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 			"kvc",
 			"",
 			recursiveFlag,
+			bucketName,
+			bucketPath,
 			map[string]string{
 				"path": fmt.Sprintf("%s/%s", vc.Options["dataPath"], kvcDataPathSuffix),
 			},

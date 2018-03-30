@@ -21,7 +21,7 @@ spec:
       hostPath:
         path: {{index .Options "dataPath"}}
   initContainers:
-  - image: volumecontroller/aws-cli
+  - image: minio/mc:RELEASE.2018-02-09T23-07-36Z
     imagePullPolicy: "Always"
     command: ["/bin/sh"]
     args: ["-c", "mkdir -p $DATA_PATH"]
@@ -33,10 +33,10 @@ spec:
     - name: DATA_PATH
       value: {{ index .KVCOptions "path" }}
   containers:
-  - image: volumecontroller/aws-cli
+  - image: minio/mc:RELEASE.2018-02-09T23-07-36Z
     imagePullPolicy: "Always"
     command: ["/bin/sh"]
-    args: ["-c", "aws s3 cp $RECURSIVE_OPTION $S3_URL $DATA_PATH"]
+    args: ["-c", "mc config host add s3 ${AWS_ENDPOINT_URL} ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY}; mc cp ${RECURSIVE_OPTION} s3/${BUCKET_NAME}${BUCKET_PATH} ${DATA_PATH}"]
     name: kvc-s3-sync-container
     volumeMounts:
     - mountPath: {{index .Options "dataPath"}}
@@ -56,6 +56,10 @@ spec:
       value: {{.EndpointURL}}
     - name: S3_URL
       value: {{.SourceURL}}
+    - name: BUCKET_NAME
+      value: {{.BucketName}}
+    - name: BUCKET_PATH
+      value: {{.BucketPath}}
     - name: DATA_PATH
       value: {{ index .KVCOptions "path" }}
     - name: RECURSIVE_OPTION
