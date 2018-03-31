@@ -20,8 +20,8 @@ spec:
           template: tf-inference
           arguments:
             parameters:
-            - name: s3-unfinished-url
-              value: "{{steps.get-workflow-info.outputs.parameters.s3-unfinished-url}}"
+            - name: s3-model-url
+              value: "{{steps.get-workflow-info.outputs.parameters.s3-model-url}}"
             - name: s3-exported-url
               value: "{{steps.get-workflow-info.outputs.parameters.s3-exported-url}}"
             - name: aws-secret 
@@ -46,12 +46,12 @@ spec:
     container:
       image: nervana/circleci:master
       imagePullPolicy: Always
-      command: ["bash", "-c", "-x", 'for var in s3-unfinished-url s3-exported-url; do kubectl get workflow {{workflow.parameters.workflow}} -o json | jq -r ".status.nodes[] | select(.name|contains(\"get-workflow-info\")) | .outputs.parameters[] | select(.name == \"${var}\") | .value" > /tmp/${var} ; done; for var in job-name namespace aws-secret aws-region s3-endpoint tf-serving-image model-serving-servicetype model-serving-ks-url model-serving-ks-tag; do kubectl get workflow {{workflow.parameters.workflow}} -o jsonpath="{.spec.arguments.parameters[?(.name==\"${var}\")].value}" > /tmp/${var}; done']
+      command: ["bash", "-c", "-x", 'for var in s3-model-url s3-exported-url; do kubectl get workflow {{workflow.parameters.workflow}} -o json | jq -r ".status.nodes[] | select(.name|contains(\"get-workflow-info\")) | .outputs.parameters[] | select(.name == \"${var}\") | .value" > /tmp/${var} ; done; for var in job-name namespace aws-secret aws-region s3-endpoint tf-serving-image model-serving-servicetype model-serving-ks-url model-serving-ks-tag; do kubectl get workflow {{workflow.parameters.workflow}} -o jsonpath="{.spec.arguments.parameters[?(.name==\"${var}\")].value}" > /tmp/${var}; done']
     outputs:
       parameters:
-      - name: s3-unfinished-url
+      - name: s3-model-url
         valueFrom:
-          path: /tmp/s3-unfinished-url
+          path: /tmp/s3-model-url
       - name: s3-exported-url
         valueFrom:
           path: /tmp/s3-exported-url
@@ -85,7 +85,7 @@ spec:
   - name: tf-inference
     inputs:
       parameters:
-      - name: s3-unfinished-url
+      - name: s3-model-url
       - name: s3-exported-url
       - name: aws-secret
       - name: namespace
