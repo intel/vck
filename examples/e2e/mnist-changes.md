@@ -1,112 +1,85 @@
 ```diff
-41a42
+25a26,27
 > import os
-48a50,51
-> flags.DEFINE_string("train_dir", "/tmp/mnist-train",
->                     "Directory for training output")
-81a85,86
-> flags.DEFINE_string("master_hosts", "",
->                     "Comma-separated list of hostname:port pairs")
-87a93,120
-> def mnist_inference(hidden_units):
->     # Variables of the hidden layer
->     hid_w = tf.Variable(
->         tf.truncated_normal(
->             [IMAGE_PIXELS * IMAGE_PIXELS, FLAGS.hidden_units],
->             stddev=1.0 / IMAGE_PIXELS),
->         name="hid_w")
->     hid_b = tf.Variable(tf.zeros([FLAGS.hidden_units]), name="hid_b")
-> 
->     # Variables of the softmax layer
->     sm_w = tf.Variable(
->         tf.truncated_normal(
->             [FLAGS.hidden_units, 10],
->             stddev=1.0 / math.sqrt(FLAGS.hidden_units)),
->         name="sm_w")
->     sm_b = tf.Variable(tf.zeros([10]), name="sm_b")
-> 
->     # Ops: located on the worker specified with FLAGS.task_id
->     x = tf.placeholder(tf.float32, [None, IMAGE_PIXELS * IMAGE_PIXELS])
->     y_ = tf.placeholder(tf.float32, [None, 10])
-> 
->     hid_lin = tf.nn.xw_plus_b(x, hid_w, hid_b)
->     hid = tf.nn.relu(hid_lin)
-> 
->     y = tf.nn.softmax(tf.nn.xw_plus_b(hid, sm_w, sm_b))
->     cross_entropy = -tf.reduce_sum(y_ * tf.log(tf.clip_by_value(y, 1e-10, 1.0)))
-> 
->     return x, y, y_, cross_entropy
-90a124
-> 
-104a139
->   master_spec = FLAGS.master_hosts.split(",")
-109c144,151
-<   cluster = tf.train.ClusterSpec({"ps": ps_spec, "worker": worker_spec})
+> import sys
+26a29,36
+> # Configure model options
+> TF_DATA_DIR = os.getenv("TF_DATA_DIR", "/tmp/data/")
+> TF_MODEL_DIR = os.getenv("TF_MODEL_DIR", None)
+> TF_EXPORT_DIR = os.getenv("TF_EXPORT_DIR", "mnist/")
+> TF_MODEL_TYPE = os.getenv("TF_MODEL_TYPE", "CNN")
+> TF_TRAIN_STEPS = int(os.getenv("TF_TRAIN_STEPS", 200))
+> TF_BATCH_SIZE = int(os.getenv("TF_BATCH_SIZE", 100))
+> TF_LEARNING_RATE = float(os.getenv("TF_LEARNING_RATE", 0.01 ))
+70a81,82
+>   predict = tf.nn.softmax(logits)
+>   classes = tf.cast(tf.argmax(predict, 1), tf.uint8)
+79c91
+<     return tf.estimator.EstimatorSpec(mode, predictions=predictions)
 ---
->   cluster_specc = {"ps": ps_spec, "worker": worker_spec}
->   print("cluster_specc = %s" % str(cluster_specc))
->   print("num_workers = %d" % num_workers)
+>     return tf.estimator.EstimatorSpec(mode, predictions=predictions, export_outputs={'classes': tf.estimator.export.PredictOutput({"predictions": predict, "classes": classes})})
+86c98
+<     optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.01)
+---
+>     optimizer = tf.train.GradientDescentOptimizer(learning_rate=TF_LEARNING_RATE)
+97a110,117
+> def cnn_serving_input_receiver_fn():
+>   inputs = {X_FEATURE: tf.placeholder(tf.float32, [None, 28, 28])}
+>   return tf.estimator.export.ServingInputReceiver(inputs, inputs)
 > 
->   if FLAGS.master_hosts == "":
->     cluster = tf.train.ClusterSpec({"ps": ps_spec, "worker": worker_spec})
+> def linear_serving_input_receiver_fn():
+>   inputs = {X_FEATURE: tf.placeholder(tf.float32, (784,))}
+>   return tf.estimator.export.ServingInputReceiver(inputs, inputs)
+> 
+103c123
+<   mnist = tf.contrib.learn.datasets.DATASETS['mnist']('/tmp/mnist')
+---
+>   mnist = tf.contrib.learn.datasets.DATASETS['mnist'](TF_DATA_DIR)
+107c127
+<       batch_size=100,
+---
+>       batch_size=TF_BATCH_SIZE,
+116,131c136,160
+<   ### Linear classifier.
+<   feature_columns = [
+<       tf.feature_column.numeric_column(
+<           X_FEATURE, shape=mnist.train.images.shape[1:])]
+< 
+<   classifier = tf.estimator.LinearClassifier(
+<       feature_columns=feature_columns, n_classes=N_DIGITS)
+<   classifier.train(input_fn=train_input_fn, steps=200)
+<   scores = classifier.evaluate(input_fn=test_input_fn)
+<   print('Accuracy (LinearClassifier): {0:f}'.format(scores['accuracy']))
+< 
+<   ### Convolutional network
+<   classifier = tf.estimator.Estimator(model_fn=conv_model)
+<   classifier.train(input_fn=train_input_fn, steps=200)
+<   scores = classifier.evaluate(input_fn=test_input_fn)
+<   print('Accuracy (conv_model): {0:f}'.format(scores['accuracy']))
+---
+>   if TF_MODEL_TYPE == "LINEAR":
+>     ### Linear classifier.
+>     feature_columns = [
+>         tf.feature_column.numeric_column(
+>             X_FEATURE, shape=mnist.train.images.shape[1:])]
+> 
+>     classifier = tf.estimator.LinearClassifier(
+>         feature_columns=feature_columns, n_classes=N_DIGITS, model_dir=TF_MODEL_DIR)
+>     classifier.train(input_fn=train_input_fn, steps=TF_TRAIN_STEPS)
+>     scores = classifier.evaluate(input_fn=test_input_fn)
+>     print('Accuracy (LinearClassifier): {0:f}'.format(scores['accuracy']))
+>     #FIXME This doesn't seem to work. sticking to CNN for the example for now.
+>     classifier.export_savedmodel(TF_EXPORT_DIR, linear_serving_input_receiver_fn)
+>   elif TF_MODEL_TYPE == "CNN":
+>     ### Convolutional network
+>     training_config = tf.estimator.RunConfig(model_dir=TF_MODEL_DIR, save_summary_steps=100, save_checkpoints_steps=1000)
+>     classifier = tf.estimator.Estimator(model_fn=conv_model, model_dir=TF_MODEL_DIR, config=training_config)
+>     export_final = tf.estimator.FinalExporter(TF_EXPORT_DIR, serving_input_receiver_fn=cnn_serving_input_receiver_fn)
+>     train_spec = tf.estimator.TrainSpec(input_fn=lambda: train_input_fn(), max_steps=TF_TRAIN_STEPS)
+>     eval_spec = tf.estimator.EvalSpec(input_fn=lambda: test_input_fn(), steps=1, exporters=export_final, throttle_secs=1,
+>                                       start_delay_secs=1)
+>     tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
 >   else:
->     cluster = tf.train.ClusterSpec({"master": master_spec, "ps": ps_spec, "worker": worker_spec})
-115a158
->       print("Running ps.")
-118c161
-<   is_chief = (FLAGS.task_id == 0)
----
->   is_chief = (FLAGS.task_id == 0) # and (FLAGS.job_name == "master")
-138,162c181
-<     # Variables of the hidden layer
-<     hid_w = tf.Variable(
-<         tf.truncated_normal(
-<             [IMAGE_PIXELS * IMAGE_PIXELS, FLAGS.hidden_units],
-<             stddev=1.0 / IMAGE_PIXELS),
-<         name="hid_w")
-<     hid_b = tf.Variable(tf.zeros([FLAGS.hidden_units]), name="hid_b")
-< 
-<     # Variables of the softmax layer
-<     sm_w = tf.Variable(
-<         tf.truncated_normal(
-<             [FLAGS.hidden_units, 10],
-<             stddev=1.0 / math.sqrt(FLAGS.hidden_units)),
-<         name="sm_w")
-<     sm_b = tf.Variable(tf.zeros([10]), name="sm_b")
-< 
-<     # Ops: located on the worker specified with FLAGS.task_id
-<     x = tf.placeholder(tf.float32, [None, IMAGE_PIXELS * IMAGE_PIXELS])
-<     y_ = tf.placeholder(tf.float32, [None, 10])
-< 
-<     hid_lin = tf.nn.xw_plus_b(x, hid_w, hid_b)
-<     hid = tf.nn.relu(hid_lin)
-< 
-<     y = tf.nn.softmax(tf.nn.xw_plus_b(hid, sm_w, sm_b))
-<     cross_entropy = -tf.reduce_sum(y_ * tf.log(tf.clip_by_value(y, 1e-10, 1.0)))
----
->     x, y, y_, cross_entropy = mnist_inference(FLAGS.hidden_units)
-192c211,216
-<     train_dir = tempfile.mkdtemp()
----
-> 
->     try:
->       os.makedirs(FLAGS.train_dir)
->     except OSError:
->       if not os.path.isdir(FLAGS.train_dir):
->         raise
-197c221
-<           logdir=train_dir,
----
->           logdir=FLAGS.train_dir,
-206c230
-<           logdir=train_dir,
----
->           logdir=FLAGS.train_dir,
-243a268,269
->     sess.graph._unsafe_unfinalize()
->     saver = tf.train.Saver(max_to_keep=None)
-259c285
-< 
----
->     saver.save(sess, FLAGS.train_dir)
+>     print("No such model type: %s" % TF_MODEL_TYPE)
+>     sys.exit(1)
 ```

@@ -1,299 +1,164 @@
-# Copyright 2016 The TensorFlow Authors. All Rights Reserved.
+#  Copyright 2016 The TensorFlow Authors. All Rights Reserved.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#   http://www.apache.org/licenses/LICENSE-2.0
 #
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# ==============================================================================
-"""Distributed MNIST training and validation, with model replicas.
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+"""This showcases how simple it is to build image classification networks.
 
-A simple softmax model with one hidden layer is defined. The parameters
-(weights and biases) are located on one parameter server (ps), while the ops
-are executed on two worker nodes by default. The TF sessions also run on the
-worker node.
-Multiple invocations of this script can be done in parallel, with different
-values for --task_id. There should be exactly one invocation with
---task_id, which will create a master session that carries out variable
-initialization. The other, non-master, sessions will wait for the master
-session to finish the initialization before proceeding to the training stage.
-
-The coordination between the multiple worker invocations occurs due to
-the definition of the parameters on the same ps devices. The parameter updates
-from one worker is visible to all other workers. As such, the workers can
-perform forward computation and gradient calculation in parallel, which
-should lead to increased training speed for the simple model.
+It follows description from this TensorFlow tutorial:
+    https://www.tensorflow.org/versions/master/tutorials/mnist/pros/index.html#deep-mnist-for-experts
 """
 
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import math
-import sys
-import tempfile
-import time
-import os
-
+import numpy as np
 import tensorflow as tf
-from tensorflow.examples.tutorials.mnist import input_data
+import os
+import sys
 
-flags = tf.app.flags
-flags.DEFINE_string("data_dir", "/tmp/mnist-data",
-                    "Directory for storing mnist data")
-flags.DEFINE_string("train_dir", "/tmp/mnist-train",
-                    "Directory for training output")
-flags.DEFINE_boolean("download_only", False,
-                     "Only perform downloading of data; Do not proceed to "
-                     "session preparation, model definition or training")
-flags.DEFINE_integer("task_id", None,
-                     "Worker task index, should be >= 0. task_id=0 is "
-                     "the master worker task the performs the variable "
-                     "initialization ")
-flags.DEFINE_integer("num_gpus", 0, "Total number of gpus for each machine."
-                     "If you don't use GPU, please set it to '0'")
-flags.DEFINE_integer("replicas_to_aggregate", None,
-                     "Number of replicas to aggregate before parameter update"
-                     "is applied (For sync_replicas mode only; default: "
-                     "num_workers)")
-flags.DEFINE_integer("hidden_units", 100,
-                     "Number of units in the hidden layer of the NN")
-flags.DEFINE_integer("train_steps", 200,
-                     "Number of (global) training steps to perform")
-flags.DEFINE_integer("batch_size", 100, "Training batch size")
-flags.DEFINE_float("learning_rate", 0.01, "Learning rate")
-flags.DEFINE_boolean(
-    "sync_replicas", False,
-    "Use the sync_replicas (synchronized replicas) mode, "
-    "wherein the parameter updates from workers are aggregated "
-    "before applied to avoid stale gradients")
-flags.DEFINE_boolean(
-    "existing_servers", False, "Whether servers already exists. If True, "
-    "will use the worker hosts via their GRPC URLs (one client process "
-    "per worker host). Otherwise, will create an in-process TensorFlow "
-    "server.")
-flags.DEFINE_string("ps_hosts", "localhost:2222",
-                    "Comma-separated list of hostname:port pairs")
-flags.DEFINE_string("worker_hosts", "localhost:2223,localhost:2224",
-                    "Comma-separated list of hostname:port pairs")
-flags.DEFINE_string("master_hosts", "",
-                    "Comma-separated list of hostname:port pairs")
-flags.DEFINE_string("job_name", None, "job name: worker or ps")
+# Configure model options
+TF_DATA_DIR = os.getenv("TF_DATA_DIR", "/tmp/data/")
+TF_MODEL_DIR = os.getenv("TF_MODEL_DIR", None)
+TF_EXPORT_DIR = os.getenv("TF_EXPORT_DIR", "mnist/")
+TF_MODEL_TYPE = os.getenv("TF_MODEL_TYPE", "CNN")
+TF_TRAIN_STEPS = int(os.getenv("TF_TRAIN_STEPS", 200))
+TF_BATCH_SIZE = int(os.getenv("TF_BATCH_SIZE", 100))
+TF_LEARNING_RATE = float(os.getenv("TF_LEARNING_RATE", 0.01 ))
 
-FLAGS = flags.FLAGS
+N_DIGITS = 10  # Number of digits.
+X_FEATURE = 'x'  # Name of the input feature.
 
-IMAGE_PIXELS = 28
 
-def mnist_inference(hidden_units):
-    # Variables of the hidden layer
-    hid_w = tf.Variable(
-        tf.truncated_normal(
-            [IMAGE_PIXELS * IMAGE_PIXELS, FLAGS.hidden_units],
-            stddev=1.0 / IMAGE_PIXELS),
-        name="hid_w")
-    hid_b = tf.Variable(tf.zeros([FLAGS.hidden_units]), name="hid_b")
+def conv_model(features, labels, mode):
+  """2-layer convolution model."""
+  # Reshape feature to 4d tensor with 2nd and 3rd dimensions being
+  # image width and height final dimension being the number of color channels.
+  feature = tf.reshape(features[X_FEATURE], [-1, 28, 28, 1])
 
-    # Variables of the softmax layer
-    sm_w = tf.Variable(
-        tf.truncated_normal(
-            [FLAGS.hidden_units, 10],
-            stddev=1.0 / math.sqrt(FLAGS.hidden_units)),
-        name="sm_w")
-    sm_b = tf.Variable(tf.zeros([10]), name="sm_b")
+  # First conv layer will compute 32 features for each 5x5 patch
+  with tf.variable_scope('conv_layer1'):
+    h_conv1 = tf.layers.conv2d(
+        feature,
+        filters=32,
+        kernel_size=[5, 5],
+        padding='same',
+        activation=tf.nn.relu)
+    h_pool1 = tf.layers.max_pooling2d(
+        h_conv1, pool_size=2, strides=2, padding='same')
 
-    # Ops: located on the worker specified with FLAGS.task_id
-    x = tf.placeholder(tf.float32, [None, IMAGE_PIXELS * IMAGE_PIXELS])
-    y_ = tf.placeholder(tf.float32, [None, 10])
+  # Second conv layer will compute 64 features for each 5x5 patch.
+  with tf.variable_scope('conv_layer2'):
+    h_conv2 = tf.layers.conv2d(
+        h_pool1,
+        filters=64,
+        kernel_size=[5, 5],
+        padding='same',
+        activation=tf.nn.relu)
+    h_pool2 = tf.layers.max_pooling2d(
+        h_conv2, pool_size=2, strides=2, padding='same')
+    # reshape tensor into a batch of vectors
+    h_pool2_flat = tf.reshape(h_pool2, [-1, 7 * 7 * 64])
 
-    hid_lin = tf.nn.xw_plus_b(x, hid_w, hid_b)
-    hid = tf.nn.relu(hid_lin)
+  # Densely connected layer with 1024 neurons.
+  h_fc1 = tf.layers.dense(h_pool2_flat, 1024, activation=tf.nn.relu)
+  h_fc1 = tf.layers.dropout(
+      h_fc1, 
+      rate=0.5, 
+      training=(mode == tf.estimator.ModeKeys.TRAIN))
 
-    y = tf.nn.softmax(tf.nn.xw_plus_b(hid, sm_w, sm_b))
-    cross_entropy = -tf.reduce_sum(y_ * tf.log(tf.clip_by_value(y, 1e-10, 1.0)))
+  # Compute logits (1 per class) and compute loss.
+  logits = tf.layers.dense(h_fc1, N_DIGITS, activation=None)
+  predict = tf.nn.softmax(logits)
+  classes = tf.cast(tf.argmax(predict, 1), tf.uint8)
 
-    return x, y, y_, cross_entropy
+  # Compute predictions.
+  predicted_classes = tf.argmax(logits, 1)
+  if mode == tf.estimator.ModeKeys.PREDICT:
+    predictions = {
+        'class': predicted_classes,
+        'prob': tf.nn.softmax(logits)
+    }
+    return tf.estimator.EstimatorSpec(mode, predictions=predictions, export_outputs={'classes': tf.estimator.export.PredictOutput({"predictions": predict, "classes": classes})})
 
-def main(unused_argv):
-  mnist = input_data.read_data_sets(FLAGS.data_dir, one_hot=True)
+  # Compute loss.
+  loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
 
-  if FLAGS.download_only:
-    sys.exit(0)
+  # Create training op.
+  if mode == tf.estimator.ModeKeys.TRAIN:
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate=TF_LEARNING_RATE)
+    train_op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
+    return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
 
-  if FLAGS.job_name is None or FLAGS.job_name == "":
-    raise ValueError("Must specify an explicit `job_name`")
-  if FLAGS.task_id is None or FLAGS.task_id == "":
-    raise ValueError("Must specify an explicit `task_id`")
+  # Compute evaluation metrics.
+  eval_metric_ops = {
+      'accuracy': tf.metrics.accuracy(
+          labels=labels, predictions=predicted_classes)
+  }
+  return tf.estimator.EstimatorSpec(
+      mode, loss=loss, eval_metric_ops=eval_metric_ops)
 
-  print("job name = %s" % FLAGS.job_name)
-  print("task index = %d" % FLAGS.task_id)
+def cnn_serving_input_receiver_fn():
+  inputs = {X_FEATURE: tf.placeholder(tf.float32, [None, 28, 28])}
+  return tf.estimator.export.ServingInputReceiver(inputs, inputs)
 
-  #Construct the cluster and start the server
-  ps_spec = FLAGS.ps_hosts.split(",")
-  worker_spec = FLAGS.worker_hosts.split(",")
-  master_spec = FLAGS.master_hosts.split(",")
+def linear_serving_input_receiver_fn():
+  inputs = {X_FEATURE: tf.placeholder(tf.float32, (784,))}
+  return tf.estimator.export.ServingInputReceiver(inputs, inputs)
 
-  # Get the number of workers.
-  num_workers = len(worker_spec)
 
-  cluster_specc = {"ps": ps_spec, "worker": worker_spec}
-  print("cluster_specc = %s" % str(cluster_specc))
-  print("num_workers = %d" % num_workers)
+def main(unused_args):
+  tf.logging.set_verbosity(tf.logging.INFO)
 
-  if FLAGS.master_hosts == "":
-    cluster = tf.train.ClusterSpec({"ps": ps_spec, "worker": worker_spec})
+  ### Download and load MNIST dataset.
+  mnist = tf.contrib.learn.datasets.DATASETS['mnist'](TF_DATA_DIR)
+  train_input_fn = tf.estimator.inputs.numpy_input_fn(
+      x={X_FEATURE: mnist.train.images},
+      y=mnist.train.labels.astype(np.int32),
+      batch_size=TF_BATCH_SIZE,
+      num_epochs=None,
+      shuffle=True)
+  test_input_fn = tf.estimator.inputs.numpy_input_fn(
+      x={X_FEATURE: mnist.train.images},
+      y=mnist.train.labels.astype(np.int32),
+      num_epochs=1,
+      shuffle=False)
+
+  if TF_MODEL_TYPE == "LINEAR":
+    ### Linear classifier.
+    feature_columns = [
+        tf.feature_column.numeric_column(
+            X_FEATURE, shape=mnist.train.images.shape[1:])]
+
+    classifier = tf.estimator.LinearClassifier(
+        feature_columns=feature_columns, n_classes=N_DIGITS, model_dir=TF_MODEL_DIR)
+    classifier.train(input_fn=train_input_fn, steps=TF_TRAIN_STEPS)
+    scores = classifier.evaluate(input_fn=test_input_fn)
+    print('Accuracy (LinearClassifier): {0:f}'.format(scores['accuracy']))
+    #FIXME This doesn't seem to work. sticking to CNN for the example for now.
+    classifier.export_savedmodel(TF_EXPORT_DIR, linear_serving_input_receiver_fn)
+  elif TF_MODEL_TYPE == "CNN":
+    ### Convolutional network
+    training_config = tf.estimator.RunConfig(model_dir=TF_MODEL_DIR, save_summary_steps=100, save_checkpoints_steps=1000)
+    classifier = tf.estimator.Estimator(model_fn=conv_model, model_dir=TF_MODEL_DIR, config=training_config)
+    export_final = tf.estimator.FinalExporter(TF_EXPORT_DIR, serving_input_receiver_fn=cnn_serving_input_receiver_fn)
+    train_spec = tf.estimator.TrainSpec(input_fn=lambda: train_input_fn(), max_steps=TF_TRAIN_STEPS)
+    eval_spec = tf.estimator.EvalSpec(input_fn=lambda: test_input_fn(), steps=1, exporters=export_final, throttle_secs=1,
+                                      start_delay_secs=1)
+    tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
   else:
-    cluster = tf.train.ClusterSpec({"master": master_spec, "ps": ps_spec, "worker": worker_spec})
-
-  if not FLAGS.existing_servers:
-    # Not using existing servers. Create an in-process server.
-    server = tf.train.Server(
-        cluster, job_name=FLAGS.job_name, task_index=FLAGS.task_id)
-    if FLAGS.job_name == "ps":
-      print("Running ps.")
-      server.join()
-
-  is_chief = (FLAGS.task_id == 0) # and (FLAGS.job_name == "master")
-  if FLAGS.num_gpus > 0:
-    # Avoid gpu allocation conflict: now allocate task_num -> #gpu
-    # for each worker in the corresponding machine
-    gpu = (FLAGS.task_id % FLAGS.num_gpus)
-    worker_device = "/job:worker/task:%d/gpu:%d" % (FLAGS.task_id, gpu)
-  elif FLAGS.num_gpus == 0:
-    # Just allocate the CPU to worker server
-    cpu = 0
-    worker_device = "/job:worker/task:%d/cpu:%d" % (FLAGS.task_id, cpu)
-  # The device setter will automatically place Variables ops on separate
-  # parameter servers (ps). The non-Variable ops will be placed on the workers.
-  # The ps use CPU and workers use corresponding GPU
-  with tf.device(
-      tf.train.replica_device_setter(
-          worker_device=worker_device,
-          ps_device="/job:ps/cpu:0",
-          cluster=cluster)):
-    global_step = tf.Variable(0, name="global_step", trainable=False)
-
-    x, y, y_, cross_entropy = mnist_inference(FLAGS.hidden_units)
-
-    opt = tf.train.AdamOptimizer(FLAGS.learning_rate)
-
-    if FLAGS.sync_replicas:
-      if FLAGS.replicas_to_aggregate is None:
-        replicas_to_aggregate = num_workers
-      else:
-        replicas_to_aggregate = FLAGS.replicas_to_aggregate
-
-      opt = tf.train.SyncReplicasOptimizer(
-          opt,
-          replicas_to_aggregate=replicas_to_aggregate,
-          total_num_replicas=num_workers,
-          name="mnist_sync_replicas")
-
-    train_step = opt.minimize(cross_entropy, global_step=global_step)
-
-    if FLAGS.sync_replicas:
-      local_init_op = opt.local_step_init_op
-      if is_chief:
-        local_init_op = opt.chief_init_op
-
-      ready_for_local_init_op = opt.ready_for_local_init_op
-
-      # Initial token and chief queue runners required by the sync_replicas mode
-      chief_queue_runner = opt.get_chief_queue_runner()
-      sync_init_op = opt.get_init_tokens_op()
-
-    init_op = tf.global_variables_initializer()
-
-    try:
-      os.makedirs(FLAGS.train_dir)
-    except OSError:
-      if not os.path.isdir(FLAGS.train_dir):
-        raise
-
-    if FLAGS.sync_replicas:
-      sv = tf.train.Supervisor(
-          is_chief=is_chief,
-          logdir=FLAGS.train_dir,
-          init_op=init_op,
-          local_init_op=local_init_op,
-          ready_for_local_init_op=ready_for_local_init_op,
-          recovery_wait_secs=1,
-          global_step=global_step)
-    else:
-      sv = tf.train.Supervisor(
-          is_chief=is_chief,
-          logdir=FLAGS.train_dir,
-          init_op=init_op,
-          recovery_wait_secs=1,
-          global_step=global_step)
-
-    sess_config = tf.ConfigProto(
-        allow_soft_placement=True,
-        log_device_placement=False,
-        device_filters=["/job:ps",
-                        "/job:worker/task:%d" % FLAGS.task_id])
-
-    # The chief worker (task_id==0) session will prepare the session,
-    # while the remaining workers will wait for the preparation to complete.
-    if is_chief:
-      print("Worker %d: Initializing session..." % FLAGS.task_id)
-    else:
-      print("Worker %d: Waiting for session to be initialized..." %
-            FLAGS.task_id)
-
-    if FLAGS.existing_servers:
-      server_grpc_url = "grpc://" + worker_spec[FLAGS.task_id]
-      print("Using existing server at: %s" % server_grpc_url)
-
-      sess = sv.prepare_or_wait_for_session(server_grpc_url, config=sess_config)
-    else:
-      sess = sv.prepare_or_wait_for_session(server.target, config=sess_config)
-
-    print("Worker %d: Session initialization complete." % FLAGS.task_id)
-
-    if FLAGS.sync_replicas and is_chief:
-      # Chief worker will start the chief queue runner and call the init op.
-      sess.run(sync_init_op)
-      sv.start_queue_runners(sess, [chief_queue_runner])
-
-    # Perform training
-    time_begin = time.time()
-    print("Training begins @ %f" % time_begin)
-
-    sess.graph._unsafe_unfinalize()
-    saver = tf.train.Saver(max_to_keep=None)
-    local_step = 0
-    while True:
-      # Training feed
-      batch_xs, batch_ys = mnist.train.next_batch(FLAGS.batch_size)
-      train_feed = {x: batch_xs, y_: batch_ys}
-
-      _, step = sess.run([train_step, global_step], feed_dict=train_feed)
-      local_step += 1
-
-      now = time.time()
-      print("%f: Worker %d: training step %d done (global step: %d)" %
-            (now, FLAGS.task_id, local_step, step))
-
-      if step >= FLAGS.train_steps:
-        break
-    saver.save(sess, FLAGS.train_dir)
-    time_end = time.time()
-    print("Training ends @ %f" % time_end)
-    training_time = time_end - time_begin
-    print("Training elapsed time: %f s" % training_time)
-
-    # Validation feed
-    val_feed = {x: mnist.validation.images, y_: mnist.validation.labels}
-    val_xent = sess.run(cross_entropy, feed_dict=val_feed)
-    print("After %d training step(s), validation cross entropy = %g" %
-          (FLAGS.train_steps, val_xent))
+    print("No such model type: %s" % TF_MODEL_TYPE)
+    sys.exit(1)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
   tf.app.run()
