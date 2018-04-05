@@ -1,0 +1,35 @@
+{
+   "name": "kvc",
+   "apiVersion": "0.0.1",
+   "kind": "ksonnet.io/parts",
+   "description": "kvc main components\n",
+   "author": "",
+   "contributors": [
+      {
+         "name": "",
+         "email": ""
+      }
+   ],
+   "repository": {
+      "type": "git",
+      "url": "https://github.com/kubeflow/experimental-kvc"
+   },
+   "bugs": {
+      "url": "https://github.com/kubeflow/experimental-kvc/issues"
+   },
+   "keywords": [
+      "kube-volume-controller",
+      "kvc"
+   ],
+   "quickStart": {
+      "prototype": "io.ksonnet.pkg.kvc",
+      "componentName": "kvc",
+      "flags": {
+         "name": "kvc",
+         "namespace": "default",
+         "disks": ""
+      },
+      "comment": "kvc main components."
+   },
+   "license": "Apache 2.0"
+}
