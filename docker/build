@@ -1,5 +1,5 @@
 #!/bin/bash
 set -eu
 
-docker build -t volumecontroller/aws-cli ./aws-cli
 docker build -t volumecontroller/golang:1.9.2 ./golang
+docker build -t volumecontroller/aeon ./aeon
