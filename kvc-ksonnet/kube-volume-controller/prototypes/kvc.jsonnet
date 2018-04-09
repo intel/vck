@@ -8,14 +8,15 @@
 // @optionalParam storage_class string true Install storage class when necessary. Note: StorageClass is a cluster-scoped object. It might already be installed.
 // @optionalParam CRD string true Install CRD when necessary. Note: CRD is a cluster-scoped object. It might already be installed.
 // @optionalParam log_level number 0 Enable for verbose log.
+// @optionalParam tag string cd7ea57 specify version for kvc
 
 local k = import "k.libsonnet";
-local kvc = import "kubeflow/tf-job/kvc.libsonnet";
+local kvc = import "kvc-ksonnet/kube-volume-controller/kvc.libsonnet";
 
 local registry = "";
 local org = "volumecontroller";
 local repo = "kube-volume-controller";
-local tag= "v0.1.0";
+local tag = import "param://tag";
 
 local updatedParams = params {
   namespace: if params.namespace == "null" then env.namespace else params.namespace,
@@ -44,14 +45,14 @@ local flags = [ "/kvc",
 
 std.prune(k.core.v1.list.new([
   if storageClass == "true" then
-  kvc.parts.kvcStroageClass,
+  kvc.parts.stroageClass,
   if clusterRole == "true" then
-  kvc.parts.kvcClusterRole,
+  kvc.parts.clusterRole,
   if clusterRole == "true" then
-  kvc.parts.kvcClusterRoleBinding(namespace),
+  kvc.parts.clusterRoleBinding(namespace),
   if crd == "true" then
-  kvc.parts.kvcCRD,
-  kvc.parts.kvcServiceAccount(namespace),
-  kvc.parts.kvcDeployment(namespace,image,flags),
+  kvc.parts.crd,
+  kvc.parts.serviceAccount(namespace),
+  kvc.parts.deployment(namespace,image,flags),
 ]))
 
