@@ -16,7 +16,7 @@ This directory contains the KVC ksonnet [registry][2]. If you are unfamiliar wit
 In order to quickly set up all components, execute the following commands:
 
 ```commandline
-# Create a namespace for kubeflow deployment
+# Create a namespace for kvc deployment
 NAMESPACE=kvc
 kubectl create namespace ${NAMESPACE}
 
@@ -26,7 +26,7 @@ ks init ${APP_NAME}
 cd ${APP_NAME}
 ks env set default --namespace ${NAMESPACE}
 
-# Install Kubeflow components
+# Install KVC components
 ks registry add kvc-ksonnet github.com/sudeshsh/experimental-kvc/tree/master/kvc-ksonnet
 
 ks pkg install kvc-ksonnet/kube-volume-controller
@@ -36,7 +36,7 @@ ks generate kvc kvc
 
 
 
-# Deploy Kubeflow
+# Deploy kvc
 ks apply default -c kvc
 ```
 
