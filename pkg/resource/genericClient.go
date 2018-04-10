@@ -3,10 +3,11 @@ package resource
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 
 	"encoding/json"
-	"github.com/kubeflow/experimental-kvc/pkg/resource/reify"
 	"github.com/golang/glog"
+	"github.com/kubeflow/experimental-kvc/pkg/resource/reify"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 )
@@ -99,4 +100,16 @@ func (c *genericClient) List(namespace string, labels map[string]string) (result
 // Plural returns the plural form of the resource.
 func (c *genericClient) Plural() string {
 	return c.resourcePluralForm
+}
+
+func (c *genericClient) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result runtime.Object, err error) {
+	object, err := c.resource.Patch(name, pt, data)
+	if err != nil {
+		return nil, err
+	}
+	result, err = c.scheme.ConvertToVersion(object, c.groupversion)
+	if err != nil {
+		return nil, err
+	}
+	return
 }

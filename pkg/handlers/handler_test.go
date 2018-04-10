@@ -8,6 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/fake"
 	"testing"
 )
@@ -34,7 +35,7 @@ func (tc *testClient) Delete(namespace string, name string) error {
 }
 
 func (tc *testClient) Get(namespace, name string) (runtime.Object, error) {
-	return nil, nil
+	return &corev1.Node{}, nil
 }
 
 func (tc *testClient) List(namespace string, labels map[string]string) ([]metav1.Object, error) {
@@ -48,11 +49,15 @@ func (tc *testClient) List(namespace string, labels map[string]string) ([]metav1
 	}}, nil
 }
 
+func (tc *testClient) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (runtime.Object, error) {
+	return nil, nil
+}
+
 func (tc *testClient) Plural() string {
 	return tc.plural
 }
 
-func TestS3DevHandler(t *testing.T) {
+func TestHandler(t *testing.T) {
 
 	namespace := "test"
 
