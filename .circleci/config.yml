@@ -40,7 +40,6 @@ jobs:
             mkdir -p $HOME/.kube
             KUBE_CONFIG=${GKE_KUBECONFIG_KVCCI}
             echo "${KUBE_CONFIG}" | base64 --decode > "${HOME}/.kube/config"
-            context=$(kubectl config current-context)
             kubectl create ns "kvc-${CIRCLE_BUILD_NUM}"
             kubectl create secret generic s3-creds \
               --from-literal=awsAccessKeyID=${MINIO_ACCESS_KEY_ID} \

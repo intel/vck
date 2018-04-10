@@ -34,6 +34,9 @@ func getK8SResourceClientFromPlural(k8sResourceClients []resource.Client, plural
 func waitForPodSuccess(podClient resource.Client, podName string, podNS string, timeout time.Duration) error {
 	return waitPoll(func() (bool, error) {
 		obj, err := podClient.Get(podNS, podName)
+		if err != nil {
+			return false, fmt.Errorf("error while getting pod object when checking for pod success")
+		}
 
 		pod, ok := obj.(*corev1.Pod)
 		if !ok {
