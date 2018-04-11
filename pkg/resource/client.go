@@ -3,7 +3,6 @@ package resource
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 // Client manipulates Kubernetes API resources backed by template files.
@@ -19,8 +18,8 @@ type Client interface {
 	Get(namespace, name string) (runtime.Object, error)
 	// List lists objects based on group, version and kind.
 	List(namespace string, labels map[string]string) ([]metav1.Object, error)
-	// Patch patches objects
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (runtime.Object, error)
+	// Update updates the object
+	Update(object runtime.Object) (runtime.Object, error)
 	// Plural returns the plural form of the resource.
 	Plural() string
 }

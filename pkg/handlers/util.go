@@ -1,11 +1,7 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/golang/glog"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -60,39 +56,19 @@ func waitPoll(waitFunc func() (bool, error), timeout time.Duration) error {
 }
 
 // Returns a strategic patch for adding or removing a label for a node. Operation can be add or delete.
-func patchForNodeWithLabel(oldNode *corev1.Node, label string, operation string, nodeClient resource.Client) (err error) {
-	modifiedNode := oldNode.DeepCopy()
-
-	// That label already exists on the node, so don't do anything
-	if _, ok := modifiedNode.ObjectMeta.Labels[label]; !ok {
-		return
-	}
+func patchForNodeWithLabels(node *corev1.Node, labels []string, operation string, nodeClient resource.Client) (err error) {
 	switch operation {
 	case "add":
-		modifiedNode.ObjectMeta.Labels[label] = "true"
+		for _, key := range labels {
+			node.ObjectMeta.Labels[key] = "true"
+		}
 	case "delete":
-		delete(modifiedNode.ObjectMeta.Labels, label)
+		for _, key := range labels {
+			delete(node.ObjectMeta.Labels, key)
+		}
 	}
 
-	oldJSON, err := json.Marshal(oldNode)
-	if err != nil {
-		return
-	}
-	modifiedJSON, err := json.Marshal(modifiedNode)
-	if err != nil {
-		return
-	}
-	patch, err := strategicpatch.CreateTwoWayMergePatch(oldJSON, modifiedJSON, corev1.Node{})
-	if err != nil {
-		return
-	}
-
-	glog.V(4).Infof("Original json: %v, modified json: %v", oldJSON, modifiedJSON)
-	glog.V(4).Infof("Original node: %v, modified node: %v", oldNode, modifiedNode)
-	if len(patch) == 0 || string(patch) == "{}" {
-		return fmt.Errorf("[patchForNodeWithLabel] nothing to patch. Original: %v, Modified: %v", oldNode, modifiedNode)
-	}
-
-	nodeClient.Patch(oldNode.Name, types.StrategicMergePatchType, patch)
+	_, err = nodeClient.Update(node)
 	return
+
 }

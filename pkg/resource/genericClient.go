@@ -3,7 +3,6 @@ package resource
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 
 	"encoding/json"
 	"github.com/golang/glog"
@@ -102,14 +101,8 @@ func (c *genericClient) Plural() string {
 	return c.resourcePluralForm
 }
 
-func (c *genericClient) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result runtime.Object, err error) {
-	object, err := c.resource.Patch(name, pt, data)
-	if err != nil {
-		return nil, err
-	}
-	result, err = c.scheme.ConvertToVersion(object, c.groupversion)
-	if err != nil {
-		return nil, err
-	}
+func (c *genericClient) Update(object runtime.Object) (result runtime.Object, err error) {
+	convertedObject := object.(*unstructured.Unstructured)
+	result, err = c.resource.Update(convertedObject)
 	return
 }

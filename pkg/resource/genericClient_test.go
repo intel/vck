@@ -183,8 +183,6 @@ func TestGenericClient(t *testing.T) {
 		require.Nil(t, err)
 		compareJson(t, toCompareJson, resourceJson)
 
-		// TODO: Test Patch
-
 		// Test Delete
 		err = genericClient.Delete(namespace, test.resourceName)
 		require.Nil(t, err)

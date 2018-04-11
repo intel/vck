@@ -128,7 +128,7 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 				Message: fmt.Sprintf("could not get node %s, error: %v", nodeNames[i], err),
 			}
 		}
-		err = patchForNodeWithLabel(node.(*corev1.Node), fmt.Sprintf("%s/%s", kvcv1.GroupName, vc.ID), "add", nodeClient)
+		err = patchForNodeWithLabels(node.(*corev1.Node), []string{fmt.Sprintf("%s/%s", kvcv1.GroupName, vc.ID)}, "add", nodeClient)
 
 		if err != nil {
 			return kvcv1.Volume{
@@ -262,7 +262,7 @@ func (h *s3Handler) OnDelete(ns string, vc kvcv1.VolumeConfig, controllerRef met
 			glog.Warningf("[s3-handler] OnDelete: error while getting node: %v", err)
 		}
 
-		err = patchForNodeWithLabel(node.(*corev1.Node), vc.ID, "delete", nodeClient)
+		err = patchForNodeWithLabels(node.(*corev1.Node), []string{fmt.Sprintf("%s/%s", kvcv1.GroupName, vc.ID)}, "delete", nodeClient)
 		if err != nil {
 			glog.Warningf("[s3-handler] OnDelete: error while deleting label for node nodes %v", err)
 		}
