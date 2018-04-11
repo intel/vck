@@ -56,7 +56,7 @@ func waitPoll(waitFunc func() (bool, error), timeout time.Duration) error {
 }
 
 // Returns a strategic patch for adding or removing a label for a node. Operation can be add or delete.
-func patchForNodeWithLabels(node *corev1.Node, labels []string, operation string, nodeClient resource.Client) (err error) {
+func updateNodeWithLabels(nodeClient resource.Client, node *corev1.Node, labels []string, operation string) (err error) {
 	switch operation {
 	case "add":
 		for _, key := range labels {

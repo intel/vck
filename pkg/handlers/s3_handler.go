@@ -120,23 +120,6 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 		kvcName := fmt.Sprintf("%s%s", kvcNamePrefix, uuid.NewUUID())
 		kvcNames = append(kvcNames, kvcName)
 
-		// patch nodes with the correct label
-		node, err := nodeClient.Get("", nodeNames[i])
-		if err != nil {
-			return kvcv1.Volume{
-				ID:      vc.ID,
-				Message: fmt.Sprintf("could not get node %s, error: %v", nodeNames[i], err),
-			}
-		}
-		err = patchForNodeWithLabels(node.(*corev1.Node), []string{fmt.Sprintf("%s/%s", kvcv1.GroupName, vc.ID)}, "add", nodeClient)
-
-		if err != nil {
-			return kvcv1.Volume{
-				ID:      vc.ID,
-				Message: fmt.Sprintf("could not label node %s, error: %v", nodeNames[i], err),
-			}
-		}
-
 		err = podClient.Create(ns, struct {
 			kvcv1.VolumeConfig
 			metav1.OwnerReference
@@ -199,6 +182,24 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 		}
 
 		usedNodeNames = append(usedNodeNames, pod.Spec.NodeName)
+
+		node, err := nodeClient.Get("", pod.Spec.NodeName)
+		if err != nil {
+			return kvcv1.Volume{
+				ID:      vc.ID,
+				Message: fmt.Sprintf("could not get node %s, error: %v", pod.Spec.NodeName, err),
+			}
+		}
+		// update nodes with the correct label
+		err = updateNodeWithLabels(nodeClient, node.(*corev1.Node), []string{fmt.Sprintf("%s/%s-%s", kvcv1.GroupName, ns, controllerRef.Name)}, "add")
+
+		if err != nil {
+			return kvcv1.Volume{
+				ID:      vc.ID,
+				Message: fmt.Sprintf("could not label node %s, error: %v", pod.Spec.NodeName, err),
+			}
+		}
+
 	}
 
 	return kvcv1.Volume{
@@ -214,7 +215,7 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 					{
 						MatchExpressions: []corev1.NodeSelectorRequirement{
 							{
-								Key:      fmt.Sprintf("%s/%s", kvcv1.GroupName, vc.ID),
+								Key:      fmt.Sprintf("%s/%s-%s", kvcv1.GroupName, ns, controllerRef.Name),
 								Operator: corev1.NodeSelectorOpExists,
 							},
 						},
@@ -244,11 +245,11 @@ func (h *s3Handler) OnDelete(ns string, vc kvcv1.VolumeConfig, controllerRef met
 		}
 	}
 
-	// Delete the annotation for the node
-	// Get the node list based on the vc.ID
+	// Delete the label for the node
 	nodeClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "nodes")
 
-	nodeList, err := nodeClient.List("", map[string]string{fmt.Sprintf("%s/%s", kvcv1.GroupName, vc.ID): "true"})
+	// Get the node list based on the label
+	nodeList, err := nodeClient.List("", map[string]string{fmt.Sprintf("%s/%s-%s", kvcv1.GroupName, ns, controllerRef.Name): "true"})
 	if err != nil {
 		glog.Warningf("[s3-handler] OnDelete: error while listing nodes %v", err)
 		return
@@ -262,7 +263,7 @@ func (h *s3Handler) OnDelete(ns string, vc kvcv1.VolumeConfig, controllerRef met
 			glog.Warningf("[s3-handler] OnDelete: error while getting node: %v", err)
 		}
 
-		err = patchForNodeWithLabels(node.(*corev1.Node), []string{fmt.Sprintf("%s/%s", kvcv1.GroupName, vc.ID)}, "delete", nodeClient)
+		err = updateNodeWithLabels(nodeClient, node.(*corev1.Node), []string{fmt.Sprintf("%s/%s-%s", kvcv1.GroupName, ns, controllerRef.Name)}, "delete")
 		if err != nil {
 			glog.Warningf("[s3-handler] OnDelete: error while deleting label for node nodes %v", err)
 		}

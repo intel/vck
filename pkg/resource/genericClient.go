@@ -102,7 +102,12 @@ func (c *genericClient) Plural() string {
 }
 
 func (c *genericClient) Update(object runtime.Object) (result runtime.Object, err error) {
-	convertedObject := object.(*unstructured.Unstructured)
+
+	convertedObject := &unstructured.Unstructured{}
+	err = c.scheme.Convert(object, convertedObject, c.resource)
+	if err != nil {
+		return
+	}
 	result, err = c.resource.Update(convertedObject)
 	return
 }
