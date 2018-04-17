@@ -98,7 +98,6 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 		}
 	}
 
-	nodeNames := getNodeNames(nodeList)
 	recursiveFlag := ""
 	if strings.HasSuffix(vc.SourceURL, "/") {
 		recursiveFlag = "--recursive"
@@ -114,7 +113,6 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 	bucketName := s3URL.Host
 	bucketPath := s3URL.Path
 
-	usedNodeNames := []string{}
 	kvcNames := []string{}
 	podClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "pods")
 	kvcDataPathSuffix := fmt.Sprintf("%s%s", kvcNamePrefix, uuid.NewUUID())
@@ -122,14 +120,10 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 		kvcName := fmt.Sprintf("%s%s", kvcNamePrefix, uuid.NewUUID())
 		kvcNames = append(kvcNames, kvcName)
 
-		// Collect node names for providing node affinity details.
-		usedNodeNames = append(usedNodeNames, nodeNames[i])
-
 		err := podClient.Create(ns, struct {
 			kvcv1.VolumeConfig
 			metav1.OwnerReference
 			NS                  string
-			NodeName            string
 			KVCName             string
 			KVCStorageClassName string
 			PVType              string
@@ -141,7 +135,6 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 			vc,
 			controllerRef,
 			ns,
-			nodeNames[i],
 			kvcName,
 			"kvc",
 			"",
@@ -161,14 +154,34 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 		}
 	}
 
+	usedNodeNames := []string{}
 	for _, kvcName := range kvcNames {
 		err := waitForPodSuccess(podClient, kvcName, ns, timeout)
 		if err != nil {
 			return kvcv1.Volume{
-				ID:      vc.ID,
+				ID: vc.ID,
+				// TODO(balajismaniam): append pod logs to this message if possible.
 				Message: fmt.Sprintf("error during data download using pod [name: %v]: %v", kvcName, err),
 			}
 		}
+
+		podObj, err := podClient.Get(ns, kvcName)
+		if err != nil {
+			return kvcv1.Volume{
+				ID:      vc.ID,
+				Message: fmt.Sprintf("error getting pod [name: %v]: %v", kvcName, err),
+			}
+		}
+
+		pod, ok := podObj.(*corev1.Pod)
+		if !ok {
+			return kvcv1.Volume{
+				ID:      vc.ID,
+				Message: fmt.Sprintf("object returned from podclient.Get() is not a pod"),
+			}
+		}
+
+		usedNodeNames = append(usedNodeNames, pod.Spec.NodeName)
 	}
 
 	return kvcv1.Volume{

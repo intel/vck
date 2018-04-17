@@ -14,8 +14,24 @@ metadata:
 {{ range $key, $val := .Labels }}
     "{{ $key }}": "{{ $val }}"
 {{ end }}
+    "kvcname": "{{.KVCName}}"
 spec:
-  nodeName: "{{.NodeName}}"
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+{{ range $key, $val := .Labels }}
+          - key: {{ $key }}
+            operator: In
+            values:
+            - {{ $val }}
+{{ end }}
+          - key: kvcname
+            operator: In
+            values:
+            - {{.KVCName}}
+        topologyKey: kubernetes.io/hostname
   volumes:
     - name: dataset-root
       hostPath:
