@@ -18,6 +18,8 @@ type Client interface {
 	Get(namespace, name string) (runtime.Object, error)
 	// List lists objects based on group, version and kind.
 	List(namespace string, labels map[string]string) ([]metav1.Object, error)
+	// Update updates the object
+	Update(object runtime.Object) (runtime.Object, error)
 	// Plural returns the plural form of the resource.
 	Plural() string
 }

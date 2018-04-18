@@ -54,3 +54,21 @@ func waitForPodSuccess(podClient resource.Client, podName string, podNS string, 
 func waitPoll(waitFunc func() (bool, error), timeout time.Duration) error {
 	return wait.Poll(1*time.Second, timeout, waitFunc)
 }
+
+// Returns a strategic patch for adding or removing a label for a node. Operation can be add or delete.
+func updateNodeWithLabels(nodeClient resource.Client, node *corev1.Node, labels []string, operation string) (err error) {
+	switch operation {
+	case "add":
+		for _, key := range labels {
+			node.ObjectMeta.Labels[key] = "true"
+		}
+	case "delete":
+		for _, key := range labels {
+			delete(node.ObjectMeta.Labels, key)
+		}
+	}
+
+	_, err = nodeClient.Update(node)
+	return
+
+}

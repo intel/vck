@@ -34,7 +34,11 @@ func (tc *testClient) Delete(namespace string, name string) error {
 }
 
 func (tc *testClient) Get(namespace, name string) (runtime.Object, error) {
-	return nil, nil
+	return &corev1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Labels: map[string]string{},
+		},
+	}, nil
 }
 
 func (tc *testClient) List(namespace string, labels map[string]string) ([]metav1.Object, error) {
@@ -48,11 +52,15 @@ func (tc *testClient) List(namespace string, labels map[string]string) ([]metav1
 	}}, nil
 }
 
+func (tc *testClient) Update(object runtime.Object) (runtime.Object, error) {
+	return nil, nil
+}
+
 func (tc *testClient) Plural() string {
 	return tc.plural
 }
 
-func TestS3DevHandler(t *testing.T) {
+func TestHandler(t *testing.T) {
 
 	namespace := "test"
 

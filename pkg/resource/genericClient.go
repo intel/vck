@@ -5,8 +5,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"encoding/json"
-	"github.com/kubeflow/experimental-kvc/pkg/resource/reify"
 	"github.com/golang/glog"
+	"github.com/kubeflow/experimental-kvc/pkg/resource/reify"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 )
@@ -99,4 +99,15 @@ func (c *genericClient) List(namespace string, labels map[string]string) (result
 // Plural returns the plural form of the resource.
 func (c *genericClient) Plural() string {
 	return c.resourcePluralForm
+}
+
+func (c *genericClient) Update(object runtime.Object) (result runtime.Object, err error) {
+
+	convertedObject := &unstructured.Unstructured{}
+	err = c.scheme.Convert(object, convertedObject, c.resource)
+	if err != nil {
+		return
+	}
+	result, err = c.resource.Update(convertedObject)
+	return
 }
