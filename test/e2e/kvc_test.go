@@ -180,6 +180,60 @@ func TestVolumeManager(t *testing.T) {
 			expNA:      true,
 			expPVC:     true,
 		},
+		{
+			description: "single vc - Pachyderm - non-recursive - no error",
+			volumeConfigs: []crv1.VolumeConfig{
+				{
+					ID:         "vol1",
+					Replicas:   1,
+					SourceType: "Pachyderm",
+					AccessMode: "ReadWriteOnce",
+					Capacity:   "5Gi",
+					Labels: map[string]string{
+						"key1": "val1",
+						"key2": "val2",
+					},
+					Options: map[string]string{
+						"repo":       "test",
+						"branch":     "master",
+						"inputPath":  "s3/test",
+						"outputPath": "test",
+					},
+				},
+			},
+			expSuccess: true,
+			expError:   "",
+			expHP:      true,
+			expNA:      true,
+			expPVC:     false,
+		},
+		{
+			description: "single vc - Pachyderm - recursive - no error",
+			volumeConfigs: []crv1.VolumeConfig{
+				{
+					ID:         "vol1",
+					Replicas:   1,
+					SourceType: "Pachyderm",
+					AccessMode: "ReadWriteOnce",
+					Capacity:   "5Gi",
+					Labels: map[string]string{
+						"key1": "val1",
+						"key2": "val2",
+					},
+					Options: map[string]string{
+						"repo":       "test",
+						"branch":     "master",
+						"inputPath":  "s3/",
+						"outputPath": "test",
+					},
+				},
+			},
+			expSuccess: true,
+			expError:   "",
+			expHP:      true,
+			expNA:      true,
+			expPVC:     false,
+		},
 		// Negative test cases.
 		{
 			description: "single vc - S3 - no label error",
@@ -385,6 +439,34 @@ func TestVolumeManager(t *testing.T) {
 			expError:   fmt.Sprintf("awsCredentialsSecretName key has to be set in options"),
 			expHP:      false,
 			expNA:      false,
+			expPVC:     false,
+		},
+		{
+			description: "single vc - Pachyderm - ",
+			volumeConfigs: []crv1.VolumeConfig{
+				{
+					ID:         "vol1",
+					Replicas:   1,
+					SourceType: "Pachyderm",
+					AccessMode: "ReadWriteOnce",
+					Capacity:   "5Gi",
+					Labels: map[string]string{
+						"key1": "val1",
+						"key2": "val2",
+					},
+					Options: map[string]string{
+						"repo":                   "test",
+						"branch":                 "master",
+						"inputPath":              "s3/",
+						"outputPath":             "test",
+						"timeoutForDataDownload": "10s",
+					},
+				},
+			},
+			expSuccess: true,
+			expError:   "",
+			expHP:      true,
+			expNA:      true,
 			expPVC:     false,
 		},
 	}

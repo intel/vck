@@ -248,6 +248,87 @@ func TestHandler(t *testing.T) {
 			},
 			handler: NewNFSHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, &testClient{plural: "persistentvolumeclaims", createShouldFail: true}, fakePVlient}),
 		},
+
+		// Pachyderm handler
+		"[pachyderm_handler] labels not set": {
+			volumeConfig: kvcv1.VolumeConfig{},
+			handler:      NewPachydermHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
+		},
+		"[pachyderm_handler] repo not set": {
+			volumeConfig: kvcv1.VolumeConfig{
+				Labels: map[string]string{"foo": "bar"},
+			},
+			handler: NewPachydermHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
+		},
+		"[pachyderm_handler] branch not set": {
+			volumeConfig: kvcv1.VolumeConfig{
+				Labels:  map[string]string{"foo": "bar"},
+				Options: map[string]string{"repo": "foo"},
+			},
+			handler: NewPachydermHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
+		},
+		"[pachyderm_handler] inputPathnot set": {
+			volumeConfig: kvcv1.VolumeConfig{
+				Labels: map[string]string{"foo": "bar"},
+				Options: map[string]string{
+					"repo":   "foo",
+					"branch": "master",
+				},
+			},
+			handler: NewPachydermHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
+		},
+		"[pachyderm_handler] outputPath not set": {
+			volumeConfig: kvcv1.VolumeConfig{
+				Labels: map[string]string{"foo": "bar"},
+				Options: map[string]string{
+					"repo":      "foo",
+					"branch":    "master",
+					"inputPath": "s3/",
+				},
+			},
+			handler: NewPachydermHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
+		},
+		"[pachyderm_handler] Wrong access mode": {
+			volumeConfig: kvcv1.VolumeConfig{
+				Labels: map[string]string{"foo": "bar"},
+				Options: map[string]string{
+					"repo":       "foo",
+					"branch":     "master",
+					"inputPath":  "s3/",
+					"outputPath": "s3/",
+				},
+				AccessMode: "ReadWriteMany",
+			},
+			handler: NewPachydermHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
+		},
+		"[pachyderm_handler] replicas > Num nodes": {
+			volumeConfig: kvcv1.VolumeConfig{
+				Labels: map[string]string{"foo": "bar"},
+				Options: map[string]string{
+					"repo":       "foo",
+					"branch":     "master",
+					"inputPath":  "s3/",
+					"outputPath": "s3/",
+				},
+				AccessMode: "ReadWriteOnce",
+				Replicas:   2,
+			},
+			handler: NewPachydermHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
+		},
+		"[pachyderm_handler] Any create failed": {
+			volumeConfig: kvcv1.VolumeConfig{
+				Labels: map[string]string{"foo": "bar"},
+				Options: map[string]string{
+					"repo":       "foo",
+					"branch":     "master",
+					"inputPath":  "s3/",
+					"outputPath": "s3/",
+				},
+				AccessMode: "ReadWriteOnce",
+				Replicas:   1,
+			},
+			handler: NewPachydermHandler(fakek8sClient, []resource.Client{&testClient{plural: "pods", createShouldFail: true}, fakeNodeClient, fakePVClient, fakePVlient}),
+		},
 	}
 
 	for key, tc := range testCases {
