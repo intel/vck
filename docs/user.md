@@ -30,7 +30,7 @@ No resources found.
 ```
 
 Also check if the Controller is installed in your namespace:
-```
+```sh
 $ helm list
 NAME            	REVISION	UPDATED                 	STATUS  	CHART                        	NAMESPACE
 kvc-ashahba     	1       	Thu Apr 26 13:10:36 2018	DEPLOYED	kube-volume-controller-v0.1.0	ashahba
