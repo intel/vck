@@ -29,6 +29,13 @@ $ kubectl get volumemanagers
 No resources found.
 ```
 
+Also check if the Controller is installed in your namespace:
+```
+$ helm list
+NAME            	REVISION	UPDATED                 	STATUS  	CHART                        	NAMESPACE
+kvc-ashahba     	1       	Thu Apr 26 13:10:36 2018	DEPLOYED	kube-volume-controller-v0.1.0	ashahba
+```
+
 If not follow the instructions in the [operator manual][ops-doc] first.
 
 Set your current context to use the same namespace as the controller.

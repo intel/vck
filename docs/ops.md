@@ -24,7 +24,7 @@ $ kubectl create namespace <insert-namespace-here>
 $ kubectl config set-context $(kubectl config current-context) --namespace=<insert-namespace-here>
 ```
 
-## Installing the Controller
+## Installing the Controller for the first time
 
 Clone the repo and specify the namespace within `<>` to install KVC:
 
@@ -86,27 +86,35 @@ NAME                            AGE
 volumemanagers.kvc.kubeflow.org   1h
 ```
 
-### Installing KVC in multiple namespaces
+### Installing KVC Controller in your namespaces
 
-KVC can be installed in multiple namespaces on a Kubernetes cluster. Once KVC is installed in one Kubernetes namespace, subsequent installations in additional namespaces no longer require the `clusterrole`, or `storageclass` to be enabled:
+Once KVC is installed in one Kubernetes namespace and in order to use it in another namespace, KVC controller needs to be installed in the new namespace, but subsequent installations no longer require the `clusterrole`, or `storageclass` to be enabled:
 
-```
-$ helm install helm-charts/kube-volume-controller/ -n kvc --wait \
+```sh
+$ YOUR_NAMESPACE=<your_namespace>
+$ helm install helm-charts/kube-volume-controller/ -n kvc-${YOUR_NAMESPACE} --wait \
   --set clusterrole.install=false \
   --set storageclass.install=false \
   --set crd.install=false \
-  --set namespace=<kvc_namespace>
+  --set namespace=${YOUR_NAMESPACE}
 ```
 
 ### Custom Helm Options in KVC
 
 Any helm chart values can be configured via `--set key=value` in the helm command. For example, you can specify KVC version via `--set tag="v0.1.0"` and enable logging via `--set log_level=4`:
 
-```
+```sh
 $ helm install helm-charts/kube-volume-controller/ -n kvc --wait \
   --set tag="v0.1.0" \
   --set log_level=4 \
   --set namespace=<kvc_namespace>
+```
+
+### Deleting KVC Controller from your namespace
+If you need to uninstall the Controller from your namespace try running the command:
+
+```sh
+helm delete --purge <YOUR_KVC>
 ```
 
 For a complete list of parameters, please review the [helm values file][helm-values] for additional information.
