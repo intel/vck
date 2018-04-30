@@ -4,7 +4,7 @@
     * [Prerequisites](#prerequisites)
     * [Before You Begin](#before-you-begin)
     * [Installing the Controller for the first time](#installing-the-controller-for-the-first-time)
-      * [Installing KVC Controller in your namespaces](#installing-kvc-in-your-namespaces)
+      * [Installing KVC Controller in your namespaces](#installing-kvc-controller-in-your-namespaces)
       * [Custom Helm Options in KVC](#custom-helm-options-in-kvc)
       * [Deleting KVC Controller from your namespace](#deleting-kvc-controller-from-your-namespace)
 
