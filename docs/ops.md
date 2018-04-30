@@ -3,9 +3,10 @@
   * [Operator Manual: Kubernetes Volume Controller (KVC)](#operator-manual-kubernetes-volume-controller-kvc)
     * [Prerequisites](#prerequisites)
     * [Before You Begin](#before-you-begin)
-    * [Installing the Controller](#installing-the-controller)
-      * [Installing KVC in multiple namespaces](#installing-kvc-in-multiple-namespaces)
+    * [Installing the Controller for the first time](#installing-the-controller-for-the-first-time)
+      * [Installing KVC Controller in your namespaces](#installing-kvc-in-your-namespaces)
       * [Custom Helm Options in KVC](#custom-helm-options-in-kvc)
+      * [Deleting KVC Controller from your namespace](#deleting-kvc-controller-from-your-namespace)
 
 ## Prerequisites
 
@@ -114,7 +115,8 @@ $ helm install helm-charts/kube-volume-controller/ -n kvc --wait \
 If you need to uninstall the Controller from your namespace try running the command:
 
 ```sh
-helm delete --purge <YOUR_KVC>
+$ YOUR_NAMESPACE=<your_namespace>
+$helm delete --purge kvc-${YOUR_NAMESPACE}
 ```
 
 For a complete list of parameters, please review the [helm values file][helm-values] for additional information.
