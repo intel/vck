@@ -131,6 +131,7 @@ func (h *s3DevHandler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef met
 			KVCName             string
 			KVCStorageClassName string
 			PVType              string
+			KVCOp               string
 			RecursiveOption     string
 			BucketName          string
 			BucketPath          string
@@ -143,6 +144,7 @@ func (h *s3DevHandler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef met
 			kvcName,
 			"kvc",
 			"local",
+			"add",
 			recursiveFlag,
 			bucketName,
 			bucketPath,
@@ -179,7 +181,7 @@ func (h *s3DevHandler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef met
 	}
 }
 
-func (h *s3DevHandler) OnDelete(ns string, vc kvcv1.VolumeConfig, controllerRef metav1.OwnerReference) {
+func (h *s3DevHandler) OnDelete(ns string, vc kvcv1.VolumeConfig, vStatus kvcv1.Volume, controllerRef metav1.OwnerReference) {
 	podClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "pods")
 	podList, err := podClient.List(ns, vc.Labels)
 	if err != nil {

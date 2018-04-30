@@ -174,7 +174,9 @@ The following source types are currently implemented:
 * S3: Files present in an S3 bucket and provided as `volumeConfig.sourceURL` in the CR are downloaded/synced onto the number of nodes equal to `volumeConfig.replicas` and made available as a hostPath volume. Node affinity details are provided through `volume.nodeAffinity` to guide the scheduling of pods.
 * NFS: The path exported by an NFS server is mounted and made available as a PVC.
 
-NOTE: For minio configure the setting `volumeConfig.endpointURL` to point to your minio service url.
+_NOTES: 
+For minio configure the setting `volumeConfig.endpointURL` to point to your minio service url.
+When the CR for S3 source type is deleted, all the replicated data is also deleted. Care should be taken when deleting CRs as objects, such as pods, using the CR will lose the data._
 
 For examples on how to define and use the different types, please refer to the examples in [resources][resources-dir].
 

@@ -21,7 +21,7 @@ func (tdh *testDataHandler) OnAdd(namespace string, vc kvcv1.VolumeConfig, contr
 	return kvcv1.Volume{}
 }
 
-func (tdh *testDataHandler) OnDelete(namespace string, vc kvcv1.VolumeConfig, controllerRef metav1.OwnerReference) {
+func (tdh *testDataHandler) OnDelete(namespace string, vc kvcv1.VolumeConfig, vStatus kvcv1.Volume, controllerRef metav1.OwnerReference) {
 	tdh.deleteCalled = true
 }
 

@@ -3,6 +3,7 @@ kind: Pod
 metadata:
   name: "{{.KVCName}}"
   namespace: "{{.NS}}"
+{{ if eq .KVCOp "add" }}
   ownerReferences:
   - apiVersion: {{.APIVersion}}
     kind: {{.Kind}}
@@ -10,32 +11,41 @@ metadata:
     uid: {{.UID}}
     controller: {{.Controller}}
     blockOwnerDeletion: {{.BlockOwnerDeletion}}
+{{ end }}
   labels:
 {{ range $key, $val := .Labels }}
     "{{ $key }}": "{{ $val }}"
 {{ end }}
-    "kvcname": "{{.KVCName}}"
+    "kvcname": "{{.Name}}"
+    "vcid": "{{.ID}}"
 spec:
   affinity:
+{{ if eq .KVCOp "delete" }}
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: {{.KVCNodeLabelKey}}
+            operator: Exists
+{{ end }}
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
       - labelSelector:
           matchExpressions:
-{{ range $key, $val := .Labels }}
-          - key: {{ $key }}
-            operator: In
-            values:
-            - {{ $val }}
-{{ end }}
           - key: kvcname
             operator: In
             values:
-            - {{.KVCName}}
+            - {{.Name}}
+          - key: vcid
+            operator: In
+            values:
+            - {{.ID}}
         topologyKey: kubernetes.io/hostname
   volumes:
     - name: dataset-root
       hostPath:
         path: {{index .Options "dataPath"}}
+{{ if eq .KVCOp "add" }}
   initContainers:
   - image: minio/mc:RELEASE.2018-02-09T23-07-36Z
     imagePullPolicy: "Always"
@@ -48,16 +58,23 @@ spec:
     env:
     - name: DATA_PATH
       value: {{ index .KVCOptions "path" }}
+{{ end  }}
   containers:
   - image: minio/mc:RELEASE.2018-02-09T23-07-36Z
     imagePullPolicy: "Always"
     command: ["/bin/sh"]
+{{ if eq .KVCOp "add" }}
     args: ["-c", "mc config host add s3 ${AWS_ENDPOINT_URL} ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY}; mc cp ${RECURSIVE_OPTION} s3/${BUCKET_NAME}${BUCKET_PATH} ${DATA_PATH}"]
+{{ end  }}
+{{ if eq .KVCOp "delete" }}
+    args: ["-c", "rm -rf ${DATA_PATH}"]
+{{ end  }}
     name: kvc-s3-sync-container
     volumeMounts:
     - mountPath: {{index .Options "dataPath"}}
       name: dataset-root
     env:
+{{ if eq .KVCOp "add" }}
     - name: AWS_ACCESS_KEY_ID
       valueFrom:
         secretKeyRef:
@@ -76,8 +93,9 @@ spec:
       value: {{.BucketName}}
     - name: BUCKET_PATH
       value: {{.BucketPath}}
-    - name: DATA_PATH
-      value: {{ index .KVCOptions "path" }}
     - name: RECURSIVE_OPTION
       value: {{.RecursiveOption}}
+{{ end  }}
+    - name: DATA_PATH
+      value: {{ index .KVCOptions "path" }}
   restartPolicy: "Never"
