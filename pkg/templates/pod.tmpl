@@ -41,6 +41,51 @@ spec:
             values:
             - {{.ID}}
         topologyKey: kubernetes.io/hostname
+{{ if eq .KVCOp "add" }}
+  {{ if .NodeAffinity }}
+    nodeAffinity:
+      {{ if .NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution }}
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        {{ range $nodeSelectorTerm := .NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms }}
+        - matchExpressions:
+          {{ range $nodeSelectorRequirement := $nodeSelectorTerm.MatchExpressions }}
+          - key: {{ $nodeSelectorRequirement.Key }}
+            operator: {{ $nodeSelectorRequirement.Operator }}
+            values:
+            {{ range $value := $nodeSelectorRequirement.Values }}
+            - {{ $value }}
+            {{ end }}
+          {{ end }}
+        {{end}}
+      {{ end }}
+      {{ if .NodeAffinity.PreferredDuringSchedulingIgnoredDuringExecution }}
+      preferredDuringSchedulingIgnoredDuringExecution:
+        {{ range $preferred := .NodeAffinity.PreferredDuringSchedulingIgnoredDuringExecution }}
+        - weight: {{ $preferred.Weight }}
+          preference:
+            matchExpressions:
+            {{ range $nodeSelectorRequirement := $preferred.Preference.MatchExpressions }}
+            - key: {{ $nodeSelectorRequirement.Key }}
+              operator: {{ $nodeSelectorRequirement.Operator }}
+              values:
+              {{ range $value := $nodeSelectorRequirement.Values }}
+              - {{ $value }}
+              {{ end }}
+            {{ end }}
+        {{ end }}
+      {{ end }}
+  {{ end }}
+{{ if .Tolerations }}
+  tolerations:
+    {{ range $toleration := .Tolerations }}
+    - key: {{ $toleration.Key }}
+      value: {{ $toleration.Value }}
+      operator: {{ $toleration.Operator }}
+      effect: {{ $toleration.Effect }}
+    {{ end }}
+{{ end }}
+{{ end }}
   volumes:
     - name: dataset-root
       hostPath:

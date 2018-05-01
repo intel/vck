@@ -10,6 +10,10 @@ spec:
       sourceType: "S3"
       sourceURL: "s3://neon-stockdatasets/cifar-100-python.tar.gz"
       accessMode: "ReadWriteOnce"
+      nodeAffinity:
+        - <insert-node-affinity-here>
+      tolerations:
+        - <insert-tolerations-here>
       capacity: 5Gi
       labels:
         key1: val1

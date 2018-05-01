@@ -11,6 +11,10 @@ spec:
       sourceURL: "s3://neon-stockdatasets/cifar-100-python.tar.gz"
       endpointURL: "minio-svc.default:9000"
       accessMode: "ReadWriteOnce"
+      nodeAffinity:
+        - <insert-node-affinity-here>
+      tolerations:
+        - <insert-tolerations-here>
       capacity: 5Gi
       labels:
         key1: val1
