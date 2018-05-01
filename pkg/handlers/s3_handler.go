@@ -123,21 +123,19 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 		err = podClient.Create(ns, struct {
 			kvcv1.VolumeConfig
 			metav1.OwnerReference
-			NS                  string
-			KVCName             string
-			KVCStorageClassName string
-			PVType              string
-			RecursiveOption     string
-			BucketName          string
-			BucketPath          string
-			KVCOptions          map[string]string
+			NS              string
+			KVCName         string
+			KVCOp           string
+			RecursiveOption string
+			BucketName      string
+			BucketPath      string
+			KVCOptions      map[string]string
 		}{
 			vc,
 			controllerRef,
 			ns,
 			kvcName,
-			"kvc",
-			"",
+			"add",
 			recursiveFlag,
 			bucketName,
 			bucketPath,
@@ -155,6 +153,7 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 	}
 
 	usedNodeNames := []string{}
+	nodeLabelKey := fmt.Sprintf("%s/%s-%s-%s", kvcv1.GroupName, ns, controllerRef.Name, vc.ID)
 	for _, kvcName := range kvcNames {
 		err := waitForPodSuccess(podClient, kvcName, ns, timeout)
 		if err != nil {
@@ -191,7 +190,7 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 			}
 		}
 		// update nodes with the correct label
-		err = updateNodeWithLabels(nodeClient, node.(*corev1.Node), []string{fmt.Sprintf("%s/%s-%s", kvcv1.GroupName, ns, controllerRef.Name)}, "add")
+		err = updateNodeWithLabels(nodeClient, node.(*corev1.Node), []string{nodeLabelKey}, "add")
 
 		if err != nil {
 			return kvcv1.Volume{
@@ -215,7 +214,7 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 					{
 						MatchExpressions: []corev1.NodeSelectorRequirement{
 							{
-								Key:      fmt.Sprintf("%s/%s-%s", kvcv1.GroupName, ns, controllerRef.Name),
+								Key:      nodeLabelKey,
 								Operator: corev1.NodeSelectorOpExists,
 							},
 						},
@@ -227,8 +226,52 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 	}
 }
 
-func (h *s3Handler) OnDelete(ns string, vc kvcv1.VolumeConfig, controllerRef metav1.OwnerReference) {
+func (h *s3Handler) OnDelete(ns string, vc kvcv1.VolumeConfig, vStatus kvcv1.Volume, controllerRef metav1.OwnerReference) {
+	nodeLabelKey := fmt.Sprintf("%s/%s-%s-%s", kvcv1.GroupName, ns, controllerRef.Name, vc.ID)
 	podClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "pods")
+
+	if vStatus.VolumeSource != (corev1.VolumeSource{}) {
+		kvcNames := []string{}
+		for i := 0; i < vc.Replicas; i++ {
+			kvcName := fmt.Sprintf("%s%s", kvcNamePrefix, uuid.NewUUID())
+			kvcNames = append(kvcNames, kvcName)
+
+			err := podClient.Create(ns, struct {
+				kvcv1.VolumeConfig
+				metav1.OwnerReference
+				NS              string
+				KVCName         string
+				KVCOp           string
+				KVCNodeLabelKey string
+				KVCOptions      map[string]string
+			}{
+				vc,
+				controllerRef,
+				ns,
+				kvcName,
+				"delete",
+				nodeLabelKey,
+				map[string]string{
+					"path": vStatus.VolumeSource.HostPath.Path,
+				},
+			})
+
+			if err != nil {
+				glog.Warningf("error during sub-resource [%s] deletion: %v", podClient.Plural(), err)
+			}
+		}
+
+		timeout, _ := time.ParseDuration("3m")
+		for _, kvcName := range kvcNames {
+			err := waitForPodSuccess(podClient, kvcName, ns, timeout)
+			if err != nil {
+				// TODO(balajismaniam): append pod logs to this message if possible.
+				glog.Warningf("error during data deletion using pod [name: %v]: %v", kvcName, err)
+			}
+			podClient.Delete(ns, kvcName)
+		}
+	}
+
 	podList, err := podClient.List(ns, vc.Labels)
 	if err != nil {
 		glog.Warningf("[s3-handler] OnDelete: error while listing resource [%s], %v", podClient.Plural(), err)
@@ -249,7 +292,7 @@ func (h *s3Handler) OnDelete(ns string, vc kvcv1.VolumeConfig, controllerRef met
 	nodeClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "nodes")
 
 	// Get the node list based on the label
-	nodeList, err := nodeClient.List("", map[string]string{fmt.Sprintf("%s/%s-%s", kvcv1.GroupName, ns, controllerRef.Name): "true"})
+	nodeList, err := nodeClient.List("", map[string]string{nodeLabelKey: "true"})
 	if err != nil {
 		glog.Warningf("[s3-handler] OnDelete: error while listing nodes %v", err)
 		return
@@ -257,13 +300,12 @@ func (h *s3Handler) OnDelete(ns string, vc kvcv1.VolumeConfig, controllerRef met
 	nodeNames := getNodeNames(nodeList)
 
 	for _, nodeName := range nodeNames {
-
 		node, err := nodeClient.Get("", nodeName)
 		if err != nil {
 			glog.Warningf("[s3-handler] OnDelete: error while getting node: %v", err)
 		}
 
-		err = updateNodeWithLabels(nodeClient, node.(*corev1.Node), []string{fmt.Sprintf("%s/%s-%s", kvcv1.GroupName, ns, controllerRef.Name)}, "delete")
+		err = updateNodeWithLabels(nodeClient, node.(*corev1.Node), []string{nodeLabelKey}, "delete")
 		if err != nil {
 			glog.Warningf("[s3-handler] OnDelete: error while deleting label for node nodes %v", err)
 		}

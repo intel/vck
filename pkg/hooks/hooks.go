@@ -137,9 +137,9 @@ func (h *VolumeManagerHooks) Update(oldObj, newObj interface{}) {
 	if newVolumeManager.Status.State == states.Failed {
 		// Delete all the sub-resources.
 		for _, handler := range h.dataHandlers {
-			for _, vConfig := range newVolumeManager.Spec.VolumeConfigs {
+			for idx, vConfig := range newVolumeManager.Spec.VolumeConfigs {
 				if handler.GetSourceType() == vConfig.SourceType {
-					handler.OnDelete(newVolumeManager.Namespace, vConfig, *controllerRef)
+					handler.OnDelete(newVolumeManager.Namespace, vConfig, newVolumeManager.Status.Volumes[idx], *controllerRef)
 				}
 			}
 		}
@@ -157,9 +157,9 @@ func (h *VolumeManagerHooks) Delete(obj interface{}) {
 
 	controllerRef := metav1.NewControllerRef(volumeManager, kvcv1.GVK)
 	for _, handler := range h.dataHandlers {
-		for _, vConfig := range volumeManager.Spec.VolumeConfigs {
+		for idx, vConfig := range volumeManager.Spec.VolumeConfigs {
 			if handler.GetSourceType() == vConfig.SourceType {
-				handler.OnDelete(volumeManager.Namespace, vConfig, *controllerRef)
+				handler.OnDelete(volumeManager.Namespace, vConfig, volumeManager.Status.Volumes[idx], *controllerRef)
 			}
 		}
 	}

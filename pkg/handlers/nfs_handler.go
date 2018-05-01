@@ -114,7 +114,7 @@ func (h *nfsHandler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav
 	}
 }
 
-func (h *nfsHandler) OnDelete(ns string, vc kvcv1.VolumeConfig, controllerRef metav1.OwnerReference) {
+func (h *nfsHandler) OnDelete(ns string, vc kvcv1.VolumeConfig, vStatus kvcv1.Volume, controllerRef metav1.OwnerReference) {
 	for _, client := range h.k8sResourceClients {
 		if client.Plural() == "nodes" || client.Plural() == "pods" {
 			continue

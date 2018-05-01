@@ -10,7 +10,7 @@ import (
 type DataHandler interface {
 	GetSourceType() kvcv1.DataSourceType
 	OnAdd(namespace string, vc kvcv1.VolumeConfig, controllerRef metav1.OwnerReference) kvcv1.Volume
-	OnDelete(namespace string, vc kvcv1.VolumeConfig, controllerRef metav1.OwnerReference)
+	OnDelete(namespace string, vc kvcv1.VolumeConfig, vStatus kvcv1.Volume, controllerRef metav1.OwnerReference)
 }
 
 const (
