@@ -14,10 +14,10 @@ import (
 
 	"github.com/golang/glog"
 
+	"bytes"
+	"encoding/binary"
 	kvcv1 "github.com/kubeflow/experimental-kvc/pkg/apis/kvc/v1"
 	"github.com/kubeflow/experimental-kvc/pkg/resource"
-	"encoding/binary"
-	"bytes"
 	"os"
 )
 
