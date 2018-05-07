@@ -15,10 +15,8 @@ import (
 	"github.com/golang/glog"
 
 	"bytes"
-	"encoding/binary"
 	kvcv1 "github.com/kubeflow/experimental-kvc/pkg/apis/kvc/v1"
 	"github.com/kubeflow/experimental-kvc/pkg/resource"
-	"os"
 )
 
 const (
@@ -165,14 +163,14 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 			readCloser, _ := req.Stream()
 
 			defer readCloser.Close()
-			log_buf := new(bytes.Buffer)
+			logBuf := new(bytes.Buffer)
 
-			io.Copy(log_buf, readCloser)
+			io.Copy(logBuf, readCloser)
 
 			return kvcv1.Volume{
 				ID: vc.ID,
 				// TODO(balajismaniam): append pod logs to this message if possible.
-				Message: fmt.Sprintf("error during data download using pod [name: %v]: %v", kvcName, log_buf.String()),
+				Message: fmt.Sprintf("error during data download using pod [name: %v]: %v", kvcName, logBuf.String()),
 			}
 		}
 
