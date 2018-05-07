@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"io"
 	"net/url"
 	"strings"
 	"time"
@@ -15,6 +16,9 @@ import (
 
 	kvcv1 "github.com/kubeflow/experimental-kvc/pkg/apis/kvc/v1"
 	"github.com/kubeflow/experimental-kvc/pkg/resource"
+	"encoding/binary"
+	"bytes"
+	"os"
 )
 
 const (
@@ -157,10 +161,18 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 	for _, kvcName := range kvcNames {
 		err := waitForPodSuccess(podClient, kvcName, ns, timeout)
 		if err != nil {
+			req := h.k8sClientset.CoreV1().RESTClient().Get().Namespace(ns).Name(kvcName).Resource("pods").SubResource("log")
+			readCloser, _ := req.Stream()
+
+			defer readCloser.Close()
+			log_buf := new(bytes.Buffer)
+
+			io.Copy(log_buf, readCloser)
+
 			return kvcv1.Volume{
 				ID: vc.ID,
 				// TODO(balajismaniam): append pod logs to this message if possible.
-				Message: fmt.Sprintf("error during data download using pod [name: %v]: %v", kvcName, err),
+				Message: fmt.Sprintf("error during data download using pod [name: %v]: %v", kvcName, log_buf.String()),
 			}
 		}
 
