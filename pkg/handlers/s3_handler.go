@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"io"
 	"net/url"
 	"strings"
 	"time"
@@ -165,7 +164,7 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 			defer readCloser.Close()
 			logBuf := new(bytes.Buffer)
 
-			io.Copy(logBuf, readCloser)
+			logBuf.ReadFrom(readCloser)
 
 			return kvcv1.Volume{
 				ID: vc.ID,
