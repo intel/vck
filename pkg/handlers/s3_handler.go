@@ -159,7 +159,7 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 		err := waitForPodSuccess(podClient, kvcName, ns, timeout)
 		if err != nil {
 			req := h.k8sClientset.CoreV1().RESTClient().Get().Namespace(ns).Name(kvcName).Resource("pods").SubResource("log")
-			readCloser, _ := req.Stream()
+			readCloser, streamErr := req.Stream()
 
 			if readCloser != nil {
 				defer readCloser.Close()
@@ -177,7 +177,7 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 			return kvcv1.Volume{
 				ID: vc.ID,
 				// TODO(balajismaniam): append pod logs to this message if possible.
-				Message: fmt.Sprintf("error during data download using pod [name: %v]: %v", kvcName, err),
+				Message: fmt.Sprintf("error during data download using pod [name: %v]: %v", kvcName, streamErr),
 			}
 		}
 
