@@ -169,15 +169,13 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 				logBuf.ReadFrom(readCloser)
 
 				return kvcv1.Volume{
-					ID: vc.ID,
-					// TODO(balajismaniam): append pod logs to this message if possible.
+					ID:      vc.ID,
 					Message: fmt.Sprintf("error during data download using pod [name: %v]: %v", kvcName, logBuf.String()),
 				}
 			}
 			return kvcv1.Volume{
-				ID: vc.ID,
-				// TODO(balajismaniam): append pod logs to this message if possible.
-				Message: fmt.Sprintf("error during data download using pod [name: %v]: %v", kvcName, streamErr),
+				ID:      vc.ID,
+				Message: fmt.Sprintf("error during data download and while streaming logs for pod [name: %v]: %v", kvcName, streamErr),
 			}
 		}
 
