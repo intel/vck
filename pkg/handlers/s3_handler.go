@@ -180,11 +180,8 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 			readCloser, streamErr := logReq.Stream()
 			if readCloser != nil {
 				defer readCloser.Close()
-
 				logBuf := new(bytes.Buffer)
-
 				logBuf.ReadFrom(readCloser)
-
 				return kvcv1.Volume{
 					ID:      vc.ID,
 					Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, kvcName, logBuf.String()),
