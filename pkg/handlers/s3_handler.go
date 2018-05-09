@@ -157,10 +157,27 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 	nodeLabelKey := fmt.Sprintf("%s/%s-%s-%s", kvcv1.GroupName, ns, controllerRef.Name, vc.ID)
 	for _, kvcName := range kvcNames {
 		err := waitForPodSuccess(podClient, kvcName, ns, timeout)
-		if err != nil {
-			req := h.k8sClientset.CoreV1().RESTClient().Get().Namespace(ns).Name(kvcName).Resource("pods").SubResource("log")
-			readCloser, streamErr := req.Stream()
 
+		if err != nil {
+			downloadErrMsg := "error during data download and failed to fetch logs for pod"
+
+			podsResource, podErr := h.k8sClientset.CoreV1().RESTClient().Get().Namespace(ns).Name(kvcName).Resource("pods")
+			if podErr != nil {
+				return kvcv1.Volume{
+					ID:      vc.ID,
+					Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, kvcName, "getting pod resource failed"),
+				}
+			}
+
+			logReq, logErr := podsResource.SubResource("log")
+			if logErr != nil {
+				return kvcv1.Volume{
+					ID:      vc.ID,
+					Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, kvcName, "getting logs sub-resource failed"),
+				}
+			}
+
+			readCloser, streamErr := logReq.Stream()
 			if readCloser != nil {
 				defer readCloser.Close()
 
@@ -170,12 +187,19 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 
 				return kvcv1.Volume{
 					ID:      vc.ID,
-					Message: fmt.Sprintf("error during data download using pod [name: %v]: %v", kvcName, logBuf.String()),
+					Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, kvcName, logBuf.String()),
 				}
 			}
+			if streamErr != nil {
+				return kvcv1.Volume{
+					ID:      vc.ID,
+					Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, kvcName, streamErr),
+				}
+			}
+
 			return kvcv1.Volume{
 				ID:      vc.ID,
-				Message: fmt.Sprintf("error during data download and while streaming logs for pod [name: %v]: %v", kvcName, streamErr),
+				Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, kvcName, "unknown error occurred"),
 			}
 		}
 
