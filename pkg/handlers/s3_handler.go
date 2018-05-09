@@ -161,16 +161,16 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 		if err != nil {
 			downloadErrMsg := "error during data download and failed to fetch logs for pod"
 
-			podsResource, podErr := h.k8sClientset.CoreV1().RESTClient().Get().Namespace(ns).Name(kvcName).Resource("pods")
-			if podErr != nil {
+			podResource := h.k8sClientset.CoreV1().RESTClient().Get().Namespace(ns).Name(kvcName).Resource("pods")
+			if podResource == nil {
 				return kvcv1.Volume{
 					ID:      vc.ID,
 					Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, kvcName, "getting pod resource failed"),
 				}
 			}
 
-			logReq, logErr := podsResource.SubResource("log")
-			if logErr != nil {
+			logReq := podResource.SubResource("log")
+			if logReq == nil {
 				return kvcv1.Volume{
 					ID:      vc.ID,
 					Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, kvcName, "getting logs sub-resource failed"),
