@@ -159,13 +159,13 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 		err := waitForPodSuccess(podClient, kvcName, ns, timeout)
 
 		if err != nil {
-			downloadErrMsg := "error during data download and failed to fetch logs for pod"
+			downloadErrMsg := "error during data download using pod"
 
 			podResource := h.k8sClientset.CoreV1().RESTClient().Get().Namespace(ns).Name(kvcName).Resource("pods")
 			if podResource == nil {
 				return kvcv1.Volume{
 					ID:      vc.ID,
-					Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, kvcName, "getting pod resource failed"),
+					Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, kvcName, err),
 				}
 			}
 
@@ -173,30 +173,24 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 			if logReq == nil {
 				return kvcv1.Volume{
 					ID:      vc.ID,
-					Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, kvcName, "getting logs sub-resource failed"),
+					Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, kvcName, err),
 				}
 			}
 
-			readCloser, streamErr := logReq.Stream()
-			if readCloser != nil {
-				defer readCloser.Close()
-				logBuf := new(bytes.Buffer)
-				logBuf.ReadFrom(readCloser)
+			readCloser, logErr := logReq.Stream()
+			if logErr != nil {
 				return kvcv1.Volume{
 					ID:      vc.ID,
-					Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, kvcName, logBuf.String()),
-				}
-			}
-			if streamErr != nil {
-				return kvcv1.Volume{
-					ID:      vc.ID,
-					Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, kvcName, streamErr),
+					Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, kvcName, err),
 				}
 			}
 
+			defer readCloser.Close()
+			logBuf := new(bytes.Buffer)
+			logBuf.ReadFrom(readCloser)
 			return kvcv1.Volume{
 				ID:      vc.ID,
-				Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, kvcName, "unknown error occurred"),
+				Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, kvcName, logBuf.String()),
 			}
 		}
 
