@@ -271,7 +271,7 @@ func TestVolumeManager(t *testing.T) {
 			expNA:      false,
 			expPVC:     false,
 		},
-        // For a list of invalid IP addresses see RFC 5737 here: https://tools.ietf.org/html/rfc5737
+		// For a list of invalid IP addresses see RFC 5737 here: https://tools.ietf.org/html/rfc5737
 		{
 			description: "single vc - NFS - server ip is unreachable",
 			volumeConfigs: []crv1.VolumeConfig{
@@ -286,7 +286,7 @@ func TestVolumeManager(t *testing.T) {
 					},
 					Options: map[string]string{
 						"server": "192.0.2.0",
-						"path": "/",
+						"path":   "/",
 					},
 				},
 			},
@@ -296,7 +296,7 @@ func TestVolumeManager(t *testing.T) {
 			expNA:      false,
 			expPVC:     false,
 		},
-        {
+		{
 			description: "single vc - NFS - nfs path is not correct",
 			volumeConfigs: []crv1.VolumeConfig{
 				{
@@ -310,7 +310,7 @@ func TestVolumeManager(t *testing.T) {
 					},
 					Options: map[string]string{
 						"server": *nfsServerIP,
-						"path": "/invalidnfspath",
+						"path":   "/invalidnfspath",
 					},
 				},
 			},
