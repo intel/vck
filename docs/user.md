@@ -282,6 +282,13 @@ source types is given below.
       persistentVolumeClaim:
         claimName: kvc-resource-a150fd63-11c4-11e8-8397-0a580a440340
   ```
+  ### Caveats ###
+    Please keep in mind that during Persistent Volume creation, Kubernetes does not validate the `server` or `path` provided by configuration file and for that reason `KVC` follows the same practice.
+    Users are required to ensure servers are routable and paths are valid prior to creatting the volume, otherwise the only way to find out volume creation was successful is during first usage of the claim.
+    In case an invalid `server` or `path` is used, Kubernetes publishes an event similar to the following during first attempt to use the PVC:
+    ```shell
+    Unable to mount volumes for pod : timeout expired waiting for volumes to attach/mount for pod ...
+    ```
 
 To add a new source type, a new handler specific to the source type is required. Please refer to the [developer manual][dev-doc] for more details.
 
