@@ -389,6 +389,7 @@ func TestVolumeManager(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
+        fmt.Printf("########## RUNNING TEST: %v ##########\n", testCase.description)
 		volman := makeVolumeManager(testCase.volumeConfigs)
 		createdVolman, err := crdClient.Create(volman)
 		require.Nil(t, err)
