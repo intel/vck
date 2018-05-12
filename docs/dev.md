@@ -98,7 +98,7 @@ cd $GOPATH/src/github.com/kubeflow/experimental-kvc
 
 Now you are ready to make changes and test `KVC` as follows:
 
-```bash
+```
 $ make prereq
 go get -u \
 	github.com/golang/dep/cmd/dep \
