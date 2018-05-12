@@ -6,7 +6,7 @@ set -o pipefail
 
 rm -rf ./vendor/k8s.io/code-generator
 go get -d github.com/kubernetes/code-generator/...
-mv /go/src/k8s.io/code-generator ./vendor/k8s.io/
+mv $GOPATH/src/k8s.io/code-generator ./vendor/k8s.io/
 pushd vendor/k8s.io/code-generator
 git checkout kubernetes-1.9.2
 popd
