@@ -11,7 +11,7 @@
       * [Adding a new sub resource client](#adding-a-new-sub-resource-client)
     * [Docker Containers](#docker-containers)
 
-## Modify, Build and Test KVC
+## Testing and Building
 
 There are several ways to modify `KVC` and test your changes.
 In all cases we assume users have an active `GitHub` account that is properly setup.
