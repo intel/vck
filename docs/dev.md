@@ -14,7 +14,6 @@
 ## Testing and Building
 
 There are several ways to modify `KVC` and test your changes.
-In all cases we assume users have an active `GitHub` account that is properly setup.
 
 ### Using "docker_make" script
 This method is preferred for developers who have `docker` setup and running on their workstation and don't
