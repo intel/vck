@@ -74,9 +74,10 @@ go build -gcflags "-N -l" github.com/kubeflow/experimental-kvc
 This is the preferred method for developers who don't want to run `docker` locally and or don't mind setting up
 `Go` development environment on their workstation.
 
-Prior to using this method please ensure you have `go 1.9.2` or better development environment setup and running.
+Prior to using this method please ensure you have `go 1.9.2` (or better) development environment setup.
+Also make sure `GOROOT`, `GOPATH` and `PATH` environment variables are set to their appropriate values.
 
-For developing on `Linux` add the following lines to your `.bashrc`
+For example on `CentOS 7 or Ubuntu 16` add the following lines to your `.bashrc`
 ```bash
 export GOROOT="/usr/lib/go-1.9"
 export GOPATH="$HOME/go"
@@ -89,15 +90,11 @@ export GOROOT="/usr/local/opt/go/libexec"
 export GOPATH=$HOME/go
 export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 ```
-in both cases, install `mercurial` either using `yum` or `apt-get` or `brew`.
+in both cases, install `mercurial` and `socat` either using `yum` or `apt-get` or `brew`.
 This is because some dependencies live in `bitbucket` repositories.
 
-Then run these commands:
-```bash
-mkdir -p $GOPATH/src/github.com/kubeflow
-ln -s <PATH_TO_KVC> $GOPATH/src/github.com/kubeflow/experimental-kvc
-cd $GOPATH/src/github.com/kubeflow/experimental-kvc
-```
+Finally make sure `KVC` is present at:
+```$GOPATH/src/github.com/kubeflow/experimental-kvc```
 
 Now you are ready to make changes and test `KVC` as follows:
 
@@ -134,7 +131,7 @@ gometalinter --config=./lint.json ./pkg/controller/...
 gometalinter --config=./lint.json ./pkg/handlers/...
 ```
 
-Any many more options provided by `Makefile`.
+And many more options provided by `Makefile`.
 
 ## Adding a New Data Handler
 
