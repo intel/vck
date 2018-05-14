@@ -316,7 +316,7 @@ func TestVolumeManager(t *testing.T) {
 				},
 			},
 			expSuccess: false,
-			expError:   fmt.Sprintf("mc: <ERROR> Unable to validate source"),
+			expError:   fmt.Sprintf("mc: <ERROR> Unable to validate source s3/fake-url"),
 			expHP:      false,
 			expNA:      false,
 			expPVC:     false,
@@ -343,7 +343,7 @@ func TestVolumeManager(t *testing.T) {
 				},
 			},
 			expSuccess: false,
-			expError:   fmt.Sprintf("mc: <ERROR> Unable to validate source"),
+			expError:   fmt.Sprintf("mc: <ERROR> Unable to validate source s3/e2e-test/cifar-100-python.tar.gz"),
 			expHP:      false,
 			expNA:      false,
 			expPVC:     false,
@@ -389,7 +389,7 @@ func TestVolumeManager(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-        fmt.Printf("########## RUNNING TEST: %v ##########\n", testCase.description)
+        fmt.Printf("%v n", testCase.description)
 		volman := makeVolumeManager(testCase.volumeConfigs)
 		createdVolman, err := crdClient.Create(volman)
 		require.Nil(t, err)
