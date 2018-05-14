@@ -17,12 +17,11 @@ There are several ways to modify `KVC` and test your changes.
 In all cases we assume users have an active `GitHub` account that is properly setup.
 
 ### Using "docker_make" script
-Prior to running `docker_make`, please ensure you have `docker` setup and running.
+This method is preferred for developers who have `docker` setup and running on their workstation and don't
+want to install `Go` and modify `environment` variables for it.
 
-The best way to build and test your changes is to use the `docker_make` script.
-The script downloads all the dependencies, runs the linter and the unit tests 
-and builds `kube-volume-controller` in a docker container. Example output is
-shown below:
+The `docker_make` script downloads all the dependencies, runs the linter and the unit tests
+and builds `kube-volume-controller` in a docker container. Example output is shown below:
 
 ```
 $ ./docker_make dep-ensure
@@ -72,7 +71,11 @@ dep ensure
 go build -gcflags "-N -l" github.com/kubeflow/experimental-kvc
 ```
 ### Developing on a workstation
-Prior to using this method please ensure you have a `go 1.9` or better development environment setup and running.
+This is the preferred method for developers who don't want to run `docker` locally and or don't mind setting up
+`Go` development environment on their workstation.
+
+Prior to using this method please ensure you have `go 1.9.2` or better development environment setup and running.
+
 For developing on `Linux` add the following lines to your `.bashrc`
 ```bash
 export GOROOT="/usr/lib/go-1.9"
