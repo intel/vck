@@ -11,6 +11,10 @@ spec:
       sourceURL: "s3://neon-stockdatasets/cifar-100-python.tar.gz"
       accessMode: "ReadWriteOnce"
       capacity: 5Gi
+      nodeAffinity:
+        - <insert-node-affinity-here>
+      tolerations:
+        - <insert-tolerations-here>
       labels:
         key1: val1
         key2: val2
@@ -22,6 +26,10 @@ spec:
       sourceType: "S3"
       sourceURL: "s3://helium-stockdatasets-dev/alexnet.p"
       accessMode: "ReadWriteOnce"
+      nodeAffinity:
+        - <insert-node-affinity-here>
+      tolerations:
+        - <insert-tolerations-here>
       capacity: 5Gi
       labels:
         key3: val3
