@@ -10,6 +10,8 @@ establishes a relationship between volumes and data and provides a way to
 abstract the details away from the user. When using KVC, users 
 are expected to only interact with [custom resources][cr] (CRs).
 
+![KVC overview figure](./docs/images/kvc.png)
+
 ## Further Reading
 
 - [Architecture][arch-doc]
