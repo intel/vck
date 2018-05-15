@@ -12,10 +12,15 @@
     * [Docker Containers](#docker-containers)
 
 ## Testing and Building
-The best way to build and test your changes is to use the `docker_make` script.
-The script downloads all the dependencies, runs the linter and the unit tests 
-and builds `kube-volume-controller` in a docker container. Example output is
-shown below:
+
+There are several ways to modify `KVC` and test your changes.
+
+### Using "docker_make" script
+This method is preferred for developers who have `docker` setup and running on their workstation and don't
+want to install `Go` and modify `environment` variables for it.
+
+The `docker_make` script downloads all the dependencies, runs the linter and the unit tests
+and builds `kube-volume-controller` in a docker container. Example output is shown below:
 
 ```
 $ ./docker_make dep-ensure
@@ -64,6 +69,68 @@ dep ensure
 /go/bin/deepcopy-gen --output-base=/go/src --input-dirs=github.com/kubeflow/experimental-kvc/pkg/apis/cr/v1/...
 go build -gcflags "-N -l" github.com/kubeflow/experimental-kvc
 ```
+### Developing on a workstation
+This is the preferred method for developers who don't want to run `docker` locally and or don't mind setting up
+`Go` development environment on their workstation.
+
+Prior to using this method please ensure you have `go 1.9.2` (or better) development environment setup.
+Also make sure `GOROOT`, `GOPATH` and `PATH` environment variables are set to their appropriate values.
+
+For example on `CentOS 7 or Ubuntu 16` add the following lines to your `.bashrc`
+```bash
+export GOROOT="/usr/lib/go-1.9"
+export GOPATH="$HOME/go"
+export PATH="$PATH:$GOROOT/bin:$GOPATH/bin"
+```
+
+and for `MacOSX` add these lines to your `.bashrc`:
+ ```bash
+export GOROOT="/usr/local/opt/go/libexec"
+export GOPATH=$HOME/go
+export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+```
+in both cases, install `mercurial` and `socat` either using `yum` or `apt-get` or `brew`.
+This is because some dependencies live in `bitbucket` repositories.
+
+Finally make sure `KVC` is present at:
+```$GOPATH/src/github.com/kubeflow/experimental-kvc```
+
+Now you are ready to make changes and test `KVC` as follows:
+
+```
+$ make prereq
+go get -u \
+	github.com/golang/dep/cmd/dep \
+	github.com/alecthomas/gometalinter \
+	github.com/kubernetes/gengo/examples/deepcopy-gen
+gometalinter --install
+Installing:
+  deadcode
+  dupl
+  ...
+  unused
+  varcheck
+$ make dep-ensure
+dep ensure
+$ make code-generation
+  ./hack/update-codegen.sh
+  ~/go/src/github.com/kubeflow/experimental-kvc/vendor/k8s.io/code-generator ~/go/src/github.com/kubeflow/experimental-kvc
+  Note: checking out 'kubernetes-1.9.2'.
+  ...
+  Generating clientset for kvc:v1 at github.com/kubeflow/experimental-kvc/pkg/client/clientset
+  Generating listers for kvc:v1 at github.com/kubeflow/experimental-kvc/pkg/client/listers
+  Generating informers for kvc:v1 at github.com/kubeflow/experimental-kvc/pkg/client/informers
+$ make lint
+gometalinter --config=./lint.json --vendor .
+# Disabling golint for apis since it conflicts with the deepcopy-gen
+# annotations.
+gometalinter --config=./lint.json --disable=golint ./pkg/apis/...
+gometalinter --config=./lint.json ./pkg/hooks/...
+gometalinter --config=./lint.json ./pkg/controller/...
+gometalinter --config=./lint.json ./pkg/handlers/...
+```
+
+And many more options provided by `Makefile`.
 
 ## Adding a New Data Handler
 
