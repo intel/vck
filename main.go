@@ -24,6 +24,7 @@ func main() {
 	kubeconfig := flag.String("kubeconfig", "", "Path to a kubeconfig file")
 	namespace := flag.String("namespace", apiv1.NamespaceAll, "Namespace to monitor (Default all)")
 	podTemplateFile := flag.String("podFile", "/etc/volumemanagers/pod.tmpl", "Path to a job template file")
+	pachydermPodTemplateFile := flag.String("pachydermPodFile", "/etc/volumemanagers/pod_pachyderm.tmpl", "Path to a job template file for the pachyderm client")
 	pvTemplateFile := flag.String("pvFile", "/etc/volumemangers/pv.tmpl", "Path to a job template file")
 	pvcTemplateFile := flag.String("pvcFile", "/etc/volumemangers/pvc.tmpl", "Path to a job template file")
 	flag.Set("logtostderr", "true")
@@ -89,17 +90,17 @@ func main() {
 	reify := &reify.Reify{}
 	// The ordering of these resource clients matters. We want the pod to be
 	// deployed last as it will use the PVC created before it.
-	resourceClients := []resource.Client{
-		resource.NewGenericClient(dynClient.Resource(nodeAPIResource, *namespace), "", nodeAPIResource.Name, corev1Scheme, corev1.SchemeGroupVersion, reify),
-		resource.NewGenericClient(dynClient.Resource(pvAPIResource, *namespace), *pvTemplateFile, pvAPIResource.Name, corev1Scheme, corev1.SchemeGroupVersion, reify),
-		resource.NewGenericClient(dynClient.Resource(pvcAPIResource, *namespace), *pvcTemplateFile, pvcAPIResource.Name, corev1Scheme, corev1.SchemeGroupVersion, reify),
-		resource.NewGenericClient(dynClient.Resource(podAPIResource, *namespace), *podTemplateFile, podAPIResource.Name, corev1Scheme, corev1.SchemeGroupVersion, reify),
-	}
+	nodeClient := resource.NewGenericClient(dynClient.Resource(nodeAPIResource, *namespace), "", nodeAPIResource.Name, corev1Scheme, corev1.SchemeGroupVersion, reify)
+	pvClient := resource.NewGenericClient(dynClient.Resource(pvAPIResource, *namespace), *pvTemplateFile, pvAPIResource.Name, corev1Scheme, corev1.SchemeGroupVersion, reify)
+	pvcClient := resource.NewGenericClient(dynClient.Resource(pvcAPIResource, *namespace), *pvcTemplateFile, pvcAPIResource.Name, corev1Scheme, corev1.SchemeGroupVersion, reify)
+	podClient := resource.NewGenericClient(dynClient.Resource(podAPIResource, *namespace), *podTemplateFile, podAPIResource.Name, corev1Scheme, corev1.SchemeGroupVersion, reify)
+	pachydermPodClient := resource.NewGenericClient(dynClient.Resource(podAPIResource, *namespace), *pachydermPodTemplateFile, podAPIResource.Name, corev1Scheme, corev1.SchemeGroupVersion, reify)
 
 	dataHandlers := []handlers.DataHandler{
-		handlers.NewS3Handler(k8sClientset, resourceClients),
-		handlers.NewS3DevHandler(k8sClientset, resourceClients),
-		handlers.NewNFSHandler(k8sClientset, resourceClients),
+		handlers.NewS3Handler(k8sClientset, []resource.Client{nodeClient, pvClient, pvcClient, podClient, podClient}),
+		handlers.NewS3DevHandler(k8sClientset, []resource.Client{nodeClient, pvClient, pvcClient, podClient, podClient}),
+		handlers.NewNFSHandler(k8sClientset, []resource.Client{nodeClient, pvClient, pvcClient, podClient, podClient}),
+		handlers.NewPachydermHandler(k8sClientset, []resource.Client{nodeClient, pvClient, pvcClient, pachydermPodClient}),
 	}
 
 	// Create hooks

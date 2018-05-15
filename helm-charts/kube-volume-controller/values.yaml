@@ -14,6 +14,7 @@ flags:
 - "--podFile=/kvc-templates/pod.tmpl"
 - "--pvFile=/kvc-templates/pv.tmpl"
 - "--pvcFile=/kvc-templates/pvc.tmpl"
+- "--pachydermPodFile=/kvc-templates/pod_pachyderm.tmpl"
 
 # Install cluster role if necessary.
 # Note: ClusterRole is a cluster-scoped object. It might already be installed.

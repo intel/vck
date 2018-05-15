@@ -167,12 +167,13 @@ information on adding a new data handler, read the [developer manual][dev-doc].
 Brief description of source type support is provided below. For more
 information on usage, refer to the [user manual][user-doc].
 
-| Source Type    | Phase    | Description                                                                                                   |
-| :------------- | :--------| :-------------------------------------------------------------------------------------------------------------|
-| S3-Dev         | Supported| KVC will download the files from a specified S3 bucket and make it available for consumption in a node. This source type should only be used for development and testing purposes.      |
-| S3             | Supported| KVC will download the files from a specified S3 bucket and provide nodes where hostPath volumes can be used.  |
-| NFS            | Supported| KVC will make the specified path from an NFS server available for consumption.                                |
-| [Aeon][aeon]   | Design   | -                                                                                                             |
+| Source Type            | Phase    | Description                                                                                                   |
+| :----------------------| :--------| :-------------------------------------------------------------------------------------------------------------|
+| S3-Dev                 | Supported| KVC will download the files from a specified S3 bucket and make it available for consumption in a node. This source type should only be used for development and testing purposes.      |
+| S3                     | Supported| KVC will download the files from a specified S3 bucket and provide nodes where hostPath volumes can be used.  |
+| NFS                    | Supported| KVC will make the specified path from an NFS server available for consumption.                                |
+[ [Pachyderm][pachyderm] | Supported| KVC will download the pachyderm repo data and make it available for consumption on a specified number of nodes|
+| [Aeon][aeon]           | Design   | -                                                                                                             |
 
 [pv]: https://kubernetes.io/docs/concepts/storage/persistent-volumes/
 [pvc]: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims
@@ -189,3 +190,4 @@ information on usage, refer to the [user manual][user-doc].
 [vols]: https://kubernetes.io/docs/concepts/storage/volumes/
 [volsources]: https://github.com/kubernetes/api/blob/master/core/v1/types.go#L250
 [tolerations]: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/#concepts
+[pachyderm]: http://pachyderm.io
