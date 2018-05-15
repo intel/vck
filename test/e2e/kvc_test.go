@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os/user"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -316,7 +317,7 @@ func TestVolumeManager(t *testing.T) {
 				},
 			},
 			expSuccess: false,
-			expError:   "",
+			expError:   fmt.Sprintf("mc: <ERROR> Unable to validate source"),
 			expHP:      false,
 			expNA:      false,
 			expPVC:     false,
@@ -343,7 +344,7 @@ func TestVolumeManager(t *testing.T) {
 				},
 			},
 			expSuccess: false,
-			expError:   "",
+			expError:   fmt.Sprintf("mc: <ERROR> Unable to validate source"),
 			expHP:      false,
 			expNA:      false,
 			expPVC:     false,
@@ -389,6 +390,7 @@ func TestVolumeManager(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
+        fmt.Printf("%v n", testCase.description)
 		volman := makeVolumeManager(testCase.volumeConfigs)
 		createdVolman, err := crdClient.Create(volman)
 		require.Nil(t, err)
@@ -456,7 +458,7 @@ func TestVolumeManager(t *testing.T) {
 			if testCase.expError != "" {
 				gotMessage := false
 				for _, vol := range volman.Status.Volumes {
-					if vol.Message == testCase.expError {
+					if strings.Contains(vol.Message, testCase.expError) {
 						gotMessage = true
 						break
 					}

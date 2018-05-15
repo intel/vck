@@ -13,6 +13,7 @@ import (
 
 	"github.com/golang/glog"
 
+	"bytes"
 	kvcv1 "github.com/kubeflow/experimental-kvc/pkg/apis/kvc/v1"
 	"github.com/kubeflow/experimental-kvc/pkg/resource"
 )
@@ -156,11 +157,40 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 	nodeLabelKey := fmt.Sprintf("%s/%s-%s-%s", kvcv1.GroupName, ns, controllerRef.Name, vc.ID)
 	for _, kvcName := range kvcNames {
 		err := waitForPodSuccess(podClient, kvcName, ns, timeout)
+
 		if err != nil {
+			downloadErrMsg := "error during data download using pod"
+
+			podResource := h.k8sClientset.CoreV1().RESTClient().Get().Namespace(ns).Name(kvcName).Resource("pods")
+			if podResource == nil {
+				return kvcv1.Volume{
+					ID:      vc.ID,
+					Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, kvcName, err),
+				}
+			}
+
+			logReq := podResource.SubResource("log")
+			if logReq == nil {
+				return kvcv1.Volume{
+					ID:      vc.ID,
+					Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, kvcName, err),
+				}
+			}
+
+			readCloser, logErr := logReq.Stream()
+			if logErr != nil {
+				return kvcv1.Volume{
+					ID:      vc.ID,
+					Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, kvcName, err),
+				}
+			}
+
+			defer readCloser.Close()
+			logBuf := new(bytes.Buffer)
+			logBuf.ReadFrom(readCloser)
 			return kvcv1.Volume{
-				ID: vc.ID,
-				// TODO(balajismaniam): append pod logs to this message if possible.
-				Message: fmt.Sprintf("error during data download using pod [name: %v]: %v", kvcName, err),
+				ID:      vc.ID,
+				Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, kvcName, logBuf.String()),
 			}
 		}
 
