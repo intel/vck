@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os/user"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -316,7 +317,7 @@ func TestVolumeManager(t *testing.T) {
 				},
 			},
 			expSuccess: false,
-			expError:   fmt.Sprintf("mc: <ERROR> Unable to validate source s3/fake-url"),
+			expError:   fmt.Sprintf("mc: <ERROR> Unable to validate source"),
 			expHP:      false,
 			expNA:      false,
 			expPVC:     false,
@@ -343,7 +344,7 @@ func TestVolumeManager(t *testing.T) {
 				},
 			},
 			expSuccess: false,
-			expError:   fmt.Sprintf("mc: <ERROR> Unable to validate source s3/e2e-test/cifar-100-python.tar.gz"),
+			expError:   fmt.Sprintf("mc: <ERROR> Unable to validate source"),
 			expHP:      false,
 			expNA:      false,
 			expPVC:     false,
@@ -457,7 +458,7 @@ func TestVolumeManager(t *testing.T) {
 			if testCase.expError != "" {
 				gotMessage := false
 				for _, vol := range volman.Status.Volumes {
-					if vol.Message == testCase.expError {
+					if strings.Contains(vol.Message, testCase.expError) {
 						gotMessage = true
 						break
 					}
