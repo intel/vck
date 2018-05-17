@@ -7,17 +7,15 @@ spec:
   volumeConfigs:
     - id: "vol1"
       replicas: 1
-      sourceType: "S3"
-      sourceURL: "s3://neon-stockdatasets/cifar-100-python.tar.gz"
+      sourceType: "Pachyderm"
       accessMode: "ReadWriteOnce"
-      nodeAffinity:
-        - <insert-node-affinity-here>
-      tolerations:
-        - <insert-tolerations-here>
       capacity: 5Gi
       labels:
         key1: val1
         key2: val2
       options:
-        awsCredentialsSecretName: <insert-secret-name-for-aws-credentials>
+        repo: <insert-repo-here>
+        branch: <insert-branch-here>
+        filePath: <insert-filepath-here>
+        # recursive: false
         # dataPath: <insert-data-path-here-optional>"
