@@ -22,7 +22,7 @@ spec:
       serviceAccountName: kvc
       containers:
       - name: kvc
-        image: {{ .Values.registry }}{{ .Values.org }}/{{ .Values.repo }}:{{ int .Values.tag }}
+        image: {{ .Values.registry }}{{ .Values.org }}/{{ .Values.repo }}:{{ .Values.tag }}
         imagePullPolicy: IfNotPresent
         command:
           - "/kvc"
