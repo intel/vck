@@ -335,7 +335,7 @@ source types is given below.
 
 To add a new source type, a new handler specific to the source type is required. Please refer to the [developer manual][dev-doc] for more details.
 
-### KNown issues
+## Known issues
 - The NFS server ip and path are not validated, so please ensure that the servers are routable and paths are valid prior
 to the creation of the VolumeManager CR.
 In case an invalid `server` or `path` is used, Kubernetes publishes an event similar to the
