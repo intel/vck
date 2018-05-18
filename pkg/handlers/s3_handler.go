@@ -73,19 +73,13 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 	// Check if timeout for data download was set and use it.
 	if _, ok := vc.Options["timeoutForDataDownload"]; ok {
 		timeout, err = time.ParseDuration(vc.Options["timeoutForDataDownload"])
-		if err != nil {
+		if err != nil || strings.Compare("5m0s", string(timeout)) != 0 {
 			return kvcv1.Volume{
 				ID:      vc.ID,
 				Message: fmt.Sprintf("error while parsing timeout for data download %v and timeout is %v ", err, timeout),
 			}
 		}
 	}
-	// This is just to add the logs to the pod
-	dummyVar := kvcv1.Volume{
-		ID:      vc.ID,
-		Message: fmt.Sprintf("No error while parsing timeout for data download but the timeout is %v ", timeout),
-	}
-	fmt.Println(dummyVar)
 
 	nodeClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "nodes")
 	nodeList, err := nodeClient.List(ns, map[string]string{})
