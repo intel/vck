@@ -80,10 +80,12 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 			}
 		}
 	}
-	return kvcv1.Volume{
+	// This is just to add the logs to the pod
+	dummyVar := kvcv1.Volume{
 		ID:      vc.ID,
 		Message: fmt.Sprintf("No error while parsing timeout for data download but the timeout is %v ", timeout),
 	}
+	fmt.Println(dummyVar)
 
 	nodeClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "nodes")
 	nodeList, err := nodeClient.List(ns, map[string]string{})
