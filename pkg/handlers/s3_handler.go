@@ -78,12 +78,11 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 				ID:      vc.ID,
 				Message: fmt.Sprintf("error while parsing timeout for data download %v and timeout is %v ", err, timeout),
 			}
-		} else {
-			return kvcv1.Volume{
-				ID:      vc.ID,
-				Message: fmt.Sprintf("No error while parsing timeout for data download but the timeout is %v ", timeout),
-			}
 		}
+	}
+	return kvcv1.Volume{
+		ID:      vc.ID,
+		Message: fmt.Sprintf("No error while parsing timeout for data download but the timeout is %v ", timeout),
 	}
 
 	nodeClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "nodes")
