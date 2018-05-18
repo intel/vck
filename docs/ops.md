@@ -115,7 +115,7 @@ $ helm install helm-charts/kube-volume-controller/ -n kvc --wait \
 #### Installing KVC from tip of a branch
 You can also install `KVC` from feature branches if needed. In this case follow same steps as described above, but set the `tag` option this way:
 ```
---set-string tag="$(git rev-parse --short HEAD)"
+--set-string tag="$(git describe --tags --always --dirty)"
 ```
 
 ### Deleting KVC Controller from your namespace
