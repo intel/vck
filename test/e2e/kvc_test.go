@@ -377,6 +377,33 @@ func TestVolumeManager(t *testing.T) {
 			expPVC:     false,
 		},
 		{
+			description: "single vc - S3 - error while parsing timeout for data download",
+			volumeConfigs: []crv1.VolumeConfig{
+				{
+					ID:          "vol1",
+					Replicas:    1,
+					SourceType:  "S3",
+					SourceURL:   "s3://e2e-test/cifar-100-python.tar.gz",
+					EndpointURL: fmt.Sprintf("http://%s:9000", *s3ServerIP),
+					AccessMode:  "ReadWriteOnce",
+					Capacity:    "5Gi",
+					Labels: map[string]string{
+						"key1": "val1",
+						"key2": "val2",
+					},
+					Options: map[string]string{
+						"awsCredentialsSecretName": "s3-creds",
+						"timeoutForDataDownload":   "10",
+					},
+				},
+			},
+			expSuccess: false,
+			expError:   "error while parsing timeout for data download: time: missing unit in",
+			expHP:      false,
+			expNA:      false,
+			expPVC:     false,
+		},
+		{
 			description: "single vc - S3 - timeout error due to bad endpoint",
 			volumeConfigs: []crv1.VolumeConfig{
 				{
