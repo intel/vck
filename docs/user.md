@@ -7,6 +7,7 @@
     * [Create a Pod using the Custom Resource Status](#create-a-pod-using-the-custom-resource-status)
     * [Create a Deployment using the Custom Resource Status](#create-a-deployment-using-the-custom-resource-status)
     * [Types of Sources](#types-of-sources)
+    * [Known issues](#known-issues)
 
 ## Prerequisites
 
@@ -291,12 +292,6 @@ source types is given below.
       persistentVolumeClaim:
         claimName: kvc-resource-a150fd63-11c4-11e8-8397-0a580a440340
   ```
-  ### Caveats ###
-    The NFS server ip and path are not validated, so please ensure that the servers are routable and paths are valid prior to the creation of the VolumeManager CR.
-    In case an invalid `server` or `path` is used, Kubernetes publishes an event similar to the following during first attempt to use the PVC:
-    ```
-    Unable to mount volumes for pod : timeout expired waiting for volumes to attach/mount for pod ...
-    ```
 
 * Pachyderm:
   ```yaml
@@ -338,9 +333,21 @@ source types is given below.
             - cluster-node-2
   ```
 
-
-
 To add a new source type, a new handler specific to the source type is required. Please refer to the [developer manual][dev-doc] for more details.
+
+### KNown issues
+- The NFS server ip and path are not validated, so please ensure that the servers are routable and paths are valid prior
+to the creation of the VolumeManager CR.
+In case an invalid `server` or `path` is used, Kubernetes publishes an event similar to the
+following during first attempt to use the PVC:
+```
+Unable to mount volumes for pod : timeout expired waiting for volumes to attach/mount for pod ...
+```
+
+- `timeoutForDataDownload` value should be of valid format as described [here](https://golang.org/pkg/time/#ParseDuration)
+and also wrapped inside quotes. Attempting to create PVCs with invalid `timeoutForDataDownload` value
+could potentially cause the current and all subsequent PVCs hang and never finish.
+
 
 [ops-doc]: ops.md
 [dev-doc]: dev.md
