@@ -73,12 +73,19 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 	// Check if timeout for data download was set and use it.
 	if _, ok := vc.Options["timeoutForDataDownload"]; ok {
 		timeout, err = time.ParseDuration(vc.Options["timeoutForDataDownload"])
-		if err != nil || strings.Compare("5m0s", string(timeout)) != 0 {
+		if err != nil {
 			return kvcv1.Volume{
 				ID:      vc.ID,
 				Message: fmt.Sprintf("error while parsing timeout for data download %v and timeout is %v ", err, timeout),
 			}
 		}
+		if err == nil && strings.Compare("5m0s", string(timeout)) != 0 {
+			return kvcv1.Volume{
+				ID:      vc.ID,
+				Message: fmt.Sprintf("no error while parsing timeout for data download %v and timeout is %v ", err, timeout),
+			}
+		}
+
 	}
 
 	nodeClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "nodes")
