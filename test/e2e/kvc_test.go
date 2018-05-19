@@ -61,7 +61,7 @@ func makeVolumeManager(volumeConfigs []crv1.VolumeConfig) *crv1.VolumeManager {
 	}
 }
 
-// WaitForCRState polls for an expected CR state until it reaches a timeout.
+// WaitForCRState polls for an expected CR state untill it reaches a timeout.
 func waitForCRState(crdClient crv1_volume_manager.VolumeManagerInterface, name string, state states.State) error {
 	return waitPoll(func() (bool, error) {
 		volman, err := crdClient.Get(name, metav1.GetOptions{})
@@ -322,55 +322,6 @@ func TestVolumeManager(t *testing.T) {
 			},
 			expSuccess: false,
 			expError:   fmt.Sprintf("server has to be set in options"),
-			expHP:      false,
-			expNA:      false,
-			expPVC:     false,
-		},
-		// For a list of invalid IP addresses see RFC 5737 here: https://tools.ietf.org/html/rfc5737
-		{
-			description: "single vc - NFS - server ip is unreachable",
-			volumeConfigs: []crv1.VolumeConfig{
-				{
-					ID:         "vol1",
-					SourceType: "NFS",
-					AccessMode: "ReadWriteMany",
-					Capacity:   ".5Gi",
-					Labels: map[string]string{
-						"key1": "val1",
-						"key2": "val2",
-					},
-					Options: map[string]string{
-						"server": "192.0.2.0",
-						"path":   "/",
-					},
-				},
-			},
-			expSuccess: false,
-			expError:   fmt.Sprintf("server has to be set in options"),
-			expHP:      false,
-			expNA:      false,
-			expPVC:     false,
-		},
-		{
-			description: "single vc - NFS - nfs path is not correct",
-			volumeConfigs: []crv1.VolumeConfig{
-				{
-					ID:         "vol1",
-					SourceType: "NFS",
-					AccessMode: "ReadWriteMany",
-					Capacity:   ".5Gi",
-					Labels: map[string]string{
-						"key1": "val1",
-						"key2": "val2",
-					},
-					Options: map[string]string{
-						"server": *nfsServerIP,
-						"path":   "/invalidnfspath",
-					},
-				},
-			},
-			expSuccess: false,
-			expError:   fmt.Sprintf("path has to be set in options"),
 			expHP:      false,
 			expNA:      false,
 			expPVC:     false,
