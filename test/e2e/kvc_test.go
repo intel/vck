@@ -141,46 +141,6 @@ func TestVolumeManager(t *testing.T) {
 			expPVC:     true,
 		},
 		{
-			description: "multiple vc - S3 and NFS - no error",
-			volumeConfigs: []crv1.VolumeConfig{
-				{
-					ID:          "vol1",
-					Replicas:    1,
-					SourceType:  "S3",
-					SourceURL:   "s3://e2e-test/cifar-100-python.tar.gz",
-					EndpointURL: fmt.Sprintf("http://%s:9000", *s3ServerIP),
-					AccessMode:  "ReadWriteOnce",
-					Capacity:    "5Gi",
-					Labels: map[string]string{
-						"key1": "val1",
-						"key2": "val2",
-					},
-					Options: map[string]string{
-						"awsCredentialsSecretName": "s3-creds",
-					},
-				},
-				{
-					ID:         "vol1",
-					SourceType: "NFS",
-					AccessMode: "ReadWriteMany",
-					Capacity:   ".5Gi",
-					Labels: map[string]string{
-						"key3": "val3",
-						"key4": "val4",
-					},
-					Options: map[string]string{
-						"server": *nfsServerIP,
-						"path":   "/",
-					},
-				},
-			},
-			expSuccess: true,
-			expError:   "",
-			expHP:      true,
-			expNA:      true,
-			expPVC:     true,
-		},
-		{
 			description: "single vc - Pachyderm - non-recursive - no error",
 			volumeConfigs: []crv1.VolumeConfig{
 				{
@@ -234,6 +194,47 @@ func TestVolumeManager(t *testing.T) {
 			expNA:      true,
 			expPVC:     false,
 		},
+		{
+			description: "multiple vc - S3 and NFS - no error",
+			volumeConfigs: []crv1.VolumeConfig{
+				{
+					ID:          "vol1",
+					Replicas:    1,
+					SourceType:  "S3",
+					SourceURL:   "s3://e2e-test/cifar-100-python.tar.gz",
+					EndpointURL: fmt.Sprintf("http://%s:9000", *s3ServerIP),
+					AccessMode:  "ReadWriteOnce",
+					Capacity:    "5Gi",
+					Labels: map[string]string{
+						"key1": "val1",
+						"key2": "val2",
+					},
+					Options: map[string]string{
+						"awsCredentialsSecretName": "s3-creds",
+					},
+				},
+				{
+					ID:         "vol1",
+					SourceType: "NFS",
+					AccessMode: "ReadWriteMany",
+					Capacity:   ".5Gi",
+					Labels: map[string]string{
+						"key3": "val3",
+						"key4": "val4",
+					},
+					Options: map[string]string{
+						"server": *nfsServerIP,
+						"path":   "/",
+					},
+				},
+			},
+			expSuccess: true,
+			expError:   "",
+			expHP:      true,
+			expNA:      true,
+			expPVC:     true,
+		},
+
 		// Negative test cases.
 		{
 			description: "single vc - S3 - no label error",
@@ -278,6 +279,132 @@ func TestVolumeManager(t *testing.T) {
 			},
 			expSuccess: false,
 			expError:   fmt.Sprintf("awsCredentialsSecretName key has to be set in options"),
+			expHP:      false,
+			expNA:      false,
+			expPVC:     false,
+		},
+		{
+			description: "single vc - S3 - Unable to validate source due to bad url",
+			volumeConfigs: []crv1.VolumeConfig{
+				{
+					ID:          "vol1",
+					Replicas:    1,
+					SourceType:  "S3",
+					SourceURL:   "s3://fake-url",
+					EndpointURL: fmt.Sprintf("http://%s:9000", *s3ServerIP),
+					AccessMode:  "ReadWriteOnce",
+					Capacity:    "5Gi",
+					Labels: map[string]string{
+						"key1": "val1",
+						"key2": "val2",
+					},
+					Options: map[string]string{
+						"awsCredentialsSecretName": "s3-creds",
+						"timeoutForDataDownload":   "10s",
+					},
+				},
+			},
+			expSuccess: false,
+			expError:   fmt.Sprintf("mc: <ERROR> Unable to validate source"),
+			expHP:      false,
+			expNA:      false,
+			expPVC:     false,
+		},
+		{
+			description: "single vc - S3 - Unable to validate source due to bad endpoint",
+			volumeConfigs: []crv1.VolumeConfig{
+				{
+					ID:          "vol1",
+					Replicas:    1,
+					SourceType:  "S3",
+					SourceURL:   "s3://e2e-test/cifar-100-python.tar.gz",
+					EndpointURL: "fake.end.point",
+					AccessMode:  "ReadWriteOnce",
+					Capacity:    "5Gi",
+					Labels: map[string]string{
+						"key1": "val1",
+						"key2": "val2",
+					},
+					Options: map[string]string{
+						"awsCredentialsSecretName": "s3-creds",
+						"timeoutForDataDownload":   "10s",
+					},
+				},
+			},
+			expSuccess: false,
+			expError:   fmt.Sprintf("mc: <ERROR> Unable to validate source"),
+			expHP:      false,
+			expNA:      false,
+			expPVC:     false,
+		},
+		{
+			description: "single vc - S3 - improperly formated timeouti - missing unit",
+			volumeConfigs: []crv1.VolumeConfig{
+				{
+					ID:          "vol1",
+					Replicas:    1,
+					SourceType:  "S3",
+					SourceURL:   "s3://e2e-test/cifar-100-python.tar.gz",
+					EndpointURL: fmt.Sprintf("http://%s:9000", *s3ServerIP),
+					AccessMode:  "ReadWriteOnce",
+					Capacity:    "5Gi",
+					Labels:      map[string]string{},
+					Options: map[string]string{
+						"awsCredentialsSecretName": "s3-creds",
+                        "timeoutForDataDownload": "10"
+					},
+				},
+			},
+			expSuccess: false,
+			expError:   fmt.Sprintf("error while parsing timeout for data download: time: missing unit in duration"),
+			expHP:      false,
+			expNA:      false,
+			expPVC:     false,
+		},
+		{
+			description: "single vc - S3 - invalid timeout value - negative timeout",
+			volumeConfigs: []crv1.VolumeConfig{
+				{
+					ID:          "vol1",
+					Replicas:    1,
+					SourceType:  "S3",
+					SourceURL:   "s3://e2e-test/cifar-100-python.tar.gz",
+					EndpointURL: fmt.Sprintf("http://%s:9000", *s3ServerIP),
+					AccessMode:  "ReadWriteOnce",
+					Capacity:    "5Gi",
+					Labels:      map[string]string{},
+					Options: map[string]string{
+						"awsCredentialsSecretName": "s3-creds",
+                        "timeoutForDataDownload": "-10s"
+					},
+				},
+			},
+			expSuccess: false,
+			expError:   fmt.Sprintf("timed out waiting for the condition"),
+			expHP:      false,
+			expNA:      false,
+			expPVC:     false,
+		},
+		{
+			description: "single vc - S3 - too many replicas",
+			volumeConfigs: []crv1.VolumeConfig{
+				{
+					ID:          "vol1",
+					Replicas:    999,
+					SourceType:  "S3",
+					SourceURL:   "s3://e2e-test/cifar-100-python.tar.gz",
+					EndpointURL: fmt.Sprintf("http://%s:9000", *s3ServerIP),
+					AccessMode:  "ReadWriteOnce",
+					Capacity:    "5Gi",
+					Labels:      map[string]string{},
+					Options: map[string]string{
+						"awsCredentialsSecretName": "s3-creds",
+                        "timeoutForDataDownload": "10"
+					},
+				},
+			},
+			expSuccess: false,
+			expError:   fmt.Sprintf("replicas [999] greater than number of nodes"),
 			expHP:      false,
 			expNA:      false,
 			expPVC:     false,
@@ -345,60 +472,6 @@ func TestVolumeManager(t *testing.T) {
 			},
 			expSuccess: false,
 			expError:   fmt.Sprintf("path has to be set in options"),
-			expHP:      false,
-			expNA:      false,
-			expPVC:     false,
-		},
-		{
-			description: "single vc - S3 - time out error due to bad url",
-			volumeConfigs: []crv1.VolumeConfig{
-				{
-					ID:          "vol1",
-					Replicas:    1,
-					SourceType:  "S3",
-					SourceURL:   "s3://fake-url",
-					EndpointURL: fmt.Sprintf("http://%s:9000", *s3ServerIP),
-					AccessMode:  "ReadWriteOnce",
-					Capacity:    "5Gi",
-					Labels: map[string]string{
-						"key1": "val1",
-						"key2": "val2",
-					},
-					Options: map[string]string{
-						"awsCredentialsSecretName": "s3-creds",
-						"timeoutForDataDownload":   "10s",
-					},
-				},
-			},
-			expSuccess: false,
-			expError:   fmt.Sprintf("mc: <ERROR> Unable to validate source"),
-			expHP:      false,
-			expNA:      false,
-			expPVC:     false,
-		},
-		{
-			description: "single vc - S3 - timeout error due to bad endpoint",
-			volumeConfigs: []crv1.VolumeConfig{
-				{
-					ID:          "vol1",
-					Replicas:    1,
-					SourceType:  "S3",
-					SourceURL:   "s3://e2e-test/cifar-100-python.tar.gz",
-					EndpointURL: "fake.end.point",
-					AccessMode:  "ReadWriteOnce",
-					Capacity:    "5Gi",
-					Labels: map[string]string{
-						"key1": "val1",
-						"key2": "val2",
-					},
-					Options: map[string]string{
-						"awsCredentialsSecretName": "s3-creds",
-						"timeoutForDataDownload":   "10s",
-					},
-				},
-			},
-			expSuccess: false,
-			expError:   fmt.Sprintf("mc: <ERROR> Unable to validate source"),
 			expHP:      false,
 			expNA:      false,
 			expPVC:     false,
