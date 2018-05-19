@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"net/url"
 	"strings"
 	"time"
 
@@ -13,35 +12,34 @@ import (
 
 	"github.com/golang/glog"
 
-	"bytes"
 	kvcv1 "github.com/kubeflow/experimental-kvc/pkg/apis/kvc/v1"
 	"github.com/kubeflow/experimental-kvc/pkg/resource"
 )
 
 const (
-	s3SourceType kvcv1.DataSourceType = "S3"
+	pachydermSourceType kvcv1.DataSourceType = "Pachyderm"
 )
 
-type s3Handler struct {
+type pachydermHandler struct {
 	sourceType         kvcv1.DataSourceType
 	k8sClientset       kubernetes.Interface
 	k8sResourceClients []resource.Client
 }
 
-// NewS3Handler creates and returns an instance of the NFS handler.
-func NewS3Handler(k8sClientset kubernetes.Interface, resourceClients []resource.Client) DataHandler {
-	return &s3Handler{
-		sourceType:         s3SourceType,
+// NewPachydermHandler creates and returns an instance of the NFS handler.
+func NewPachydermHandler(k8sClientset kubernetes.Interface, resourceClients []resource.Client) DataHandler {
+	return &pachydermHandler{
+		sourceType:         pachydermSourceType,
 		k8sClientset:       k8sClientset,
 		k8sResourceClients: resourceClients,
 	}
 }
 
-func (h *s3Handler) GetSourceType() kvcv1.DataSourceType {
+func (h *pachydermHandler) GetSourceType() kvcv1.DataSourceType {
 	return h.sourceType
 }
 
-func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1.OwnerReference) kvcv1.Volume {
+func (h *pachydermHandler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1.OwnerReference) kvcv1.Volume {
 	if len(vc.Labels) == 0 {
 		return kvcv1.Volume{
 			ID:      vc.ID,
@@ -49,10 +47,30 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 		}
 	}
 
-	if _, ok := vc.Options["awsCredentialsSecretName"]; !ok {
+	if _, ok := vc.Options["repo"]; !ok {
 		return kvcv1.Volume{
 			ID:      vc.ID,
-			Message: fmt.Sprintf("awsCredentialsSecretName key has to be set in options"),
+			Message: fmt.Sprintf("repo has to be set in options"),
+		}
+	}
+	if _, ok := vc.Options["branch"]; !ok {
+		return kvcv1.Volume{
+			ID:      vc.ID,
+			Message: fmt.Sprintf("branch has to be set in options"),
+		}
+	}
+
+	if _, ok := vc.Options["inputPath"]; !ok {
+		return kvcv1.Volume{
+			ID:      vc.ID,
+			Message: fmt.Sprintf("inputPath has to be set in options"),
+		}
+	}
+
+	if _, ok := vc.Options["outputPath"]; !ok {
+		return kvcv1.Volume{
+			ID:      vc.ID,
+			Message: fmt.Sprintf("outputPath has to be set in options"),
 		}
 	}
 
@@ -61,6 +79,11 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 			ID:      vc.ID,
 			Message: fmt.Sprintf("access mode has to be ReadWriteOnce"),
 		}
+	}
+
+	// Set the pachyderm service address
+	if _, ok := vc.Options["pachydermServiceAddress"]; !ok {
+		vc.Options["pachydermServiceAddress"] = "pachd.default.svc:650"
 	}
 
 	// Check if dataPath  was set and  if not set default to /var/datasets.
@@ -99,20 +122,10 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 		}
 	}
 
-	recursiveFlag := ""
-	if strings.HasSuffix(vc.SourceURL, "/") {
-		recursiveFlag = "--recursive"
+	vc.Options["recursive"] = ""
+	if strings.HasSuffix(vc.Options["inputPath"], "/") {
+		vc.Options["recursive"] = "-r"
 	}
-
-	s3URL, err := url.Parse(vc.SourceURL)
-	if err != nil {
-		return kvcv1.Volume{
-			ID:      vc.ID,
-			Message: fmt.Sprintf("error while parsing URL [%s]: %v", vc.SourceURL, err),
-		}
-	}
-	bucketName := s3URL.Host
-	bucketPath := s3URL.Path
 
 	kvcNames := []string{}
 	podClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "pods")
@@ -124,22 +137,20 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 		err = podClient.Create(ns, struct {
 			kvcv1.VolumeConfig
 			metav1.OwnerReference
-			NS              string
-			KVCName         string
-			KVCOp           string
-			RecursiveOption string
-			BucketName      string
-			BucketPath      string
-			KVCOptions      map[string]string
+			NS                  string
+			KVCName             string
+			KVCOp               string
+			KVCStorageClassName string
+			PVType              string
+			KVCOptions          map[string]string
 		}{
 			vc,
 			controllerRef,
 			ns,
 			kvcName,
 			"add",
-			recursiveFlag,
-			bucketName,
-			bucketPath,
+			"kvc",
+			"",
 			map[string]string{
 				"path": fmt.Sprintf("%s/%s", vc.Options["dataPath"], kvcDataPathSuffix),
 			},
@@ -157,40 +168,11 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 	nodeLabelKey := fmt.Sprintf("%s/%s-%s-%s", kvcv1.GroupName, ns, controllerRef.Name, vc.ID)
 	for _, kvcName := range kvcNames {
 		err := waitForPodSuccess(podClient, kvcName, ns, timeout)
-
 		if err != nil {
-			downloadErrMsg := "error during data download using pod"
-
-			podResource := h.k8sClientset.CoreV1().RESTClient().Get().Namespace(ns).Name(kvcName).Resource("pods")
-			if podResource == nil {
-				return kvcv1.Volume{
-					ID:      vc.ID,
-					Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, kvcName, err),
-				}
-			}
-
-			logReq := podResource.SubResource("log")
-			if logReq == nil {
-				return kvcv1.Volume{
-					ID:      vc.ID,
-					Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, kvcName, err),
-				}
-			}
-
-			readCloser, logErr := logReq.Stream()
-			if logErr != nil {
-				return kvcv1.Volume{
-					ID:      vc.ID,
-					Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, kvcName, err),
-				}
-			}
-
-			defer readCloser.Close()
-			logBuf := new(bytes.Buffer)
-			logBuf.ReadFrom(readCloser)
 			return kvcv1.Volume{
-				ID:      vc.ID,
-				Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, kvcName, logBuf.String()),
+				ID: vc.ID,
+				// TODO(balajismaniam): append pod logs to this message if possible.
+				Message: fmt.Sprintf("error during data download using pod [name: %v]: %v", kvcName, err),
 			}
 		}
 
@@ -256,7 +238,7 @@ func (h *s3Handler) OnAdd(ns string, vc kvcv1.VolumeConfig, controllerRef metav1
 	}
 }
 
-func (h *s3Handler) OnDelete(ns string, vc kvcv1.VolumeConfig, vStatus kvcv1.Volume, controllerRef metav1.OwnerReference) {
+func (h *pachydermHandler) OnDelete(ns string, vc kvcv1.VolumeConfig, vStatus kvcv1.Volume, controllerRef metav1.OwnerReference) {
 	nodeLabelKey := fmt.Sprintf("%s/%s-%s-%s", kvcv1.GroupName, ns, controllerRef.Name, vc.ID)
 	podClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "pods")
 
@@ -304,7 +286,7 @@ func (h *s3Handler) OnDelete(ns string, vc kvcv1.VolumeConfig, vStatus kvcv1.Vol
 
 	podList, err := podClient.List(ns, vc.Labels)
 	if err != nil {
-		glog.Warningf("[s3-handler] OnDelete: error while listing resource [%s], %v", podClient.Plural(), err)
+		glog.Warningf("[pachyderm-handler] OnDelete: error while listing resource [%s], %v", podClient.Plural(), err)
 	}
 
 	for _, resource := range podList {
@@ -324,20 +306,21 @@ func (h *s3Handler) OnDelete(ns string, vc kvcv1.VolumeConfig, vStatus kvcv1.Vol
 	// Get the node list based on the label
 	nodeList, err := nodeClient.List("", map[string]string{nodeLabelKey: "true"})
 	if err != nil {
-		glog.Warningf("[s3-handler] OnDelete: error while listing nodes %v", err)
+		glog.Warningf("[pachyderm-handler] OnDelete: error while listing nodes %v", err)
 		return
 	}
 	nodeNames := getNodeNames(nodeList)
 
 	for _, nodeName := range nodeNames {
+
 		node, err := nodeClient.Get("", nodeName)
 		if err != nil {
-			glog.Warningf("[s3-handler] OnDelete: error while getting node: %v", err)
+			glog.Warningf("[pachyderm-handler] OnDelete: error while getting node: %v", err)
 		}
 
 		err = updateNodeWithLabels(nodeClient, node.(*corev1.Node), []string{nodeLabelKey}, "delete")
 		if err != nil {
-			glog.Warningf("[s3-handler] OnDelete: error while deleting label for node nodes %v", err)
+			glog.Warningf("[pachyderm-handler] OnDelete: error while deleting label for node nodes %v", err)
 		}
 	}
 }

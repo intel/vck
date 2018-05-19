@@ -17,7 +17,7 @@
 
 ## Before You Begin
 
-Check if the cluster has the volume manager CRD. Example command to verify 
+Check if the cluster has the volume manager CRD. Example command to verify
 this is shown below.
 
 ```sh
@@ -55,7 +55,7 @@ appropriate values.
 ```sh
 $ export AWS_ACCESS_KEY_ID="<insert-your-aws-access-key-id>"
 $ export AWS_SECRET_ACCESS_KEY="<insert-your-aws-secret-access-key>"
-$ kubectl create secret generic aws-creds --from-literal=awsAccessKeyID=${AWS_ACCESS_KEY_ID} --from-literal=awsSecretAccessKey=${AWS_SECRET_ACCESS_KEY} 
+$ kubectl create secret generic aws-creds --from-literal=awsAccessKeyID=${AWS_ACCESS_KEY_ID} --from-literal=awsSecretAccessKey=${AWS_SECRET_ACCESS_KEY}
 ```
 
 ## Create a Volume Manager Custom Resource
@@ -119,7 +119,7 @@ status:
 Other examples on custom resource manifest can be found in [resources][resources-dir]
 directory. For details about source types and their fields, refer [types of sources](#types-of-sources).
 
-## Create a Pod using the Custom Resource Status 
+## Create a Pod using the Custom Resource Status
 
 Using the [example pod manifest][pod-example], create a pod.
 Example commands are shown below. Before using the command below, make sure to
@@ -153,7 +153,7 @@ $ kubectl create -f resources/pods/kvc-pod.yaml
 pod "kvc-claim-pod" created
 ```
 
-## Create a Deployment using the Custom Resource Status 
+## Create a Deployment using the Custom Resource Status
 
 Using the [example deployment manifest][dep-example], create a deployment.
 Example commands are shown below. Before using the command below, make sure to
@@ -173,8 +173,9 @@ The following source types are currently implemented:
 * S3-Dev: Files present in an S3 bucket and provided as `volumeConfig.sourceURL` in the CR are downloaded/synced and made available as a PVC. Only 1 replica is allowed. This source type should only be used for development and testing purposes.
 * S3: Files present in an S3 bucket and provided as `volumeConfig.sourceURL` in the CR are downloaded/synced onto the number of nodes equal to `volumeConfig.replicas` and made available as a hostPath volume. Node affinity details are provided through `volume.nodeAffinity` to guide the scheduling of pods.
 * NFS: The path exported by an NFS server is mounted and made available as a PVC.
+* Pachyderm: The repo, branch and file in [Pachyderm][pachyderm] and provided as `volumeConfig.options["repo"]`, `volumeConfig.options["branch"]` and `volumeConfig.options["filePath"]` in the CR are downloaded/synced onto the number of nodes equal to `volumeConfig.replicas` and made available as a hostPath volume. Node affinity details are provided through `volume.nodeAffinity` to guide the scheduling of pods.
 
-_NOTES: 
+_NOTES:
 For minio configure the setting `volumeConfig.endpointURL` to point to your minio service url.
 When the CR for S3 source type is deleted, all the replicated data is also deleted. Care should be taken when deleting CRs as objects, such as pods, using the CR will lose the data._
 
@@ -182,26 +183,34 @@ For examples on how to define and use the different types, please refer to the e
 
 A brief description of each source type is provided below.
 
-| Type    | Fields | Required                         |  Description                                          | Supported Access Modes | Field(s) provided in CR status | 
-|:--------|:----------------------------------------|:----|:--------------------------------------------------|:-----------------------|:-------------------------------|
-| `S3-Dev`| `volumeConfig.sourceURL`                | Yes | The s3 url to download the data from. End the sourceURL with a `/` to recursively copy |`ReadWriteOnce`         | `volumeSource`                 |
-|         | `volumeConfig.endpointURL`              | No | The s3 compatible service endpoint (i.e. minio url)         |                        | |
-|         | `volumeConfig.replicas`                 | No | Field is ignored for this source type.                 |                        | |
-|         | `volumeConfig.options["dataPath"]`                 | No | The  data path on the node where s3 data would be downloaded  |                        | `volumeSource`                 |
-|         | `volumeConfig.options["awsCredentialsSecretName"]` | Yes | The name of the secret with AWS credentials to access the s3 data              |                        | |
-|         | `volumeConfig.options["timeoutForDataDownload"]`  | No | The timeout for download of s3 data. Defaults to 5 minutes. [[Format]](https://golang.org/pkg/time/#ParseDuration) |                        | |
-| `S3`    | `volumeConfig.sourceURL`                | Yes | The s3 url to download the data from. End the sourceURL with a `/` to recursively copy | `ReadWriteOnce`        | `volumeSource`                 |
-|         | `volumeConfig.endpointURL`              | No | The s3 compatible service endpoint (i.e. minio url)          |                        | |
-|         | `volumeConfig.replicas`                 | Yes | The number of nodes this data should be replicated on. |                        | `nodeAffinity`                 |
-|         | `volumeConfig.options["dataPath"]`                 | No | The  data path on the node where s3 data would be downloaded |                        | `volumeSource`                 |
-|         | `volumeConfig.options["awsCredentialsSecretName]` | Yes | The name of the secret with AWS credentials to access the s3 data              |                        | |
-|         | `volumeConfig.options["timeoutForDataDownload"]`  | No | The timeout for download of s3 data. Defaults to 5 minutes. [[Format]](https://golang.org/pkg/time/#ParseDuration) |                        | |
-| `NFS`   | `volumeConfig.options["server"]`        | Yes | Address of the NFS server.                             |`ReadWriteMany`         | `volumeSource`                 |
-|         | `volumeConfig.options["path"]`          | Yes | The path exported by the NFS server.                   |`ReadOnlyMany`          | |
-|         | `volumeConfig.accessMode     `          | Yes | Access mode for the volume config.                     |                        | |
+| Type         | Fields | Required                         |  Description                                          | Supported Access Modes | Field(s) provided in CR status |
+|:-------------|:----------------------------------------|:----|:--------------------------------------------------|:-----------------------|:-------------------------------|
+| `S3-Dev`     | `volumeConfig.sourceURL`                | Yes | The s3 url to download the data from. End the sourceURL with a `/` to recursively copy |`ReadWriteOnce`         | `volumeSource`                 |
+|              | `volumeConfig.endpointURL`              | No | The s3 compatible service endpoint (i.e. minio url)         |                        | |
+|              | `volumeConfig.replicas`                 | No | Field is ignored for this source type.                 |                        | |
+|              | `volumeConfig.options["dataPath"]`                 | No | The  data path on the node where s3 data would be downloaded  |                        | `volumeSource`                 |
+|              | `volumeConfig.options["awsCredentialsSecretName"]` | Yes | The name of the secret with AWS credentials to access the s3 data              |                        | |
+|              | `volumeConfig.options["timeoutForDataDownload"]`  | No | The timeout for download of s3 data. Defaults to 5 minutes. [[Format]](https://golang.org/pkg/time/#ParseDuration) |                        | |
+| `S3`         | `volumeConfig.sourceURL`                | Yes | The s3 url to download the data from. End the sourceURL with a `/` to recursively copy | `ReadWriteOnce`        | `volumeSource`                 |
+|              | `volumeConfig.endpointURL`              | No | The s3 compatible service endpoint (i.e. minio url)          |                        | |
+|              | `volumeConfig.replicas`                 | Yes | The number of nodes this data should be replicated on. |                        | `nodeAffinity`                 |
+|              | `volumeConfig.options["dataPath"]`                 | No | The  data path on the node where s3 data would be downloaded |                        | `volumeSource`                 |
+|              | `volumeConfig.options["awsCredentialsSecretName]` | Yes | The name of the secret with AWS credentials to access the s3 data              |                        | |
+|              | `volumeConfig.options["timeoutForDataDownload"]`  | No | The timeout for download of s3 data. Defaults to 5 minutes. [[Format]](https://golang.org/pkg/time/#ParseDuration) |                        | |
+| `NFS`        | `volumeConfig.options["server"]`        | Yes | Address of the NFS server.                             |`ReadWriteMany`         | `volumeSource`                 |
+|              | `volumeConfig.options["path"]`          | Yes | The path exported by the NFS server.                   |`ReadOnlyMany`          | |
+|              | `volumeConfig.accessMode     `          | Yes | Access mode for the volume config.                     |                        | |
+| `Pachyderm`  | `volumeConfig.options["repo"]`          | Yes | Pachyderm repo.                             |`ReadWriteOnce`         | `volumeSource`                 |
+|              | `volumeConfig.options["branch"]`        | Yes | Branch of that repo.                   |          | |
+|              | `volumeConfig.options["inputPath"]`     | Yes | File path in the branch.                 |          | |
+|              | `volumeConfig.options["outputPath"]`    | Yes | Output path for the files.                 |          | |
+|              | `volumeConfig.options["pachydermServiceAddress"`]                 | No | The address and port of the pachyderm service. Defaults to "pachd.default.svc:650". |                        |                  |
+|              | `volumeConfig.replicas`                 | Yes | The number of nodes this data should be replicated on. |                        | `nodeAffinity`                 |
+|              | `volumeConfig.options["timeoutForDataDownload"]`  | No | The timeout for download of data. Defaults to 5 minutes. [[Format]](https://golang.org/pkg/time/#ParseDuration) |                        | |
+|              | `volumeConfig.accessMode     `          | Yes | Access mode for the volume config.                     |                        | |
 
 Status of the CR provides information on the volume source and node affinity.
-Example status fields for the different source types and a description on 
+Example status fields for the different source types and a description on
 what needs to be changed in the [pod template][pod-example] to use these
 source types is given below.
 
@@ -215,7 +224,7 @@ source types is given below.
         claimName: kvc-resource-a150fd63-11c4-11e8-8397-0a580a440340
   ```
   The claim can be used in a pod to access the data. More specifically, the
-  snippet below from the CR status above needs to inserted in the 
+  snippet below from the CR status above needs to inserted in the
   [volumes field][pod-example-vol] of the example [pod template][pod-example]
   in order to use it with the pod.
 
@@ -246,12 +255,12 @@ source types is given below.
   More specifically, the snippets below from the CR status above needs to
   inserted in the [volumes field][pod-example-vol] and [affinity field][pod-example-aff]
   of the example [pod template][pod-example], respectively, in order to use it with the pod.
-      
+
   ```yaml
       hostPath:
         path: /var/datasets/kvc-resource-a2140d72-11c2-11e8-8397-0a580a440340
   ```
-    
+
   ```yaml
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -274,10 +283,10 @@ source types is given below.
             claimName: kvc-resource-a216ed4a-11c2-11e8-8397-0a580a440340
   ```
   The claim can be used in a pod to access the data.
-  More specifically, the snippet below from the CR status above needs to inserted in the 
+  More specifically, the snippet below from the CR status above needs to inserted in the
   [volumes field][pod-example-vol] of the example [pod template][pod-example]
   in order to use it with the pod.
-  
+
   ```yaml
       persistentVolumeClaim:
         claimName: kvc-resource-a150fd63-11c4-11e8-8397-0a580a440340
@@ -288,6 +297,48 @@ source types is given below.
     ```
     Unable to mount volumes for pod : timeout expired waiting for volumes to attach/mount for pod ...
     ```
+
+* Pachyderm:
+  ```yaml
+  - id: vol1
+    message: success
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - cluster-node-1
+            - cluster-node-2
+    volumeSource:
+      hostPath:
+        path: /var/datasets/kvc-resource-a2140d72-11c2-11e8-8397-0a580a440340
+  ```
+  The [node affinity][node-affinity] above can be used as-is in a pod spec
+  along with the host path above as a volume to access the pachyderm data.
+  More specifically, the snippets below from the CR status above needs to
+  inserted in the [volumes field][pod-example-vol] and [affinity field][pod-example-aff]
+  of the example [pod template][pod-example], respectively, in order to use it with the pod.
+
+  ```yaml
+      hostPath:
+        path: /var/datasets/kvc-resource-a2140d72-11c2-11e8-8397-0a580a440340
+  ```
+
+  ```yaml
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - cluster-node-1
+            - cluster-node-2
+  ```
+
+
 
 To add a new source type, a new handler specific to the source type is required. Please refer to the [developer manual][dev-doc] for more details.
 
@@ -305,4 +356,5 @@ To add a new source type, a new handler specific to the source type is required.
 [pod-example-aff]: ../resources/pods/kvc-pod.yaml#L7
 [dep-example]: ../resources/deployments/kvc-deployment.yaml
 [secret-example]: ../resources/secrets/aws-secret.yaml
-[secret-encoding]: https://kubernetes.io/docs/concepts/configuration/secret/#creating-a-secret-manually 
+[secret-encoding]: https://kubernetes.io/docs/concepts/configuration/secret/#creating-a-secret-manually
+[pachyderm]: http://pachyderm.io

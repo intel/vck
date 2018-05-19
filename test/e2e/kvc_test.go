@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os/user"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -178,6 +179,60 @@ func TestVolumeManager(t *testing.T) {
 			expHP:      true,
 			expNA:      true,
 			expPVC:     true,
+		},
+		{
+			description: "single vc - Pachyderm - non-recursive - no error",
+			volumeConfigs: []crv1.VolumeConfig{
+				{
+					ID:         "vol1",
+					Replicas:   1,
+					SourceType: "Pachyderm",
+					AccessMode: "ReadWriteOnce",
+					Capacity:   "5Gi",
+					Labels: map[string]string{
+						"key1": "val1",
+						"key2": "val2",
+					},
+					Options: map[string]string{
+						"repo":       "test",
+						"branch":     "master",
+						"inputPath":  "s3/test",
+						"outputPath": "test",
+					},
+				},
+			},
+			expSuccess: true,
+			expError:   "",
+			expHP:      true,
+			expNA:      true,
+			expPVC:     false,
+		},
+		{
+			description: "single vc - Pachyderm - recursive - no error",
+			volumeConfigs: []crv1.VolumeConfig{
+				{
+					ID:         "vol1",
+					Replicas:   1,
+					SourceType: "Pachyderm",
+					AccessMode: "ReadWriteOnce",
+					Capacity:   "5Gi",
+					Labels: map[string]string{
+						"key1": "val1",
+						"key2": "val2",
+					},
+					Options: map[string]string{
+						"repo":       "test",
+						"branch":     "master",
+						"inputPath":  "s3/",
+						"outputPath": "test",
+					},
+				},
+			},
+			expSuccess: true,
+			expError:   "",
+			expHP:      true,
+			expNA:      true,
+			expPVC:     false,
 		},
 		// Negative test cases.
 		{
@@ -365,7 +420,7 @@ func TestVolumeManager(t *testing.T) {
 				},
 			},
 			expSuccess: false,
-			expError:   "",
+			expError:   fmt.Sprintf("mc: <ERROR> Unable to validate source"),
 			expHP:      false,
 			expNA:      false,
 			expPVC:     false,
@@ -392,7 +447,7 @@ func TestVolumeManager(t *testing.T) {
 				},
 			},
 			expSuccess: false,
-			expError:   "",
+			expError:   fmt.Sprintf("mc: <ERROR> Unable to validate source"),
 			expHP:      false,
 			expNA:      false,
 			expPVC:     false,
@@ -435,9 +490,38 @@ func TestVolumeManager(t *testing.T) {
 			expNA:      false,
 			expPVC:     false,
 		},
+		{
+			description: "single vc - Pachyderm - ",
+			volumeConfigs: []crv1.VolumeConfig{
+				{
+					ID:         "vol1",
+					Replicas:   1,
+					SourceType: "Pachyderm",
+					AccessMode: "ReadWriteOnce",
+					Capacity:   "5Gi",
+					Labels: map[string]string{
+						"key1": "val1",
+						"key2": "val2",
+					},
+					Options: map[string]string{
+						"repo":                   "test",
+						"branch":                 "master",
+						"inputPath":              "s3/",
+						"outputPath":             "test",
+						"timeoutForDataDownload": "10s",
+					},
+				},
+			},
+			expSuccess: true,
+			expError:   "",
+			expHP:      true,
+			expNA:      true,
+			expPVC:     false,
+		},
 	}
 
 	for _, testCase := range testCases {
+        fmt.Printf("%v n", testCase.description)
 		volman := makeVolumeManager(testCase.volumeConfigs)
 		createdVolman, err := crdClient.Create(volman)
 		require.Nil(t, err)
@@ -505,7 +589,7 @@ func TestVolumeManager(t *testing.T) {
 			if testCase.expError != "" {
 				gotMessage := false
 				for _, vol := range volman.Status.Volumes {
-					if vol.Message == testCase.expError {
+					if strings.Contains(vol.Message, testCase.expError) {
 						gotMessage = true
 						break
 					}
