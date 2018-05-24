@@ -338,7 +338,7 @@ func TestVolumeManager(t *testing.T) {
 			expPVC:     false,
 		},
 		{
-			description: "single vc - S3 - improperly formated timeouti - missing unit",
+			description: "single vc - S3 - improperly formated timeout - missing unit",
 			volumeConfigs: []crv1.VolumeConfig{
 				{
 					ID:          "vol1",
