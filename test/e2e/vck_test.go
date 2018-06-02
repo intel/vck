@@ -17,11 +17,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	crv1 "github.com/kubeflow/experimental-kvc/pkg/apis/kvc/v1"
-	crv1_client "github.com/kubeflow/experimental-kvc/pkg/client/clientset/versioned"
-	crv1_volume_manager "github.com/kubeflow/experimental-kvc/pkg/client/clientset/versioned/typed/kvc/v1"
-	"github.com/kubeflow/experimental-kvc/pkg/states"
-	"github.com/kubeflow/experimental-kvc/pkg/util"
+	crv1 "github.com/IntelAI/vck/pkg/apis/vck/v1"
+	crv1_client "github.com/IntelAI/vck/pkg/client/clientset/versioned"
+	crv1_volume_manager "github.com/IntelAI/vck/pkg/client/clientset/versioned/typed/vck/v1"
+	"github.com/IntelAI/vck/pkg/states"
+	"github.com/IntelAI/vck/pkg/util"
 )
 
 var (
@@ -45,11 +45,11 @@ func makeClients(t *testing.T) (crv1_volume_manager.VolumeManagerInterface, *kub
 	require.Nil(t, err)
 	require.NotNil(t, crdClient)
 
-	return crdClient.KvcV1().VolumeManagers(*namespace), k8sClient
+	return crdClient.VckV1().VolumeManagers(*namespace), k8sClient
 }
 
 func makeVolumeManager(volumeConfigs []crv1.VolumeConfig) *crv1.VolumeManager {
-	name := fmt.Sprintf("kvc-e2e-test-%s", uuid.NewUUID())
+	name := fmt.Sprintf("vck-e2e-test-%s", uuid.NewUUID())
 	return &crv1.VolumeManager{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
@@ -61,7 +61,7 @@ func makeVolumeManager(volumeConfigs []crv1.VolumeConfig) *crv1.VolumeManager {
 	}
 }
 
-// WaitForCRState polls for an expected CR state untill it reaches a timeout.
+// WaitForCRState polls for an expected CR state until it reaches a timeout.
 func waitForCRState(crdClient crv1_volume_manager.VolumeManagerInterface, name string, state states.State) error {
 	return waitPoll(func() (bool, error) {
 		volman, err := crdClient.Get(name, metav1.GetOptions{})
@@ -472,16 +472,14 @@ func TestVolumeManager(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-        fmt.Printf("%v n", testCase.description)
+		fmt.Printf("%s", testCase.description)
 		volman := makeVolumeManager(testCase.volumeConfigs)
 		createdVolman, err := crdClient.Create(volman)
 		require.Nil(t, err)
-		/*
-			defer func() {
-				delOpts := &metav1.DeleteOptions{}
-				crdClient.Delete(volman.GetName(), delOpts)
-			}()
-		*/
+		defer func() {
+			delOpts := &metav1.DeleteOptions{}
+			crdClient.Delete(volman.GetName(), delOpts)
+		}()
 		if testCase.expSuccess {
 			err := waitForCRState(crdClient, createdVolman.GetName(), states.Running)
 			require.Nil(t, err)

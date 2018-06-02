@@ -1,18 +1,18 @@
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
-  name: kvc-example-deployment
+  name: vck-example-deployment
   labels:
-    app: kvc-example
+    app: vck-example
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: kvc-example
+      app: vck-example
   template:
     metadata:
       labels:
-        app: kvc-example
+        app: vck-example
     spec:
       affinity:
         <insert-node-affinity-from-cr-status>
@@ -23,7 +23,7 @@ spec:
       - image: busybox
         command: ["/bin/sh"]
         args: ["-c", "sleep 1d"]
-        name: kvc-sleep
+        name: vck-sleep
         volumeMounts:
         - mountPath: /var/data
           name: dataset-claim

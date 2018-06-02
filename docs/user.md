@@ -1,5 +1,5 @@
-# User Manual: Kubernetes Volume Controller (KVC)
-  * [User Manual: Kubernetes Volume Controller (KVC)](#user-manual-kubernetes-volume-controller-kvc)
+# User Manual: Volume Controller for Kubernetes (VCK)
+  * [User Manual: Volume Controller for Kubernetes (VCK)](#user-manual-volume-controller-for-kubernetes-vck)
     * [Prerequisites](#prerequisites)
     * [Before You Begin](#before-you-begin)
     * [Create a Secret with your AWS Credentials](#create-a-secret-with-your-aws-credentials)
@@ -13,7 +13,7 @@
 - Kubernetes v1.9+ with [`VolumeScheduling`][vol-sched] feature gate enabled
 - [Kubectl][kubectl]
 - [Helm][helm]
-- [KVC deployed on the cluster][ops-doc]
+- [VCK deployed on the cluster][ops-doc]
 
 ## Before You Begin
 
@@ -23,7 +23,7 @@ this is shown below.
 ```sh
 $ kubectl get crd
 NAME                            AGE
-volumemanagers.kvc.kubeflow.org   1h
+volumemanagers.vck.intelai.org   1h
 
 $ kubectl get volumemanagers
 No resources found.
@@ -33,7 +33,7 @@ Also check if the Controller is installed in your namespace:
 ```sh
 $ helm list
 NAME            	REVISION	UPDATED                 	STATUS  	CHART                        	NAMESPACE
-kvc-ashahba     	1       	Thu Apr 26 13:10:36 2018	DEPLOYED	kube-volume-controller-v0.1.0	ashahba
+vck-ashahba     	1       	Thu Apr 26 13:10:36 2018	DEPLOYED	kube-volume-controller-v0.1.0	ashahba
 ```
 
 If not follow the instructions in the [operator manual][ops-doc] first.
@@ -69,19 +69,19 @@ instructions [above](#create-a-secret-with-your-aws-credentials).
 
 ```sh
 $ kubectl create -f resources/customresources/s3/one-vc.yaml
-volumemanager "kvc-example" created
+volumemanager "vck-example" created
 
-$ kubectl get volumemanager kvc-example -o yaml
-apiVersion: kvc.kubeflow.org/v1
+$ kubectl get volumemanager vck-example -o yaml
+apiVersion: vck.intelai.org/v1
 kind: VolumeManager
 metadata:
   clusterName: ""
   creationTimestamp: 2018-02-21T20:22:30Z
   generation: 0
-  name: kvc-example
-  namespace: kvc-testing
+  name: vck-example
+  namespace: vck-testing
   resourceVersion: "4722186"
-  selfLink: /apis/kvc.kubeflow.org/v1/namespaces/kvc-testing/volumemanagers/kvc-example
+  selfLink: /apis/vck.intelai.org/v1/namespaces/vck-testing/volumemanagers/vck-example
   uid: f0e352bd-1744-11e8-9cc4-42010a8a026b
 spec:
   state: ""
@@ -113,7 +113,7 @@ status:
             - cluster-node-1
     volumeSource:
       hostPath:
-        path: /var/datasets/kvc-resource-f0e5a3ba-1744-11e8-a808-0a580a44065b
+        path: /var/datasets/vck-resource-f0e5a3ba-1744-11e8-a808-0a580a44065b
 ```
 
 Other examples on custom resource manifest can be found in [resources][resources-dir]
@@ -140,7 +140,7 @@ data source type:
   volumes:
     - name: dataset-claim
       hostPath:
-        path: /var/datasets/kvc-resource-f0e5a3ba-1744-11e8-a808-0a580a44065b
+        path: /var/datasets/vck-resource-f0e5a3ba-1744-11e8-a808-0a580a44065b
 ```
 
 Depending upon the source type, node
@@ -149,8 +149,8 @@ more details on how to edit the field(s) in the pod template spec before using t
 command below.
 
 ```sh
-$ kubectl create -f resources/pods/kvc-pod.yaml
-pod "kvc-claim-pod" created
+$ kubectl create -f resources/pods/vck-pod.yaml
+pod "vck-claim-pod" created
 ```
 
 ## Create a Deployment using the Custom Resource Status
@@ -164,8 +164,8 @@ details on which field(s) need to filled in the deployment template before using
 command below.
 
 ```sh
-$ kubectl create -f resources/deployments/kvc-deployment.yaml
-deployment "kvc-example-deployment" created
+$ kubectl create -f resources/deployments/vck-deployment.yaml
+deployment "vck-example-deployment" created
 ```
 
 ## Types of Sources
@@ -221,7 +221,7 @@ source types is given below.
     nodeAffinity: {}
     volumeSource:
       persistentVolumeClaim:
-        claimName: kvc-resource-a150fd63-11c4-11e8-8397-0a580a440340
+        claimName: vck-resource-a150fd63-11c4-11e8-8397-0a580a440340
   ```
   The claim can be used in a pod to access the data. More specifically, the
   snippet below from the CR status above needs to inserted in the
@@ -230,7 +230,7 @@ source types is given below.
 
   ```yaml
       persistentVolumeClaim:
-        claimName: kvc-resource-a150fd63-11c4-11e8-8397-0a580a440340
+        claimName: vck-resource-a150fd63-11c4-11e8-8397-0a580a440340
   ```
 
 * S3:
@@ -248,7 +248,7 @@ source types is given below.
             - cluster-node-2
     volumeSource:
       hostPath:
-        path: /var/datasets/kvc-resource-a2140d72-11c2-11e8-8397-0a580a440340
+        path: /var/datasets/vck-resource-a2140d72-11c2-11e8-8397-0a580a440340
   ```
   The [node affinity][node-affinity] above can be used as-is in a pod spec
   along with the host path above as a volume to access the s3 data.
@@ -258,7 +258,7 @@ source types is given below.
 
   ```yaml
       hostPath:
-        path: /var/datasets/kvc-resource-a2140d72-11c2-11e8-8397-0a580a440340
+        path: /var/datasets/vck-resource-a2140d72-11c2-11e8-8397-0a580a440340
   ```
 
   ```yaml
@@ -280,7 +280,7 @@ source types is given below.
         nodeAffinity: {}
         volumeSource:
           persistentVolumeClaim:
-            claimName: kvc-resource-a216ed4a-11c2-11e8-8397-0a580a440340
+            claimName: vck-resource-a216ed4a-11c2-11e8-8397-0a580a440340
   ```
   The claim can be used in a pod to access the data.
   More specifically, the snippet below from the CR status above needs to inserted in the
@@ -289,7 +289,7 @@ source types is given below.
 
   ```yaml
       persistentVolumeClaim:
-        claimName: kvc-resource-a150fd63-11c4-11e8-8397-0a580a440340
+        claimName: vck-resource-a150fd63-11c4-11e8-8397-0a580a440340
   ```
   ### Caveats ###
     The NFS server ip and path are not validated, so please ensure that the servers are routable and paths are valid prior to the creation of the VolumeManager CR.
@@ -313,7 +313,7 @@ source types is given below.
             - cluster-node-2
     volumeSource:
       hostPath:
-        path: /var/datasets/kvc-resource-a2140d72-11c2-11e8-8397-0a580a440340
+        path: /var/datasets/vck-resource-a2140d72-11c2-11e8-8397-0a580a440340
   ```
   The [node affinity][node-affinity] above can be used as-is in a pod spec
   along with the host path above as a volume to access the pachyderm data.
@@ -323,7 +323,7 @@ source types is given below.
 
   ```yaml
       hostPath:
-        path: /var/datasets/kvc-resource-a2140d72-11c2-11e8-8397-0a580a440340
+        path: /var/datasets/vck-resource-a2140d72-11c2-11e8-8397-0a580a440340
   ```
 
   ```yaml
@@ -351,10 +351,10 @@ To add a new source type, a new handler specific to the source type is required.
 [helm]: https://docs.helm.sh/using_helm/
 [kubectl]: https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [cr-example]: ../resources/customresources/s3/one-vc.yaml
-[pod-example]: ../resources/pods/kvc-pod.yaml
-[pod-example-vol]: ../resources/pods/kvc-pod.yaml#L10
-[pod-example-aff]: ../resources/pods/kvc-pod.yaml#L7
-[dep-example]: ../resources/deployments/kvc-deployment.yaml
+[pod-example]: ../resources/pods/vck-pod.yaml
+[pod-example-vol]: ../resources/pods/vck-pod.yaml#L10
+[pod-example-aff]: ../resources/pods/vck-pod.yaml#L7
+[dep-example]: ../resources/deployments/vck-deployment.yaml
 [secret-example]: ../resources/secrets/aws-secret.yaml
 [secret-encoding]: https://kubernetes.io/docs/concepts/configuration/secret/#creating-a-secret-manually
 [pachyderm]: http://pachyderm.io

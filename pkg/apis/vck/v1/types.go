@@ -23,11 +23,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/kubeflow/experimental-kvc/pkg/states"
+	"github.com/IntelAI/vck/pkg/states"
 )
 
 const (
-	GroupName string = "kvc.kubeflow.org"
+	GroupName string = "vck.intelai.org"
 
 	Version string = "v1"
 
