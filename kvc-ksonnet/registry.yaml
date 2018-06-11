@@ -1,0 +1,7 @@
+apiVersion: '0.1'
+kind: ksonnet.io/registry
+libraries:
+  kvc:
+    version: ksonnet_kvc 
+    path: kube-volume-controller
+
