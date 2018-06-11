@@ -20,5 +20,10 @@ CODEGEN_PKG=${CODEGEN_PKG:-$(cd ${SCRIPT_ROOT}; ls -d -1 ./vendor/k8s.io/code-ge
 #                  k8s.io/kubernetes. The output-base is needed for the generators to output into the vendor dir
 #                  instead of the $GOPATH directly. For normal projects this can be dropped.
 ${CODEGEN_PKG}/generate-groups.sh all \
-  github.com/kubeflow/experimental-kvc/pkg/client github.com/kubeflow/experimental-kvc/pkg/apis \
-  kvc:v1 --go-header-file pkg/apis/kvc/v1/doc.go.txt
+  github.com/intelai/vck/pkg/client github.com/IntelAI/vck/pkg/apis \
+  vck:v1 --go-header-file pkg/apis/vck/v1/doc.go.txt
+
+# This hack is required as the autogens don't work for upper case letters in package names.
+# This issue: https://github.com/kubernetes/code-generator/issues/22 needs to be resolved to remove this hack.
+mv /go/src/github.com/intelai/vck/pkg/client pkg/
+find pkg/client -name "*.go" | xargs -n1 sed -i 's\intelai/vck\IntelAI/vck\g'

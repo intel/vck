@@ -1,7 +1,7 @@
-apiVersion: kvc.kubeflow.org/v1
+apiVersion: vck.intelai.org/v1
 kind: VolumeManager
 metadata:
-  name: kvc-example1
+  name: vck-example1
   namespace: <insert-namespace-here>
 spec:
   volumeConfigs:

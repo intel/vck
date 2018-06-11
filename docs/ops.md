@@ -1,12 +1,12 @@
-# Operator Manual: Kubernetes Volume Controller (KVC)
+# Operator Manual: Volume Controller for Kubernetes (VCK)
   
-  * [Operator Manual: Kubernetes Volume Controller (KVC)](#operator-manual-kubernetes-volume-controller-kvc)
+  * [Operator Manual: Volume Controller for Kubernetes (VCK)](#operator-manual-volume-controller-for-kubernetes-vck)
     * [Prerequisites](#prerequisites)
     * [Before You Begin](#before-you-begin)
     * [Installing the Controller for the first time](#installing-the-controller-for-the-first-time)
-      * [Installing KVC Controller in your namespaces](#installing-kvc-controller-in-your-namespaces)
-      * [Custom Helm Options in KVC](#custom-helm-options-in-kvc)
-      * [Deleting KVC Controller from your namespace](#deleting-kvc-controller-from-your-namespace)
+      * [Installing VCK Controller in your namespaces](#installing-vck-controller-in-your-namespaces)
+      * [Custom Helm Options in VCK](#custom-helm-options-in-vck)
+      * [Deleting VCK Controller from your namespace](#deleting-vck-controller-from-your-namespace)
 
 ## Prerequisites
 
@@ -27,23 +27,23 @@ $ kubectl config set-context $(kubectl config current-context) --namespace=<inse
 
 ## Installing the Controller for the first time
 
-Clone the repo and specify the namespace within `<>` to install KVC:
+Clone the repo and specify the namespace within `<>` to install VCK:
 
 ```sh
-$ git clone git@github.com:kubeflow/experimental-kvc.git
-$ cd experimental-kvc
-$ helm install helm-charts/kube-volume-controller/ -n kvc --wait \
-  --set namespace=<kvc_namespace>
+$ git clone git@github.com:IntelAI/vck.git
+$ cd vck
+$ helm install helm-charts/kube-volume-controller/ -n vck --wait \
+  --set namespace=<vck_namespace>
 
-NAME:   kvc
+NAME:   vck
 LAST DEPLOYED: Tue Feb  6 12:58:50 2018
-NAMESPACE: kvc-testing
+NAMESPACE: vck-testing
 STATUS: DEPLOYED
 
 RESOURCES:
 ==> v1/StorageClass
 NAME       PROVISIONER                   AGE
-kvc-local  kubernetes.io/no-provisioner  11s
+vck-local  kubernetes.io/no-provisioner  11s
 
 ==> v1/ServiceAccount
 NAME                    SECRETS  AGE
@@ -68,64 +68,63 @@ kube-volume-controller-84bc5789c-9wtsr  1/1    Running  0         11s
 Notes:
 Kube-Volume-Controller v0.1.0
 
-* Installed in kvc
+* Installed in vck
 * Cluster Role: true
 * Storage Class: true
 ```
 
-The above command will install the KVC controller as a deployment, the storage
+The above command will install the VCK controller as a deployment, the storage
 class for dynamic provisioning of persistent volumes and persistent volume
 claims, a service account for the controller and all the RBAC related objects
 such as cluster role and cluster role binding.
 
-If the installation was successful, KVC is ready to use. The installation can be
+If the installation was successful, VCK is ready to use. The installation can be
 verified using the command shown below.
 
 ```sh
 $ kubectl get crd
 NAME                            AGE
-volumemanagers.kvc.kubeflow.org   1h
+volumemanagers.vck.intelai.org   1h
 ```
 
-### Installing KVC Controller in your namespaces
+### Installing VCK Controller in your namespaces
 
-Once KVC is installed in one Kubernetes namespace and in order to use it in another namespace, KVC controller needs to be installed in the new namespace, but subsequent installations no longer require the `clusterrole`, or `storageclass` to be enabled:
+Once VCK is installed in one Kubernetes namespace and in order to use it in another namespace, VCK controller needs to be installed in the new namespace, but subsequent installations no longer require the `clusterrole`, or `storageclass` to be enabled:
 
 ```sh
 $ YOUR_NAMESPACE=<your_namespace>
-$ helm install helm-charts/kube-volume-controller/ -n kvc-${YOUR_NAMESPACE} --wait \
+$ helm install helm-charts/kube-volume-controller/ -n vck-${YOUR_NAMESPACE} --wait \
   --set clusterrole.install=false \
   --set storageclass.install=false \
   --set crd.install=false \
   --set namespace=${YOUR_NAMESPACE}
 ```
 
-### Custom Helm Options in KVC
+### Custom Helm Options in VCK
 
-Any helm chart values can be configured via `--set key=value` in the helm command. For example, you can specify KVC version via `--set tag="v0.1.0"` and enable logging via `--set log_level=4`:
+Any helm chart values can be configured via `--set key=value` in the helm command. For example, you can specify VCK version via `--set tag="v0.1.0"` and enable logging via `--set log_level=4`:
 
 ```sh
-$ helm install helm-charts/kube-volume-controller/ -n kvc --wait \
+$ helm install helm-charts/kube-volume-controller/ -n vck --wait \
   --set tag="v0.1.0" \
   --set log_level=4 \
-  --set namespace=<kvc_namespace>
+  --set namespace=<vck_namespace>
 ```
 
-### Deleting KVC Controller from your namespace
+### Deleting VCK Controller from your namespace
 If you need to uninstall the Controller from your namespace try running the command:
 
 ```sh
 $ YOUR_NAMESPACE=<your_namespace>
-$helm delete --purge kvc-${YOUR_NAMESPACE}
+$helm delete --purge vck-${YOUR_NAMESPACE}
 ```
 
 For a complete list of parameters, please review the [helm values file][helm-values] for additional information.
 
-See [user manual][user-doc] for details on how to use KVC.
+See [user manual][user-doc] for details on how to use VCK.
 
 [helm-values]: ../helm-charts/kube-volume-controller/values.yaml
 [user-doc]: user.md
 [vol-sched]: https://github.com/kubernetes/features/issues/490
 [helm]: https://docs.helm.sh/using_helm/
 [kubectl]: https://kubernetes.io/docs/tasks/tools/install-kubectl/
-

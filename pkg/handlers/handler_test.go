@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"fmt"
-	kvcv1 "github.com/kubeflow/experimental-kvc/pkg/apis/kvc/v1"
-	"github.com/kubeflow/experimental-kvc/pkg/resource"
+	vckv1 "github.com/IntelAI/vck/pkg/apis/vck/v1"
+	"github.com/IntelAI/vck/pkg/resource"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -74,22 +74,22 @@ func TestHandler(t *testing.T) {
 	ownerRef := metav1.OwnerReference{}
 
 	testCases := map[string]struct {
-		volumeConfig kvcv1.VolumeConfig
+		volumeConfig vckv1.VolumeConfig
 		handler      DataHandler
 	}{
 		// S3-Dev handler
 		"[s3_dev_handler] labels not set": {
-			volumeConfig: kvcv1.VolumeConfig{},
+			volumeConfig: vckv1.VolumeConfig{},
 			handler:      NewS3DevHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 		},
 		"[s3_dev_handler] awsCredentialsSecretName not set": {
-			volumeConfig: kvcv1.VolumeConfig{
+			volumeConfig: vckv1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 			},
 			handler: NewS3DevHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 		},
 		"[s3_dev_handler] Wrong access mode": {
-			volumeConfig: kvcv1.VolumeConfig{
+			volumeConfig: vckv1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"awsCredentialsSecretName": "foobar",
@@ -99,7 +99,7 @@ func TestHandler(t *testing.T) {
 			handler: NewS3DevHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 		},
 		"[s3_dev_handler] Wrong timeoutForDataDownload format": {
-			volumeConfig: kvcv1.VolumeConfig{
+			volumeConfig: vckv1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"awsCredentialsSecretName": "foobar",
@@ -110,7 +110,7 @@ func TestHandler(t *testing.T) {
 			handler: NewS3DevHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 		},
 		"[s3_dev_handler] Node List Failing": {
-			volumeConfig: kvcv1.VolumeConfig{
+			volumeConfig: vckv1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"awsCredentialsSecretName": "foobar",
@@ -120,7 +120,7 @@ func TestHandler(t *testing.T) {
 			handler: NewS3DevHandler(fakek8sClient, []resource.Client{fakePodClient, &testClient{plural: "nodes", listShouldFail: true}, fakePVClient, fakePVlient}),
 		},
 		"[s3_dev_handler] replicas > Num nodes": {
-			volumeConfig: kvcv1.VolumeConfig{
+			volumeConfig: vckv1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"awsCredentialsSecretName": "foobar",
@@ -131,7 +131,7 @@ func TestHandler(t *testing.T) {
 			handler: NewS3DevHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 		},
 		"[s3_dev_handler] Any create failed": {
-			volumeConfig: kvcv1.VolumeConfig{
+			volumeConfig: vckv1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"awsCredentialsSecretName": "foobar",
@@ -144,17 +144,17 @@ func TestHandler(t *testing.T) {
 
 		// S3 handler
 		"[s3_handler] labels not set": {
-			volumeConfig: kvcv1.VolumeConfig{},
+			volumeConfig: vckv1.VolumeConfig{},
 			handler:      NewS3Handler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 		},
 		"[s3_handler] awsCredentialsSecretName not set": {
-			volumeConfig: kvcv1.VolumeConfig{
+			volumeConfig: vckv1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 			},
 			handler: NewS3Handler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 		},
 		"[s3_handler] Wrong access mode": {
-			volumeConfig: kvcv1.VolumeConfig{
+			volumeConfig: vckv1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"awsCredentialsSecretName": "foobar",
@@ -164,7 +164,7 @@ func TestHandler(t *testing.T) {
 			handler: NewS3Handler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 		},
 		"[s3_handler] Wrong timeoutForDataDownload format": {
-			volumeConfig: kvcv1.VolumeConfig{
+			volumeConfig: vckv1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"awsCredentialsSecretName": "foobar",
@@ -175,7 +175,7 @@ func TestHandler(t *testing.T) {
 			handler: NewS3Handler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 		},
 		"[s3_handler] Node List Failing": {
-			volumeConfig: kvcv1.VolumeConfig{
+			volumeConfig: vckv1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"awsCredentialsSecretName": "foobar",
@@ -185,7 +185,7 @@ func TestHandler(t *testing.T) {
 			handler: NewS3Handler(fakek8sClient, []resource.Client{fakePodClient, &testClient{plural: "nodes", listShouldFail: true}, fakePVClient, fakePVlient}),
 		},
 		"[s3_handler] replicas > Num nodes": {
-			volumeConfig: kvcv1.VolumeConfig{
+			volumeConfig: vckv1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"awsCredentialsSecretName": "foobar",
@@ -196,7 +196,7 @@ func TestHandler(t *testing.T) {
 			handler: NewS3Handler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 		},
 		"[s3_handler] Any create failed": {
-			volumeConfig: kvcv1.VolumeConfig{
+			volumeConfig: vckv1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"awsCredentialsSecretName": "foobar",
@@ -210,24 +210,24 @@ func TestHandler(t *testing.T) {
 
 		// NFS handler
 		"[nfs_handler] labels not set": {
-			volumeConfig: kvcv1.VolumeConfig{},
+			volumeConfig: vckv1.VolumeConfig{},
 			handler:      NewNFSHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 		},
 		"[nfs_handler] server not set": {
-			volumeConfig: kvcv1.VolumeConfig{
+			volumeConfig: vckv1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 			},
 			handler: NewNFSHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 		},
 		"[nfs_handler] path not set": {
-			volumeConfig: kvcv1.VolumeConfig{
+			volumeConfig: vckv1.VolumeConfig{
 				Labels:  map[string]string{"foo": "bar"},
 				Options: map[string]string{"server": "foo"},
 			},
 			handler: NewNFSHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 		},
 		"[nfs_handler] Wrong access mode": {
-			volumeConfig: kvcv1.VolumeConfig{
+			volumeConfig: vckv1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"server": "foo",
@@ -238,7 +238,7 @@ func TestHandler(t *testing.T) {
 			handler: NewNFSHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 		},
 		"[nfs_handler] Any create failed": {
-			volumeConfig: kvcv1.VolumeConfig{
+			volumeConfig: vckv1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"server": "foo",
@@ -251,24 +251,24 @@ func TestHandler(t *testing.T) {
 
 		// Pachyderm handler
 		"[pachyderm_handler] labels not set": {
-			volumeConfig: kvcv1.VolumeConfig{},
+			volumeConfig: vckv1.VolumeConfig{},
 			handler:      NewPachydermHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 		},
 		"[pachyderm_handler] repo not set": {
-			volumeConfig: kvcv1.VolumeConfig{
+			volumeConfig: vckv1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 			},
 			handler: NewPachydermHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 		},
 		"[pachyderm_handler] branch not set": {
-			volumeConfig: kvcv1.VolumeConfig{
+			volumeConfig: vckv1.VolumeConfig{
 				Labels:  map[string]string{"foo": "bar"},
 				Options: map[string]string{"repo": "foo"},
 			},
 			handler: NewPachydermHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 		},
 		"[pachyderm_handler] inputPathnot set": {
-			volumeConfig: kvcv1.VolumeConfig{
+			volumeConfig: vckv1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"repo":   "foo",
@@ -278,7 +278,7 @@ func TestHandler(t *testing.T) {
 			handler: NewPachydermHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 		},
 		"[pachyderm_handler] outputPath not set": {
-			volumeConfig: kvcv1.VolumeConfig{
+			volumeConfig: vckv1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"repo":      "foo",
@@ -289,7 +289,7 @@ func TestHandler(t *testing.T) {
 			handler: NewPachydermHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 		},
 		"[pachyderm_handler] Wrong access mode": {
-			volumeConfig: kvcv1.VolumeConfig{
+			volumeConfig: vckv1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"repo":       "foo",
@@ -302,7 +302,7 @@ func TestHandler(t *testing.T) {
 			handler: NewPachydermHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 		},
 		"[pachyderm_handler] replicas > Num nodes": {
-			volumeConfig: kvcv1.VolumeConfig{
+			volumeConfig: vckv1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"repo":       "foo",
@@ -316,7 +316,7 @@ func TestHandler(t *testing.T) {
 			handler: NewPachydermHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 		},
 		"[pachyderm_handler] Any create failed": {
-			volumeConfig: kvcv1.VolumeConfig{
+			volumeConfig: vckv1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"repo":       "foo",
@@ -337,6 +337,6 @@ func TestHandler(t *testing.T) {
 
 		// Assert stuff
 		require.NotNil(t, volume)
-		require.NotEqual(t, volume.Message, kvcv1.SuccessfulVolumeStatusMessage)
+		require.NotEqual(t, volume.Message, vckv1.SuccessfulVolumeStatusMessage)
 	}
 }

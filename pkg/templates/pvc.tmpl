@@ -1,7 +1,7 @@
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: "{{.KVCName}}"
+  name: "{{.VCKName}}"
   namespace: "{{.NS}}"
   ownerReferences:
   - apiVersion: {{.APIVersion}}
@@ -20,4 +20,4 @@ spec:
   resources:
     requests:
       storage: "{{.Capacity}}"
-  storageClassName: "{{.KVCStorageClassName}}"
+  storageClassName: "{{.VCKStorageClassName}}"

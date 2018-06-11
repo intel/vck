@@ -1,10 +1,10 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: kvc
+  name: vck
   namespace: {{ .Values.namespace }}
   labels:
-    app: kvc
+    app: vck
     servicetype: controller
 spec:
   replicas: 1
@@ -16,16 +16,16 @@ spec:
   template:
     metadata:
       labels:
-        app: kvc
+        app: vck
         servicetype: controller
     spec:
-      serviceAccountName: kvc
+      serviceAccountName: vck
       containers:
-      - name: kvc
+      - name: vck
         image: {{ .Values.registry }}{{ .Values.org }}/{{ .Values.repo }}:{{ .Values.tag }}
         imagePullPolicy: IfNotPresent
         command:
-          - "/kvc"
+          - "/vck"
           {{- range .Values.flags }}
           - {{ . | quote }}
           {{- end }}
