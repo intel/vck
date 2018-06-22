@@ -98,7 +98,6 @@ func main() {
 
 	dataHandlers := []handlers.DataHandler{
 		handlers.NewS3Handler(k8sClientset, []resource.Client{nodeClient, pvClient, pvcClient, podClient, podClient}),
-		handlers.NewS3DevHandler(k8sClientset, []resource.Client{nodeClient, pvClient, pvcClient, podClient, podClient}),
 		handlers.NewNFSHandler(k8sClientset, []resource.Client{nodeClient, pvClient, pvcClient, podClient, podClient}),
 		handlers.NewPachydermHandler(k8sClientset, []resource.Client{nodeClient, pvClient, pvcClient, pachydermPodClient}),
 	}

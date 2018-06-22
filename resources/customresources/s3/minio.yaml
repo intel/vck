@@ -8,8 +8,6 @@ spec:
     - id: "vol1"
       replicas: 1
       sourceType: "S3"
-      sourceURL: "s3://neon-stockdatasets/cifar-100-python.tar.gz"
-      endpointURL: "minio-svc.default:9000"
       accessMode: "ReadWriteOnce"
       nodeAffinity:
         - <insert-node-affinity-here>
@@ -21,3 +19,6 @@ spec:
         key2: val2
       options:
         awsCredentialsSecretName: <insert-secret-name-for-aws-credentials>
+        sourceURL: "s3://neon-stockdatasets/cifar-100-python.tar.gz"
+        endpointURL: "minio-svc.default:9000"
+        # distributionStrategy: <insert-distributed-strategy-here-optional>

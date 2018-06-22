@@ -94,19 +94,46 @@ func TestVolumeManager(t *testing.T) {
 			description: "single vc - S3 - no error",
 			volumeConfigs: []crv1.VolumeConfig{
 				{
-					ID:          "vol1",
-					Replicas:    1,
-					SourceType:  "S3",
-					SourceURL:   "s3://e2e-test/cifar-100-python.tar.gz",
-					EndpointURL: fmt.Sprintf("http://%s:9000", *s3ServerIP),
-					AccessMode:  "ReadWriteOnce",
-					Capacity:    "5Gi",
+					ID:         "vol1",
+					Replicas:   1,
+					SourceType: "S3",
+					AccessMode: "ReadWriteOnce",
+					Capacity:   "5Gi",
 					Labels: map[string]string{
 						"key1": "val1",
 						"key2": "val2",
 					},
 					Options: map[string]string{
 						"awsCredentialsSecretName": "s3-creds",
+						"sourceURL":                "s3://e2e-test/cifar-100-python.tar.gz",
+						"endpointURL":              fmt.Sprintf("http://%s:9000", *s3ServerIP),
+					},
+				},
+			},
+			expSuccess: true,
+			expError:   "",
+			expHP:      true,
+			expNA:      true,
+			expPVC:     false,
+		},
+		{
+			description: "single vc - S3 - with distributionStrategy - no error",
+			volumeConfigs: []crv1.VolumeConfig{
+				{
+					ID:         "vol1",
+					Replicas:   1,
+					SourceType: "S3",
+					AccessMode: "ReadWriteOnce",
+					Capacity:   "5Gi",
+					Labels: map[string]string{
+						"key1": "val1",
+						"key2": "val2",
+					},
+					Options: map[string]string{
+						"awsCredentialsSecretName": "s3-creds",
+						"sourceURL":                "s3://e2e-test",
+						"endpointURL":              fmt.Sprintf("http://%s:9000", *s3ServerIP),
+						"distributionStrategy":     "{\"*cifar*\": 1}",
 					},
 				},
 			},
@@ -144,19 +171,19 @@ func TestVolumeManager(t *testing.T) {
 			description: "multiple vc - S3 and NFS - no error",
 			volumeConfigs: []crv1.VolumeConfig{
 				{
-					ID:          "vol1",
-					Replicas:    1,
-					SourceType:  "S3",
-					SourceURL:   "s3://e2e-test/cifar-100-python.tar.gz",
-					EndpointURL: fmt.Sprintf("http://%s:9000", *s3ServerIP),
-					AccessMode:  "ReadWriteOnce",
-					Capacity:    "5Gi",
+					ID:         "vol1",
+					Replicas:   1,
+					SourceType: "S3",
+					AccessMode: "ReadWriteOnce",
+					Capacity:   "5Gi",
 					Labels: map[string]string{
 						"key1": "val1",
 						"key2": "val2",
 					},
 					Options: map[string]string{
 						"awsCredentialsSecretName": "s3-creds",
+						"sourceURL":                "s3://e2e-test/cifar-100-python.tar.gz",
+						"endpointURL":              fmt.Sprintf("http://%s:9000", *s3ServerIP),
 					},
 				},
 				{
@@ -239,16 +266,16 @@ func TestVolumeManager(t *testing.T) {
 			description: "single vc - S3 - no label error",
 			volumeConfigs: []crv1.VolumeConfig{
 				{
-					ID:          "vol1",
-					Replicas:    1,
-					SourceType:  "S3",
-					SourceURL:   "s3://e2e-test/cifar-100-python.tar.gz",
-					EndpointURL: fmt.Sprintf("http://%s:9000", *s3ServerIP),
-					AccessMode:  "ReadWriteOnce",
-					Capacity:    "5Gi",
-					Labels:      map[string]string{},
+					ID:         "vol1",
+					Replicas:   1,
+					SourceType: "S3",
+					AccessMode: "ReadWriteOnce",
+					Capacity:   "5Gi",
+					Labels:     map[string]string{},
 					Options: map[string]string{
 						"awsCredentialsSecretName": "s3-creds",
+						"sourceURL":                "s3://e2e-test/cifar-100-python.tar.gz",
+						"endpointURL":              fmt.Sprintf("http://%s:9000", *s3ServerIP),
 					},
 				},
 			},
@@ -262,18 +289,19 @@ func TestVolumeManager(t *testing.T) {
 			description: "single vc - S3 - no creds error",
 			volumeConfigs: []crv1.VolumeConfig{
 				{
-					ID:          "vol1",
-					Replicas:    1,
-					SourceType:  "S3",
-					SourceURL:   "s3://e2e-test/cifar-100-python.tar.gz",
-					EndpointURL: fmt.Sprintf("http://%s:9000", *s3ServerIP),
-					AccessMode:  "ReadWriteOnce",
-					Capacity:    "5Gi",
+					ID:         "vol1",
+					Replicas:   1,
+					SourceType: "S3",
+					AccessMode: "ReadWriteOnce",
+					Capacity:   "5Gi",
 					Labels: map[string]string{
 						"key1": "val1",
 						"key2": "val2",
 					},
-					Options: map[string]string{},
+					Options: map[string]string{
+						"sourceURL":   "s3://e2e-test/cifar-100-python.tar.gz",
+						"endpointURL": fmt.Sprintf("http://%s:9000", *s3ServerIP),
+					},
 				},
 			},
 			expSuccess: false,
@@ -353,13 +381,11 @@ func TestVolumeManager(t *testing.T) {
 			description: "single vc - S3 - time out error due to bad url",
 			volumeConfigs: []crv1.VolumeConfig{
 				{
-					ID:          "vol1",
-					Replicas:    1,
-					SourceType:  "S3",
-					SourceURL:   "s3://fake-url",
-					EndpointURL: fmt.Sprintf("http://%s:9000", *s3ServerIP),
-					AccessMode:  "ReadWriteOnce",
-					Capacity:    "5Gi",
+					ID:         "vol1",
+					Replicas:   1,
+					SourceType: "S3",
+					AccessMode: "ReadWriteOnce",
+					Capacity:   "5Gi",
 					Labels: map[string]string{
 						"key1": "val1",
 						"key2": "val2",
@@ -367,6 +393,8 @@ func TestVolumeManager(t *testing.T) {
 					Options: map[string]string{
 						"awsCredentialsSecretName": "s3-creds",
 						"timeoutForDataDownload":   "10s",
+						"sourceURL":                "s3://fake-url",
+						"endpointURL":              fmt.Sprintf("http://%s:9000", *s3ServerIP),
 					},
 				},
 			},
@@ -380,13 +408,11 @@ func TestVolumeManager(t *testing.T) {
 			description: "single vc - S3 - timeout error due to bad endpoint",
 			volumeConfigs: []crv1.VolumeConfig{
 				{
-					ID:          "vol1",
-					Replicas:    1,
-					SourceType:  "S3",
-					SourceURL:   "s3://e2e-test/cifar-100-python.tar.gz",
-					EndpointURL: "fake.end.point",
-					AccessMode:  "ReadWriteOnce",
-					Capacity:    "5Gi",
+					ID:         "vol1",
+					Replicas:   1,
+					SourceType: "S3",
+					AccessMode: "ReadWriteOnce",
+					Capacity:   "5Gi",
 					Labels: map[string]string{
 						"key1": "val1",
 						"key2": "val2",
@@ -394,6 +420,8 @@ func TestVolumeManager(t *testing.T) {
 					Options: map[string]string{
 						"awsCredentialsSecretName": "s3-creds",
 						"timeoutForDataDownload":   "10s",
+						"sourceURL":                "s3://e2e-test/cifar-100-python.tar.gz",
+						"endpointURL":              "fake.end.point",
 					},
 				},
 			},
@@ -407,18 +435,19 @@ func TestVolumeManager(t *testing.T) {
 			description: "multiple vc - S3 and NFS - S3 failed due to no creds error",
 			volumeConfigs: []crv1.VolumeConfig{
 				{
-					ID:          "vol1",
-					Replicas:    1,
-					SourceType:  "S3",
-					SourceURL:   "s3://e2e-test/cifar-100-python.tar.gz",
-					EndpointURL: fmt.Sprintf("http://%s:9000", *s3ServerIP),
-					AccessMode:  "ReadWriteOnce",
-					Capacity:    "5Gi",
+					ID:         "vol1",
+					Replicas:   1,
+					SourceType: "S3",
+					AccessMode: "ReadWriteOnce",
+					Capacity:   "5Gi",
 					Labels: map[string]string{
 						"key1": "val1",
 						"key2": "val2",
 					},
-					Options: map[string]string{},
+					Options: map[string]string{
+						"sourceURL":   "s3://e2e-test/cifar-100-python.tar.gz",
+						"endpointURL": fmt.Sprintf("http://%s:9000", *s3ServerIP),
+					},
 				},
 				{
 					ID:         "vol1",

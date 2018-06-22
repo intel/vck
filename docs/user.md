@@ -7,6 +7,7 @@
     * [Create a Pod using the Custom Resource Status](#create-a-pod-using-the-custom-resource-status)
     * [Create a Deployment using the Custom Resource Status](#create-a-deployment-using-the-custom-resource-status)
     * [Types of Sources](#types-of-sources)
+    * [Data distribution] (#data-distribution)
 
 ## Prerequisites
 
@@ -170,7 +171,6 @@ deployment "vck-example-deployment" created
 
 ## Types of Sources
 The following source types are currently implemented:
-* S3-Dev: Files present in an S3 bucket and provided as `volumeConfig.sourceURL` in the CR are downloaded/synced and made available as a PVC. Only 1 replica is allowed. This source type should only be used for development and testing purposes.
 * S3: Files present in an S3 bucket and provided as `volumeConfig.sourceURL` in the CR are downloaded/synced onto the number of nodes equal to `volumeConfig.replicas` and made available as a hostPath volume. Node affinity details are provided through `volume.nodeAffinity` to guide the scheduling of pods.
 * NFS: The path exported by an NFS server is mounted and made available as a PVC.
 * Pachyderm: The repo, branch and file in [Pachyderm][pachyderm] and provided as `volumeConfig.options["repo"]`, `volumeConfig.options["branch"]` and `volumeConfig.options["filePath"]` in the CR are downloaded/synced onto the number of nodes equal to `volumeConfig.replicas` and made available as a hostPath volume. Node affinity details are provided through `volume.nodeAffinity` to guide the scheduling of pods.
@@ -183,20 +183,18 @@ For examples on how to define and use the different types, please refer to the e
 
 A brief description of each source type is provided below.
 
+| `volumeConfig.sourceURL`      | `string`                                          | Source URL of the data set                                                                                 |
+
 | Type         | Fields | Required                         |  Description                                          | Supported Access Modes | Field(s) provided in CR status |
 |:-------------|:----------------------------------------|:----|:--------------------------------------------------|:-----------------------|:-------------------------------|
-| `S3-Dev`     | `volumeConfig.sourceURL`                | Yes | The s3 url to download the data from. End the sourceURL with a `/` to recursively copy |`ReadWriteOnce`         | `volumeSource`                 |
-|              | `volumeConfig.endpointURL`              | No | The s3 compatible service endpoint (i.e. minio url)         |                        | |
-|              | `volumeConfig.replicas`                 | No | Field is ignored for this source type.                 |                        | |
-|              | `volumeConfig.options["dataPath"]`                 | No | The  data path on the node where s3 data would be downloaded  |                        | `volumeSource`                 |
-|              | `volumeConfig.options["awsCredentialsSecretName"]` | Yes | The name of the secret with AWS credentials to access the s3 data              |                        | |
-|              | `volumeConfig.options["timeoutForDataDownload"]`  | No | The timeout for download of s3 data. Defaults to 5 minutes. [[Format]](https://golang.org/pkg/time/#ParseDuration) |                        | |
-| `S3`         | `volumeConfig.sourceURL`                | Yes | The s3 url to download the data from. End the sourceURL with a `/` to recursively copy | `ReadWriteOnce`        | `volumeSource`                 |
+| `S3`         | `volumeConfig.options["sourceURL"]`     | Yes | The s3 url to download the data from. End the sourceURL with a `/` to recursively copy | `ReadWriteOnce`        | `volumeSource`                 |
+|              | `volumeConfig.options["endpointURL"]`   | Yes | No | The s3 compatible service endpoint (i.e. minio url)          |                        | |
 |              | `volumeConfig.endpointURL`              | No | The s3 compatible service endpoint (i.e. minio url)          |                        | |
 |              | `volumeConfig.replicas`                 | Yes | The number of nodes this data should be replicated on. |                        | `nodeAffinity`                 |
 |              | `volumeConfig.options["dataPath"]`                 | No | The  data path on the node where s3 data would be downloaded |                        | `volumeSource`                 |
 |              | `volumeConfig.options["awsCredentialsSecretName]` | Yes | The name of the secret with AWS credentials to access the s3 data              |                        | |
 |              | `volumeConfig.options["timeoutForDataDownload"]`  | No | The timeout for download of s3 data. Defaults to 5 minutes. [[Format]](https://golang.org/pkg/time/#ParseDuration) |                        | |
+|              | `volumeConfig.options["distributionStrategy"]`    | No | The [distribution strategy](#data-distribution) to use to distribute the data across the replicas |                        | |
 | `NFS`        | `volumeConfig.options["server"]`        | Yes | Address of the NFS server.                             |`ReadWriteMany`         | `volumeSource`                 |
 |              | `volumeConfig.options["path"]`          | Yes | The path exported by the NFS server.                   |`ReadOnlyMany`          | |
 |              | `volumeConfig.accessMode     `          | Yes | Access mode for the volume config.                     |                        | |
@@ -213,25 +211,6 @@ Status of the CR provides information on the volume source and node affinity.
 Example status fields for the different source types and a description on
 what needs to be changed in the [pod template][pod-example] to use these
 source types is given below.
-
-* S3-Dev:
-  ```yaml
-    - id: vol1
-    message: success
-    nodeAffinity: {}
-    volumeSource:
-      persistentVolumeClaim:
-        claimName: vck-resource-a150fd63-11c4-11e8-8397-0a580a440340
-  ```
-  The claim can be used in a pod to access the data. More specifically, the
-  snippet below from the CR status above needs to inserted in the
-  [volumes field][pod-example-vol] of the example [pod template][pod-example]
-  in order to use it with the pod.
-
-  ```yaml
-      persistentVolumeClaim:
-        claimName: vck-resource-a150fd63-11c4-11e8-8397-0a580a440340
-  ```
 
 * S3:
   ```yaml
@@ -342,6 +321,37 @@ source types is given below.
 
 To add a new source type, a new handler specific to the source type is required. Please refer to the [developer manual][dev-doc] for more details.
 
+## Data distribution
+
+For the S3 source type the user can provide a distribution strategy which should be of the form: `{"glob_pattern_1": #replicas, "glob_pattern_2": #replicas, ...}`. [Glob][glob] patterns are supported in this case and the total number of replicas across all the patterns
+should equal the number or replicas in the spec.
+The strategy specifies that the files found in the specified source by applying the given glob pattern will be replicated across #replicas nodes, For example for the given yaml:
+```yaml
+apiVersion: vck.intelai.org/v1
+kind: VolumeManager
+metadata:
+  name: vck-example1
+  namespace: <insert-namespace-here>
+spec:
+  volumeConfigs:
+    - id: "vol1"
+      replicas: 4
+      sourceType: "S3"
+      accessMode: "ReadWriteOnce"
+      capacity: 5Gi
+      labels:
+        key1: val1
+        key2: val2
+      options:
+        awsCredentialsSecretName: aws-secret
+        sourceURL: "s3://foo/bar"
+        distributionStrategy: '{"*0_1*": 2, "*1_1*": 2}'
+        # dataPath: <insert-data-path-here-optional>"
+```
+
+all files matching the pattern `*0_1*` in the bucket `s3://foo/bar` would be synced in 2 replicas and all files matching `*1_1*` would be synced in the remaining 2 replicas.
+
+
 [ops-doc]: ops.md
 [dev-doc]: dev.md
 [arch-doc]: arch.md
@@ -358,3 +368,4 @@ To add a new source type, a new handler specific to the source type is required.
 [secret-example]: ../resources/secrets/aws-secret.yaml
 [secret-encoding]: https://kubernetes.io/docs/concepts/configuration/secret/#creating-a-secret-manually
 [pachyderm]: http://pachyderm.io
+[glob]: https://en.wikipedia.org/wiki/Glob_(programming)

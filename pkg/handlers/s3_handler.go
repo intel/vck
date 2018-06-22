@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
@@ -63,6 +64,17 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1
 		}
 	}
 
+	if _, ok := vc.Options["sourceURL"]; !ok {
+		return vckv1.Volume{
+			ID:      vc.ID,
+			Message: fmt.Sprintf("sourceURL has to be set in options"),
+		}
+	}
+
+	if _, ok := vc.Options["endpointURL"]; !ok {
+		vc.Options["EndpointURL"] = "https://s3.amazonaws.com"
+	}
+
 	// Check if dataPath  was set and  if not set default to /var/datasets.
 	if _, ok := vc.Options["dataPath"]; !ok {
 		vc.Options["dataPath"] = "/var/datasets"
@@ -99,16 +111,51 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1
 		}
 	}
 
+	vckDataPathSuffix := fmt.Sprintf("%s%s", vckNamePrefix, uuid.NewUUID())
+	vckPath := fmt.Sprintf("%s/%s", vc.Options["dataPath"], vckDataPathSuffix)
+	copyCommand := []string{}
+
+	if distributionStrategy, ok := vc.Options["distributionStrategy"]; ok {
+		var distributionMap map[string]int
+
+		err := json.Unmarshal([]byte(distributionStrategy), &distributionMap)
+		if err != nil {
+			return vckv1.Volume{
+				ID:      vc.ID,
+				Message: fmt.Sprintf("invalid distributionStrategy [%v] specified, it must be a map[string]int", distributionStrategy),
+			}
+		}
+		replicaCount := 0
+
+		for filter, replicas := range distributionMap {
+
+			for i := 0; i < replicas; i++ {
+				copyCommand = append(copyCommand, fmt.Sprintf("mc config host add s3 ${AWS_ENDPOINT_URL} ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY}; mc find s3/${BUCKET_NAME}${BUCKET_PATH} --path '%v' --exec 'mc cp {} %s'", filter, vckPath))
+				replicaCount++
+			}
+		}
+		if replicaCount != vc.Replicas {
+			return vckv1.Volume{
+				ID:      vc.ID,
+				Message: fmt.Sprintf("total number of replicas: [%v] in distributionStrategy [%v], does not match number or replicas provided: [%v]", replicaCount, distributionStrategy, vc.Replicas),
+			}
+		}
+	} else {
+		for i := 0; i < vc.Replicas; i++ {
+			copyCommand = append(copyCommand, "mc config host add s3 ${AWS_ENDPOINT_URL} ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY}; mc cp ${RECURSIVE_OPTION} s3/${BUCKET_NAME}${BUCKET_PATH} ${DATA_PATH}")
+		}
+	}
+
 	recursiveFlag := ""
-	if strings.HasSuffix(vc.SourceURL, "/") {
+	if strings.HasSuffix(vc.Options["sourceURL"], "/") {
 		recursiveFlag = "--recursive"
 	}
 
-	s3URL, err := url.Parse(vc.SourceURL)
+	s3URL, err := url.Parse(vc.Options["sourceURL"])
 	if err != nil {
 		return vckv1.Volume{
 			ID:      vc.ID,
-			Message: fmt.Sprintf("error while parsing URL [%s]: %v", vc.SourceURL, err),
+			Message: fmt.Sprintf("error while parsing URL [%s]: %v", vc.Options["sourceURL"], err),
 		}
 	}
 	bucketName := s3URL.Host
@@ -116,7 +163,6 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1
 
 	vckNames := []string{}
 	podClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "pods")
-	vckDataPathSuffix := fmt.Sprintf("%s%s", vckNamePrefix, uuid.NewUUID())
 	for i := 0; i < vc.Replicas; i++ {
 		vckName := fmt.Sprintf("%s%s", vckNamePrefix, uuid.NewUUID())
 		vckNames = append(vckNames, vckName)
@@ -141,7 +187,8 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1
 			bucketName,
 			bucketPath,
 			map[string]string{
-				"path": fmt.Sprintf("%s/%s", vc.Options["dataPath"], vckDataPathSuffix),
+				"path":        vckPath,
+				"copyCommand": copyCommand[i],
 			},
 		})
 
