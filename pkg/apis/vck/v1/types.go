@@ -95,8 +95,6 @@ type VolumeConfig struct {
 	ID           string              `json:"id"`
 	Replicas     int                 `json:"replicas"`
 	SourceType   DataSourceType      `json:"sourceType"`
-	EndpointURL  string              `json:"endpointURL"`
-	SourceURL    string              `json:"sourceURL"`
 	AccessMode   string              `json:"accessMode"`
 	Capacity     string              `json:"capacity"`
 	NodeAffinity corev1.NodeAffinity `json:"nodeAffinity"`

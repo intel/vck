@@ -73,7 +73,6 @@ below:
 | `volumeConfig.id`*            | `string`                                          | An identifier for the volume                                                                               |
 | `volumeConfig.replicas`*      | `int`                                             | Number of replicas required on distinct compute nodes                                                      |
 | `volumeConfig.sourceType`*    | `string`                                          | Source type of the dataset to be used by the volume (e.g., S3, NFS)                                        |
-| `volumeConfig.sourceURL`      | `string`                                          | Source URL of the data set                                                                                 |
 | `volumeConfig.accessMode`*    | `string`                                          | Type of access mode                                                                                        |
 | `volumeConfig.capacity`*      | `string`                                          | Size requested for the volume                                                                              |
 | `volumeConfig.labels`*        | `map[string]string`                               | Any labels required for the volume                                                                         |
@@ -169,7 +168,7 @@ information on usage, refer to the [user manual][user-doc].
 
 | Source Type            | Phase    | Description                                                                                                   |
 | :----------------------| :--------| :-------------------------------------------------------------------------------------------------------------|
-| S3-Dev                 | Supported| VCK will download the files from a specified S3 bucket and make it available for consumption in a node. This source type should only be used for development and testing purposes.      |
+| S3-Dev                 | Deprecated| VCK will download the files from a specified S3 bucket and make it available for consumption in a node. This source type should only be used for development and testing purposes.      |
 | S3                     | Supported| VCK will download the files from a specified S3 bucket and provide nodes where hostPath volumes can be used.  |
 | NFS                    | Supported| VCK will make the specified path from an NFS server available for consumption.                                |
 [ [Pachyderm][pachyderm] | Supported| VCK will download the pachyderm repo data and make it available for consumption on a specified number of nodes|

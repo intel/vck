@@ -109,7 +109,7 @@ spec:
     imagePullPolicy: "Always"
     command: ["/bin/sh"]
 {{ if eq .VCKOp "add" }}
-    args: ["-c", "mc config host add s3 ${AWS_ENDPOINT_URL} ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY}; mc cp ${RECURSIVE_OPTION} s3/${BUCKET_NAME}${BUCKET_PATH} ${DATA_PATH}"]
+    args: ["-c", "{{ index .VCKOptions "copyCommand" }}"]
 {{ end  }}
 {{ if eq .VCKOp "delete" }}
     args: ["-c", "rm -rf ${DATA_PATH}"]
@@ -131,9 +131,9 @@ spec:
           name: {{index .Options "awsCredentialsSecretName"}}
           key: awsSecretAccessKey
     - name: AWS_ENDPOINT_URL
-      value: {{.EndpointURL}}
+      value: {{index .Options "endpointURL"}}
     - name: S3_URL
-      value: {{.SourceURL}}
+      value: {{index .Options "sourceURL"}}
     - name: BUCKET_NAME
       value: {{.BucketName}}
     - name: BUCKET_PATH
