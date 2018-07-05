@@ -1,0 +1,35 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    "initializer.kubernetes.io/vck": '{
+        "name": "vck-example3",
+        "id": "vol2",
+        "containers": ["helloworld-1"],
+        "mount-path": "/var/datasets"
+      }'
+    
+  labels: 
+    app: helloworld
+    envoy: "true"
+  name: helloworld-with-annotation
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: helloworld
+        envoy: "true"
+      name: helloworld-with-annotation
+    spec:
+      containers:
+        - name: helloworld-1
+          image: ubuntu:latest
+          imagePullPolicy: Always
+          command: [ "/bin/bash", "-c", "--" ]
+          args: [ "while true; do sleep 30; done;" ]
+        - name: helloworld-2
+          image: ubuntu:latest
+          imagePullPolicy: Always
+          command: [ "/bin/bash", "-c", "--" ]
+          args: [ "while true; do sleep 30; done;" ]
