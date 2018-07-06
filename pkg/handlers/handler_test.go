@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"fmt"
-	vckv1 "github.com/IntelAI/vck/pkg/apis/vck/v1"
-	"github.com/IntelAI/vck/pkg/resource"
+	vckv1 "github.com/ppkube/vck/pkg/apis/vck/v1"
+	"github.com/ppkube/vck/pkg/resource"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

@@ -3,7 +3,5 @@
 *.swn
 *.idea
 *.iml
-pkg/apis/kvc/v1/zz_generated.deepcopy.go
-pkg/client
-vendor
-vendor.orig
+vck
+.vscode/

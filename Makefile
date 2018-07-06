@@ -23,7 +23,7 @@ dep-ensure:
 	dep ensure
 
 build: prereq code-generation lint test
-	go build -gcflags "-N -l" github.com/IntelAI/vck
+	go build -gcflags "-N -l" github.com/ppkube/vck
 
 lint:
 	gometalinter --config=./lint.json --vendor .

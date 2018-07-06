@@ -3,7 +3,7 @@ package handlers
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	vckv1 "github.com/IntelAI/vck/pkg/apis/vck/v1"
+	vckv1 "github.com/ppkube/vck/pkg/apis/vck/v1"
 )
 
 // DataHandler is the interface which defines the handler methods

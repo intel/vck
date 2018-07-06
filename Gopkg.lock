@@ -584,7 +584,7 @@
     "storage/v1beta1"
   ]
   revision = "006a217681ae70cbacdd66a5e2fca1a61a8ff28e"
-  version = "kubernetes-1.9.1"
+  version = "kubernetes-1.9.2"
 
 [[projects]]
   name = "k8s.io/apiextensions-apiserver"
@@ -685,7 +685,7 @@
     "third_party/forked/golang/reflect"
   ]
   revision = "68f9c3a1feb3140df59c67ced62d3a5df8e6c9c2"
-  version = "kubernetes-1.9.1"
+  version = "kubernetes-1.9.2"
 
 [[projects]]
   branch = "release-1.9"
@@ -950,6 +950,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c6410c3c3613b20c2aacbb0e39303a752f64a6c826014635db66582b158d120c"
+  inputs-digest = "7d83ff6bbade95677d53f9ac2ae6b5e74a5bb300e10c005e4b0ac05c3065b6bd"
   solver-name = "gps-cdcl"
   solver-version = 1
