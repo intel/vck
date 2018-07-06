@@ -17,11 +17,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	crv1 "github.com/IntelAI/vck/pkg/apis/vck/v1"
-	crv1_client "github.com/IntelAI/vck/pkg/client/clientset/versioned"
-	crv1_volume_manager "github.com/IntelAI/vck/pkg/client/clientset/versioned/typed/vck/v1"
-	"github.com/IntelAI/vck/pkg/states"
-	"github.com/IntelAI/vck/pkg/util"
+	crv1 "github.com/ppkube/vck/pkg/apis/vck/v1"
+	crv1_client "github.com/ppkube/vck/pkg/client/clientset/versioned"
+	crv1_volume_manager "github.com/ppkube/vck/pkg/client/clientset/versioned/typed/vck/v1"
+	"github.com/ppkube/vck/pkg/states"
+	"github.com/ppkube/vck/pkg/util"
 )
 
 var (

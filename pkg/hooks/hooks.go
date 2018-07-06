@@ -7,10 +7,10 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	vckv1 "github.com/IntelAI/vck/pkg/apis/vck/v1"
-	vckv1_volume_manager "github.com/IntelAI/vck/pkg/client/clientset/versioned/typed/vck/v1"
-	"github.com/IntelAI/vck/pkg/handlers"
-	"github.com/IntelAI/vck/pkg/states"
+	vckv1 "github.com/ppkube/vck/pkg/apis/vck/v1"
+	vckv1_volume_manager "github.com/ppkube/vck/pkg/client/clientset/versioned/typed/vck/v1"
+	"github.com/ppkube/vck/pkg/handlers"
+	"github.com/ppkube/vck/pkg/states"
 )
 
 // VolumeManagerHooks implements controller.Hooks interface

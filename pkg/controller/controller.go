@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	vckv1_client "github.com/IntelAI/vck/pkg/client/clientset/versioned"
-	vckv1_informer "github.com/IntelAI/vck/pkg/client/informers/externalversions"
+	vckv1_client "github.com/ppkube/vck/pkg/client/clientset/versioned"
+	vckv1_informer "github.com/ppkube/vck/pkg/client/informers/externalversions"
 	"k8s.io/client-go/tools/cache"
 )
 
