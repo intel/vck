@@ -1,16 +1,16 @@
-# Kubernetes Volume Controller (KVC)
+# Volume Controller for Kubernetes (VCK)
 
-[![CircleCI](https://circleci.com/gh/kubeflow/experimental-kvc.svg?style=svg)](https://circleci.com/gh/kubeflow/experimental-kvc)
+[![CircleCI](https://circleci.com/gh/IntelAI/vck.svg?style=svg)](https://circleci.com/gh/IntelAI/vck)
 ## Overview
 
 This project provides basic volume and data management in Kubernetes v1.9+
 using [custom resource definitions][crd] (CRDs), custom controllers,
 [volumes][vols] and [volume sources][volsources]. It also 
 establishes a relationship between volumes and data and provides a way to
-abstract the details away from the user. When using KVC, users 
+abstract the details away from the user. When using VCK, users 
 are expected to only interact with [custom resources][cr] (CRs).
 
-![KVC overview figure](./docs/images/kvc.png)
+![VCK overview figure](./docs/images/vck.png)
 
 ## Further Reading
 

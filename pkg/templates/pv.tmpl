@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: "{{.KVCName}}"
+  name: "{{.VCKName}}"
   namespace: "{{.NS}}"
   ownerReferences:
   - apiVersion: {{.APIVersion}}
@@ -35,7 +35,7 @@ spec:
   - "{{.AccessMode}}"
   persistentVolumeReclaimPolicy: Delete
   {{.PVType}}:
-    {{ range $key, $val := .KVCOptions }}
+    {{ range $key, $val := .VCKOptions }}
         "{{ $key }}": "{{ $val }}"
     {{ end }}
-  storageClassName: "{{.KVCStorageClassName}}"
+  storageClassName: "{{.VCKStorageClassName}}"

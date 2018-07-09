@@ -40,8 +40,8 @@ prereq:
 dep-ensure:
 	dep ensure
 
-build: prereq dep-ensure code-generation lint test
-	go build -gcflags "-N -l" github.com/kubeflow/experimental-kvc
+build: prereq code-generation lint test
+	go build -gcflags "-N -l" github.com/IntelAI/vck
 
 lint:
 	gometalinter --config=./lint.json --vendor .
@@ -51,6 +51,8 @@ lint:
 	gometalinter --config=./lint.json ./pkg/hooks/...
 	gometalinter --config=./lint.json ./pkg/controller/...
 	gometalinter --config=./lint.json ./pkg/handlers/...
+	gometalinter --config=./lint.json ./pkg/util/...
+	gometalinter --config=./lint.json ./test/...
 
 test:
 	go test -v --cover ./pkg/resource/...
@@ -61,7 +63,7 @@ test:
 test-e2e:
 	go test -v ./test/e2e/...
 
-code-generation:
+code-generation: dep-ensure
 	./hack/update-codegen.sh
 
 push-image: docker

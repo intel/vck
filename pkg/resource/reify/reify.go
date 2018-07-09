@@ -20,8 +20,8 @@ package reify
 
 import (
 	"bytes"
-	"html/template"
 	"path/filepath"
+	"text/template"
 
 	"github.com/ghodss/yaml"
 	"github.com/golang/glog"

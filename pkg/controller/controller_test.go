@@ -22,8 +22,8 @@ import (
 	"context"
 	"testing"
 
-	kvcv1 "github.com/kubeflow/experimental-kvc/pkg/apis/kvc/v1"
-	"github.com/kubeflow/experimental-kvc/pkg/client/clientset/versioned/fake"
+	vckv1 "github.com/IntelAI/vck/pkg/apis/vck/v1"
+	"github.com/IntelAI/vck/pkg/client/clientset/versioned/fake"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -68,14 +68,14 @@ func TestController(t *testing.T) {
 	namespace := "test"
 	fakeClient := fake.NewSimpleClientset()
 
-	volumeManagerClient := fakeClient.Kvc().VolumeManagers(namespace)
+	volumeManagerClient := fakeClient.Vck().VolumeManagers(namespace)
 	controller := New(&hook, fakeClient)
 
 	// Start the controller
 	go controller.Run(ctx, namespace)
 
 	// Create the CR using the fake client
-	volume, err := volumeManagerClient.Create(&kvcv1.VolumeManager{
+	volume, err := volumeManagerClient.Create(&vckv1.VolumeManager{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "volume1",
 		},

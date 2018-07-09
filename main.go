@@ -21,18 +21,18 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/kubeflow/experimental-kvc/pkg/resource/reify"
+	"github.com/IntelAI/vck/pkg/resource/reify"
 
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	kvcv1_client "github.com/kubeflow/experimental-kvc/pkg/client/clientset/versioned"
-	"github.com/kubeflow/experimental-kvc/pkg/controller"
-	"github.com/kubeflow/experimental-kvc/pkg/handlers"
-	"github.com/kubeflow/experimental-kvc/pkg/hooks"
-	"github.com/kubeflow/experimental-kvc/pkg/resource"
-	"github.com/kubeflow/experimental-kvc/pkg/util"
+	vckv1_client "github.com/IntelAI/vck/pkg/client/clientset/versioned"
+	"github.com/IntelAI/vck/pkg/controller"
+	"github.com/IntelAI/vck/pkg/handlers"
+	"github.com/IntelAI/vck/pkg/hooks"
+	"github.com/IntelAI/vck/pkg/resource"
+	"github.com/IntelAI/vck/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
@@ -58,7 +58,7 @@ func main() {
 		panic(err)
 	}
 
-	crdClient, err := kvcv1_client.NewForConfig(config)
+	crdClient, err := vckv1_client.NewForConfig(config)
 	if err != nil {
 		panic(err)
 	}
@@ -116,13 +116,12 @@ func main() {
 
 	dataHandlers := []handlers.DataHandler{
 		handlers.NewS3Handler(k8sClientset, []resource.Client{nodeClient, pvClient, pvcClient, podClient, podClient}),
-		handlers.NewS3DevHandler(k8sClientset, []resource.Client{nodeClient, pvClient, pvcClient, podClient, podClient}),
 		handlers.NewNFSHandler(k8sClientset, []resource.Client{nodeClient, pvClient, pvcClient, podClient, podClient}),
 		handlers.NewPachydermHandler(k8sClientset, []resource.Client{nodeClient, pvClient, pvcClient, pachydermPodClient}),
 	}
 
 	// Create hooks
-	hooks := hooks.NewVolumeManagerHooks(crdClient.KvcV1().VolumeManagers(*namespace), dataHandlers)
+	hooks := hooks.NewVolumeManagerHooks(crdClient.VckV1().VolumeManagers(*namespace), dataHandlers)
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()

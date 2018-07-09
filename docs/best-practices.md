@@ -1,8 +1,8 @@
-# Best Practices: Kubernetes Volume Controller (KVC)
+# Best Practices: Volume Controller for Kubernetes (VCK)
 
-## Deploying KVC
+## Deploying VCK
 
-We recommend a KVC deployment per namespace. The namespace for the deployment
+We recommend a VCK deployment per namespace. The namespace for the deployment
 of the controller and the namespace being watched by the controller should
 be the same.
 

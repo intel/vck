@@ -25,11 +25,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/kubeflow/experimental-kvc/pkg/states"
+	"github.com/IntelAI/vck/pkg/states"
 )
 
 const (
-	GroupName string = "kvc.kubeflow.org"
+	GroupName string = "vck.intelai.org"
 
 	Version string = "v1"
 
@@ -97,8 +97,6 @@ type VolumeConfig struct {
 	ID           string              `json:"id"`
 	Replicas     int                 `json:"replicas"`
 	SourceType   DataSourceType      `json:"sourceType"`
-	EndpointURL  string              `json:"endpointURL"`
-	SourceURL    string              `json:"sourceURL"`
 	AccessMode   string              `json:"accessMode"`
 	Capacity     string              `json:"capacity"`
 	NodeAffinity corev1.NodeAffinity `json:"nodeAffinity"`

@@ -17,5 +17,5 @@
 //
 
 // +k8s:deepcopy-gen=package
-// +groupName=kvc.kubeflow.org
+// +groupName=vck.intelai.org
 package v1

@@ -56,7 +56,7 @@ fi
 
 
 docker run --net=host -v "${HOME}"/root \
-  -v $(pwd)/:/go/src/github.com/kubeflow/experimental-kvc \
+  -v $(pwd)/:/go/src/github.com/IntelAI/vck \
   -e SSH_AUTH_SOCK=/var/run/ssh_agent.sock \
-  -w /go/src/github.com/kubeflow/experimental-kvc \
+  -w /go/src/github.com/IntelAI/vck \
   -it volumecontroller/golang:1.9.2 /bin/bash -c "socat UNIX-LISTEN:/var/run/ssh_agent.sock,reuseaddr,fork TCP:$HOST:$PORT & make ${1:-}"
