@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: "{{.KVCName}}"
+  name: "{{.VCKName}}"
   namespace: "{{.NS}}"
-{{ if eq .KVCOp "add" }}
+{{ if eq .VCKOp "add" }}
   ownerReferences:
   - apiVersion: {{.APIVersion}}
     kind: {{.Kind}}
@@ -16,23 +16,23 @@ metadata:
 {{ range $key, $val := .Labels }}
     "{{ $key }}": "{{ $val }}"
 {{ end }}
-    "kvcname": "{{.Name}}"
+    "vckname": "{{.Name}}"
     "vcid": "{{.ID}}"
 spec:
   affinity:
-{{ if eq .KVCOp "delete" }}
+{{ if eq .VCKOp "delete" }}
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
         - matchExpressions:
-          - key: {{.KVCNodeLabelKey}}
+          - key: {{.VCKNodeLabelKey}}
             operator: Exists
 {{ end }}
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
       - labelSelector:
           matchExpressions:
-          - key: kvcname
+          - key: vckname
             operator: In
             values:
             - {{.Name}}
@@ -45,36 +45,36 @@ spec:
     - name: dataset-root
       hostPath:
         path: {{index .Options "dataPath"}}
-{{ if eq .KVCOp "add" }}
+{{ if eq .VCKOp "add" }}
   initContainers:
   - image: minio/mc:RELEASE.2018-02-09T23-07-36Z
     imagePullPolicy: "Always"
     command: ["/bin/sh"]
     args: ["-c", "mkdir -p $DATA_PATH"]
-    name: kvc-s3-init-container
+    name: vck-s3-init-container
     volumeMounts:
     - mountPath: {{index .Options "dataPath"}}
       name: dataset-root
     env:
     - name: DATA_PATH
-      value: {{ index .KVCOptions "path" }}
+      value: {{ index .VCKOptions "path" }}
 {{ end  }}
   containers:
   - image: volumecontroller/pachctl
     imagePullPolicy: "Always"
     command: ["/bin/sh"]
-{{ if eq .KVCOp "add" }}
+{{ if eq .VCKOp "add" }}
     args: ["-c", "export ADDRESS=${PACHYDERM_SERVICE_ADDRESS}; pachctl version; cd ${DATA_PATH}; pachctl get-file ${REPO} ${BRANCH} ${INPUT_PATH} -o ${OUTPUT_PATH} ${RECURSIVE}"]
 {{ end  }}
-{{ if eq .KVCOp "delete" }}
+{{ if eq .VCKOp "delete" }}
     args: ["-c", "rm -rf ${DATA_PATH}"]
 {{ end  }}
-    name: kvc-s3-sync-container
+    name: vck-s3-sync-container
     volumeMounts:
     - mountPath: {{index .Options "dataPath"}}
       name: dataset-root
     env:
-{{ if eq .KVCOp "add" }}
+{{ if eq .VCKOp "add" }}
     - name: REPO
       value: {{index .Options "repo"}}
     - name: BRANCH
@@ -86,10 +86,10 @@ spec:
     - name: RECURSIVE
       value: {{ index .Options "recursive" }}
     - name: DATA_PATH
-      value: {{ index .KVCOptions "path" }}
+      value: {{ index .VCKOptions "path" }}
     - name: PACHYDERM_SERVICE_ADDRESS
       value: {{ index .Options "pachydermServiceAddress" }}
 {{ end  }}
     - name: DATA_PATH
-      value: {{ index .KVCOptions "path" }}
+      value: {{ index .VCKOptions "path" }}
   restartPolicy: "Never"

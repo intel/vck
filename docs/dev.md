@@ -1,6 +1,6 @@
-# Developer Manual: Kubernetes Volume Controller (KVC)
+# Developer Manual: Volume Controller for Kubernetes (VCK)
   
-  * [Developer Manual: Kubernetes Volume Controller (KVC)](#developer-manual-kubernetes-volume-controller-kvc)
+  * [Developer Manual: Volume Controller for Kubernetes (VCK)](#developer-manual-volume-controller-for-kubernetes-vck)
     * [Testing and Building](#testing-and-building)
     * [Adding a New Data Handler](#adding-a-new-data-handler)
       * [Why do I need to add a new data handler?](#why-do-i-need-to-add-a-new-data-handler)
@@ -13,7 +13,7 @@
 
 ## Testing and Building
 
-There are several ways to modify `KVC` and test your changes.
+There are several ways to modify `VCK` and test your changes.
 
 ### Using "docker_make" script
 This method is preferred for developers who have `docker` setup and running on their workstation and don't
@@ -28,7 +28,7 @@ dep ensure
 
 $ ./docker_make code-generation
 ./hack/update-codegen.sh
-/go/src/github.com/kubeflow/experimental-kvc/vendor/k8s.io/code-generator /go/src/github.com/kubeflow/experimental-kvc
+/go/src/github.com/IntelAI/vck/vendor/k8s.io/code-generator /go/src/github.com/IntelAI/vck
 Note: checking out 'kubernetes-1.9.2'.
 
 You are in 'detached HEAD' state. You can look around, make experimental
@@ -41,11 +41,11 @@ do so (now or later) by using -b with the checkout command again. Example:
   git checkout -b <new-branch-name>
 
 HEAD is now at 91d3f6a... Merge pull request #57767 from mbohlool/automated-cherry-pick-of-#57735-upstream-release-1.9
-/go/src/github.com/kubeflow/experimental-kvc
+/go/src/github.com/IntelAI/vck
 Generating deepcopy funcs
-Generating clientset for cr:v1 at github.com/kubeflow/experimental-kvc/pkg/client/clientset
-Generating listers for cr:v1 at github.com/kubeflow/experimental-kvc/pkg/client/listers
-Generating informers for cr:v1 at github.com/kubeflow/experimental-kvc/pkg/client/informers
+Generating clientset for cr:v1 at github.com/IntelAI/vck/pkg/client/clientset
+Generating listers for cr:v1 at github.com/IntelAI/vck/pkg/client/listers
+Generating informers for cr:v1 at github.com/IntelAI/vck/pkg/client/informers
 
 $ ./docker_make lint
 gometalinter --config=./lint.json --vendor .
@@ -57,17 +57,17 @@ gometalinter --config=./lint.json ./pkg/hooks/...
 
 $ ./docker_make test
 go test --cover ./...
-?   	github.com/kubeflow/experimental-kvc	[no test files]
-ok  	github.com/kubeflow/experimental-kvc/pkg/apis/cr/v1	0.166s	coverage: 53.4% of statements
-?   	github.com/kubeflow/experimental-kvc/pkg/hooks	[no test files]
+?   	github.com/IntelAI/vck	[no test files]
+ok  	github.com/IntelAI/vck/pkg/apis/cr/v1	0.166s	coverage: 53.4% of statements
+?   	github.com/IntelAI/vck/pkg/hooks	[no test files]
 # go test --cover .
 # go test --cover ./pkg/apis/...
 # go test --cover ./pkg/hooks/...
 
 $ ./docker_make build
 dep ensure
-/go/bin/deepcopy-gen --output-base=/go/src --input-dirs=github.com/kubeflow/experimental-kvc/pkg/apis/cr/v1/...
-go build -gcflags "-N -l" github.com/kubeflow/experimental-kvc
+/go/bin/deepcopy-gen --output-base=/go/src --input-dirs=github.com/IntelAI/vck/pkg/apis/cr/v1/...
+go build -gcflags "-N -l" github.com/IntelAI/vck
 ```
 ### Developing on a workstation
 This is the preferred method for developers who don't want to run `docker` locally and or don't mind setting up
@@ -92,10 +92,10 @@ export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 in both cases, install `mercurial` and `socat` either using `yum` or `apt-get` or `brew`.
 This is because some dependencies live in `bitbucket` repositories.
 
-Finally make sure `KVC` is present at:
-```$GOPATH/src/github.com/kubeflow/experimental-kvc```
+Finally make sure `VCK` is present at:
+```$GOPATH/src/github.com/IntelAI/vck```
 
-Now you are ready to make changes and test `KVC` as follows:
+Now you are ready to make changes and test `VCK` as follows:
 
 ```
 $ make prereq
@@ -114,12 +114,12 @@ $ make dep-ensure
 dep ensure
 $ make code-generation
   ./hack/update-codegen.sh
-  ~/go/src/github.com/kubeflow/experimental-kvc/vendor/k8s.io/code-generator ~/go/src/github.com/kubeflow/experimental-kvc
+  ~/go/src/github.com/IntelAI/vck/vendor/k8s.io/code-generator ~/go/src/github.com/IntelAI/vck
   Note: checking out 'kubernetes-1.9.2'.
   ...
-  Generating clientset for kvc:v1 at github.com/kubeflow/experimental-kvc/pkg/client/clientset
-  Generating listers for kvc:v1 at github.com/kubeflow/experimental-kvc/pkg/client/listers
-  Generating informers for kvc:v1 at github.com/kubeflow/experimental-kvc/pkg/client/informers
+  Generating clientset for vck:v1 at github.com/IntelAI/vck/pkg/client/clientset
+  Generating listers for vck:v1 at github.com/IntelAI/vck/pkg/client/listers
+  Generating informers for vck:v1 at github.com/IntelAI/vck/pkg/client/informers
 $ make lint
 gometalinter --config=./lint.json --vendor .
 # Disabling golint for apis since it conflicts with the deepcopy-gen
@@ -156,7 +156,7 @@ replacing all the comments within `<>` with the appropriate value.
 package handlers
 
 import (
-    crv1 "github.com/kubeflow/experimental-kvc/pkg/apis/cr/v1"
+    crv1 "github.com/IntelAI/vck/pkg/apis/cr/v1"
 )
 
 const (

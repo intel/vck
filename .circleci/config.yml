@@ -3,7 +3,7 @@ jobs:
   build:
     docker:
       - image: volumecontroller/golang:1.9.2
-    working_directory: /go/src/github.com/kubeflow/experimental-kvc
+    working_directory: /go/src/github.com/IntelAI/vck
     steps:
       - checkout
       - run:
@@ -24,14 +24,14 @@ jobs:
       - run:
           name: Build container
           command: |
-            go install -gcflags "-N -l" github.com/kubeflow/experimental-kvc
-            cp /go/bin/experimental-kvc ./kvc
+            go install -gcflags "-N -l" github.com/IntelAI/vck
+            cp /go/bin/vck ./vck
             docker login -u $DOCKER_USER -p $DOCKER_PASS
             make push-image
   e2e:
     docker:
       - image: volumecontroller/golang:1.9.2
-    working_directory: /go/src/github.com/kubeflow/experimental-kvc
+    working_directory: /go/src/github.com/IntelAI/vck
     steps:
       - checkout
       - run:
@@ -45,14 +45,14 @@ jobs:
             mkdir -p $HOME/.kube
             KUBE_CONFIG=${GKE_KUBECONFIG_KVCCI}
             echo "${KUBE_CONFIG}" | base64 --decode > "${HOME}/.kube/config"
-            kubectl create ns "kvc-${CIRCLE_BUILD_NUM}"
+            kubectl create ns "vck-${CIRCLE_BUILD_NUM}"
             kubectl create secret generic s3-creds \
               --from-literal=awsAccessKeyID=${MINIO_ACCESS_KEY_ID} \
               --from-literal=awsSecretAccessKey=${MINIO_SECRET_ACCESS_KEY} \
-              --namespace=kvc-${CIRCLE_BUILD_NUM}
-            helm install /go/src/github.com/kubeflow/experimental-kvc/helm-charts/kube-volume-controller/ \
-              -n "kvc-${CIRCLE_BUILD_NUM}" --wait \
-              --set namespace="kvc-${CIRCLE_BUILD_NUM}" \
+              --namespace=vck-${CIRCLE_BUILD_NUM}
+            helm install /go/src/github.com/IntelAI/vck/helm-charts/kube-volume-controller/ \
+              -n "vck-${CIRCLE_BUILD_NUM}" --wait \
+              --set namespace="vck-${CIRCLE_BUILD_NUM}" \
               --set clusterrole.install=true \
               --set storageclass.install=true \
               --set crd.install=true \
@@ -62,12 +62,12 @@ jobs:
             export NFS_SERVER_IP=$(kubectl get svc ${NFS_SERVER_SVC_NAME} -o json | jq -r .spec.clusterIP)
             make dep-ensure
             make code-generation
-            go test -v ./test/e2e/... -args -namespace=kvc-${CIRCLE_BUILD_NUM} -s3serverip=${S3_SERVER_IP} -nfsserverip=${NFS_SERVER_IP}
+            go test -v ./test/e2e/... -args -namespace=vck-${CIRCLE_BUILD_NUM} -s3serverip=${S3_SERVER_IP} -nfsserverip=${NFS_SERVER_IP}
       - run:
           name: cleanup
           command: |
-            helm delete --purge kvc-${CIRCLE_BUILD_NUM} || true
-            kubectl delete ns kvc-${CIRCLE_BUILD_NUM} || true
+            helm delete --purge vck-${CIRCLE_BUILD_NUM} || true
+            kubectl delete ns vck-${CIRCLE_BUILD_NUM} || true
           when: always
 
 workflows:

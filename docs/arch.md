@@ -1,13 +1,13 @@
-# Architecture: Kubernetes Volume Controller (KVC)
+# Architecture: Volume Controller for Kubernetes (VCK)
 
-  * [Architecture: Kubernetes Volume Controller (KVC)](#architecture-kubernetes-volume-controller-kvc)
+  * [Architecture: Volume Controller for Kubernetes (VCK)](#architecture-volume-controller-for-kubernetes-vck)
     * [Acronyms](#acronyms)
     * [Concepts](#concepts)
     * [Overview](#overview)
       * [Goals](#goals)
       * [Non-Goals](#non-goals)
     * [API Schema](#api-schema)
-    * [The KVC Controller](#the-kvc-controller)
+    * [The VCK Controller](#the-vck-controller)
     * [Relationship Between Volume and Data](#relationship-between-volume-and-data)
     * [Source Type Support Status](#source-type-support-status)
 
@@ -27,40 +27,40 @@
 | :------------- | :------ |
 | Controller | The process which drives a Kubernetes object from its _current_ state to the _desired_ state |
 | Source Type| The source type for the data being stored (e.g., S3, NFS) |
-| `volumemanager` | The CRD `Kind` for KVC |
+| `volumemanager` | The CRD `Kind` for VCK |
 
 ## Overview
 
-KVC provides basic volume and data management using [volumes][vols] and
+VCK provides basic volume and data management using [volumes][vols] and
 [volume sources][volsources] in a Kubernetes cluster. It uses CRDs and
 controllers to create the [volumes][vols] and [volume sources][volsources] and perform operations
 necessary for the data to be available to users. The user needs to have
-interactions only with CRs. The rest of the details are abstracted away by KVC.
+interactions only with CRs. The rest of the details are abstracted away by VCK.
 
 ### Goals
 The end goals of this project are listed below:
 
-- __Data source support:__ KVC should support exposing data from different sources such as S3, NFS and
+- __Data source support:__ VCK should support exposing data from different sources such as S3, NFS and
 local disk as volumes.
-- __Data distribution:__ KVC should support data replication for distributed job types.
-- __Data affinity:__ KVC should enable data affinity and gravity. It should use
+- __Data distribution:__ VCK should support data replication for distributed job types.
+- __Data affinity:__ VCK should enable data affinity and gravity. It should use
 existing mechanisms such as [volume scheduling][vol-sched] and [node affinity][node-aff] when possible.
-- __Data caching:__ KVC should enable the pre-population of data if required.
-- __Data streaming:__ KVC should provide abstraction for streaming data
+- __Data caching:__ VCK should enable the pre-population of data if required.
+- __Data streaming:__ VCK should provide abstraction for streaming data
 services. Jobs should be able to start as soon as the first stream or batch of
 data is available.
-- __Job output:__ KVC should allow output data to be gathered when required.
-- __Garbage collection:__ KVC should evict data in case of disk pressure.
+- __Job output:__ VCK should allow output data to be gathered when required.
+- __Garbage collection:__ VCK should evict data in case of disk pressure.
 
 ### Non-Goals
-- KVC does not aim to be a solution to all your volume and data
+- VCK does not aim to be a solution to all your volume and data
 management problems.
-- KVC does not solve any of the shortcomings or drawbacks with Kubernetes. If
-there is an issue in Kubernetes, the same issue exists with KVC.
+- VCK does not solve any of the shortcomings or drawbacks with Kubernetes. If
+there is an issue in Kubernetes, the same issue exists with VCK.
 
 ## API Schema
 
-Using KVC we extend the Kubernetes API to include a new CRD called
+Using VCK we extend the Kubernetes API to include a new CRD called
 `volumemanager`. The schema to create a `volumemanager` CR is described
 below:
 
@@ -73,7 +73,6 @@ below:
 | `volumeConfig.id`*            | `string`                                          | An identifier for the volume                                                                               |
 | `volumeConfig.replicas`*      | `int`                                             | Number of replicas required on distinct compute nodes                                                      |
 | `volumeConfig.sourceType`*    | `string`                                          | Source type of the dataset to be used by the volume (e.g., S3, NFS)                                        |
-| `volumeConfig.sourceURL`      | `string`                                          | Source URL of the data set                                                                                 |
 | `volumeConfig.accessMode`*    | `string`                                          | Type of access mode                                                                                        |
 | `volumeConfig.capacity`*      | `string`                                          | Size requested for the volume                                                                              |
 | `volumeConfig.labels`*        | `map[string]string`                               | Any labels required for the volume                                                                         |
@@ -90,9 +89,9 @@ below:
 | `status.message`              | `string`                                          | A message associated with the current state of this volume manager instance                                |
 
 Fields marked with `*` are mandatory.
-## The KVC Controller
+## The VCK Controller
 
-The KVC controller uses [volumes][vols], [volume sources][volsources], Pods to manage volumes and the associated
+The VCK controller uses [volumes][vols], [volume sources][volsources], Pods to manage volumes and the associated
 data in Kubernetes. The following are the responsibilities of the controller:
 
 __Data source support:__ The controller will transparently support different
@@ -169,10 +168,10 @@ information on usage, refer to the [user manual][user-doc].
 
 | Source Type            | Phase    | Description                                                                                                   |
 | :----------------------| :--------| :-------------------------------------------------------------------------------------------------------------|
-| S3-Dev                 | Supported| KVC will download the files from a specified S3 bucket and make it available for consumption in a node. This source type should only be used for development and testing purposes.      |
-| S3                     | Supported| KVC will download the files from a specified S3 bucket and provide nodes where hostPath volumes can be used.  |
-| NFS                    | Supported| KVC will make the specified path from an NFS server available for consumption.                                |
-[ [Pachyderm][pachyderm] | Supported| KVC will download the pachyderm repo data and make it available for consumption on a specified number of nodes|
+| S3-Dev                 | Deprecated| VCK will download the files from a specified S3 bucket and make it available for consumption in a node. This source type should only be used for development and testing purposes.      |
+| S3                     | Supported| VCK will download the files from a specified S3 bucket and provide nodes where hostPath volumes can be used.  |
+| NFS                    | Supported| VCK will make the specified path from an NFS server available for consumption.                                |
+[ [Pachyderm][pachyderm] | Supported| VCK will download the pachyderm repo data and make it available for consumption on a specified number of nodes|
 | [Aeon][aeon]           | Design   | -                                                                                                             |
 
 [pv]: https://kubernetes.io/docs/concepts/storage/persistent-volumes/

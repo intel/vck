@@ -1,14 +1,13 @@
-apiVersion: kvc.kubeflow.org/v1
+apiVersion: vck.intelai.org/v1
 kind: VolumeManager
 metadata:
-  name: kvc-example
+  name: vck-example
   namespace: <insert-namespace-here>
 spec:
   volumeConfigs:
     - id: "vol1"
       replicas: 1
       sourceType: "S3"
-      sourceURL: "s3://neon-stockdatasets/cifar-100-python.tar.gz"
       accessMode: "ReadWriteOnce"
       capacity: 5Gi
       nodeAffinity:
@@ -20,11 +19,12 @@ spec:
         key2: val2
       options:
         awsCredentialsSecretName: <insert-secret-name-for-aws-credentials>
+        sourceURL: "s3://neon-stockdatasets/cifar-100-python.tar.gz"
         # dataPath: <insert-data-path-here-optional>
+        # distributionStrategy: <insert-distributed-strategy-here-optional>
     - id: "vol1"
       replicas: 1
       sourceType: "S3"
-      sourceURL: "s3://helium-stockdatasets-dev/alexnet.p"
       accessMode: "ReadWriteOnce"
       nodeAffinity:
         - <insert-node-affinity-here>
@@ -36,4 +36,6 @@ spec:
         key4: val4
       options:
         awsCredentialsSecretName: <insert-secret-name-for-aws-credentials>
+        sourceURL: "s3://helium-stockdatasets-dev/alexnet.p"
+        # distributionStrategy: <insert-distributed-strategy-here-optional>
         # dataPath: <insert-data-path-here-optional>

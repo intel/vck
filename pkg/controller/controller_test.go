@@ -1,11 +1,29 @@
+//
+// Copyright (c) 2018 Intel Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// SPDX-License-Identifier: EPL-2.0
+//
+
 package controller
 
 import (
 	"context"
 	"testing"
 
-	kvcv1 "github.com/kubeflow/experimental-kvc/pkg/apis/kvc/v1"
-	"github.com/kubeflow/experimental-kvc/pkg/client/clientset/versioned/fake"
+	vckv1 "github.com/IntelAI/vck/pkg/apis/vck/v1"
+	"github.com/IntelAI/vck/pkg/client/clientset/versioned/fake"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -50,14 +68,14 @@ func TestController(t *testing.T) {
 	namespace := "test"
 	fakeClient := fake.NewSimpleClientset()
 
-	volumeManagerClient := fakeClient.Kvc().VolumeManagers(namespace)
+	volumeManagerClient := fakeClient.Vck().VolumeManagers(namespace)
 	controller := New(&hook, fakeClient)
 
 	// Start the controller
 	go controller.Run(ctx, namespace)
 
 	// Create the CR using the fake client
-	volume, err := volumeManagerClient.Create(&kvcv1.VolumeManager{
+	volume, err := volumeManagerClient.Create(&vckv1.VolumeManager{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "volume1",
 		},

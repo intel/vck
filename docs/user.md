@@ -1,5 +1,5 @@
-# User Manual: Kubernetes Volume Controller (KVC)
-  * [User Manual: Kubernetes Volume Controller (KVC)](#user-manual-kubernetes-volume-controller-kvc)
+# User Manual: Volume Controller for Kubernetes (VCK)
+  * [User Manual: Volume Controller for Kubernetes (VCK)](#user-manual-volume-controller-for-kubernetes-vck)
     * [Prerequisites](#prerequisites)
     * [Before You Begin](#before-you-begin)
     * [Create a Secret with your AWS Credentials](#create-a-secret-with-your-aws-credentials)
@@ -7,13 +7,14 @@
     * [Create a Pod using the Custom Resource Status](#create-a-pod-using-the-custom-resource-status)
     * [Create a Deployment using the Custom Resource Status](#create-a-deployment-using-the-custom-resource-status)
     * [Types of Sources](#types-of-sources)
+    * [Data distribution] (#data-distribution)
 
 ## Prerequisites
 
 - Kubernetes v1.9+ with [`VolumeScheduling`][vol-sched] feature gate enabled
 - [Kubectl][kubectl]
 - [Helm][helm]
-- [KVC deployed on the cluster][ops-doc]
+- [VCK deployed on the cluster][ops-doc]
 
 ## Before You Begin
 
@@ -23,7 +24,7 @@ this is shown below.
 ```sh
 $ kubectl get crd
 NAME                            AGE
-volumemanagers.kvc.kubeflow.org   1h
+volumemanagers.vck.intelai.org   1h
 
 $ kubectl get volumemanagers
 No resources found.
@@ -33,7 +34,7 @@ Also check if the Controller is installed in your namespace:
 ```sh
 $ helm list
 NAME            	REVISION	UPDATED                 	STATUS  	CHART                        	NAMESPACE
-kvc-ashahba     	1       	Thu Apr 26 13:10:36 2018	DEPLOYED	kube-volume-controller-v0.1.0	ashahba
+vck-ashahba     	1       	Thu Apr 26 13:10:36 2018	DEPLOYED	kube-volume-controller-v0.1.0	ashahba
 ```
 
 If not follow the instructions in the [operator manual][ops-doc] first.
@@ -69,19 +70,19 @@ instructions [above](#create-a-secret-with-your-aws-credentials).
 
 ```sh
 $ kubectl create -f resources/customresources/s3/one-vc.yaml
-volumemanager "kvc-example" created
+volumemanager "vck-example" created
 
-$ kubectl get volumemanager kvc-example -o yaml
-apiVersion: kvc.kubeflow.org/v1
+$ kubectl get volumemanager vck-example -o yaml
+apiVersion: vck.intelai.org/v1
 kind: VolumeManager
 metadata:
   clusterName: ""
   creationTimestamp: 2018-02-21T20:22:30Z
   generation: 0
-  name: kvc-example
-  namespace: kvc-testing
+  name: vck-example
+  namespace: vck-testing
   resourceVersion: "4722186"
-  selfLink: /apis/kvc.kubeflow.org/v1/namespaces/kvc-testing/volumemanagers/kvc-example
+  selfLink: /apis/vck.intelai.org/v1/namespaces/vck-testing/volumemanagers/vck-example
   uid: f0e352bd-1744-11e8-9cc4-42010a8a026b
 spec:
   state: ""
@@ -113,7 +114,7 @@ status:
             - cluster-node-1
     volumeSource:
       hostPath:
-        path: /var/datasets/kvc-resource-f0e5a3ba-1744-11e8-a808-0a580a44065b
+        path: /var/datasets/vck-resource-f0e5a3ba-1744-11e8-a808-0a580a44065b
 ```
 
 Other examples on custom resource manifest can be found in [resources][resources-dir]
@@ -140,7 +141,7 @@ data source type:
   volumes:
     - name: dataset-claim
       hostPath:
-        path: /var/datasets/kvc-resource-f0e5a3ba-1744-11e8-a808-0a580a44065b
+        path: /var/datasets/vck-resource-f0e5a3ba-1744-11e8-a808-0a580a44065b
 ```
 
 Depending upon the source type, node
@@ -149,8 +150,8 @@ more details on how to edit the field(s) in the pod template spec before using t
 command below.
 
 ```sh
-$ kubectl create -f resources/pods/kvc-pod.yaml
-pod "kvc-claim-pod" created
+$ kubectl create -f resources/pods/vck-pod.yaml
+pod "vck-claim-pod" created
 ```
 
 ## Create a Deployment using the Custom Resource Status
@@ -164,13 +165,12 @@ details on which field(s) need to filled in the deployment template before using
 command below.
 
 ```sh
-$ kubectl create -f resources/deployments/kvc-deployment.yaml
-deployment "kvc-example-deployment" created
+$ kubectl create -f resources/deployments/vck-deployment.yaml
+deployment "vck-example-deployment" created
 ```
 
 ## Types of Sources
 The following source types are currently implemented:
-* S3-Dev: Files present in an S3 bucket and provided as `volumeConfig.sourceURL` in the CR are downloaded/synced and made available as a PVC. Only 1 replica is allowed. This source type should only be used for development and testing purposes.
 * S3: Files present in an S3 bucket and provided as `volumeConfig.sourceURL` in the CR are downloaded/synced onto the number of nodes equal to `volumeConfig.replicas` and made available as a hostPath volume. Node affinity details are provided through `volume.nodeAffinity` to guide the scheduling of pods.
 * NFS: The path exported by an NFS server is mounted and made available as a PVC.
 * Pachyderm: The repo, branch and file in [Pachyderm][pachyderm] and provided as `volumeConfig.options["repo"]`, `volumeConfig.options["branch"]` and `volumeConfig.options["filePath"]` in the CR are downloaded/synced onto the number of nodes equal to `volumeConfig.replicas` and made available as a hostPath volume. Node affinity details are provided through `volume.nodeAffinity` to guide the scheduling of pods.
@@ -183,20 +183,18 @@ For examples on how to define and use the different types, please refer to the e
 
 A brief description of each source type is provided below.
 
+| `volumeConfig.sourceURL`      | `string`                                          | Source URL of the data set                                                                                 |
+
 | Type         | Fields | Required                         |  Description                                          | Supported Access Modes | Field(s) provided in CR status |
 |:-------------|:----------------------------------------|:----|:--------------------------------------------------|:-----------------------|:-------------------------------|
-| `S3-Dev`     | `volumeConfig.sourceURL`                | Yes | The s3 url to download the data from. End the sourceURL with a `/` to recursively copy |`ReadWriteOnce`         | `volumeSource`                 |
-|              | `volumeConfig.endpointURL`              | No | The s3 compatible service endpoint (i.e. minio url)         |                        | |
-|              | `volumeConfig.replicas`                 | No | Field is ignored for this source type.                 |                        | |
-|              | `volumeConfig.options["dataPath"]`                 | No | The  data path on the node where s3 data would be downloaded  |                        | `volumeSource`                 |
-|              | `volumeConfig.options["awsCredentialsSecretName"]` | Yes | The name of the secret with AWS credentials to access the s3 data              |                        | |
-|              | `volumeConfig.options["timeoutForDataDownload"]`  | No | The timeout for download of s3 data. Defaults to 5 minutes. [[Format]](https://golang.org/pkg/time/#ParseDuration) |                        | |
-| `S3`         | `volumeConfig.sourceURL`                | Yes | The s3 url to download the data from. End the sourceURL with a `/` to recursively copy | `ReadWriteOnce`        | `volumeSource`                 |
+| `S3`         | `volumeConfig.options["sourceURL"]`     | Yes | The s3 url to download the data from. End the sourceURL with a `/` to recursively copy | `ReadWriteOnce`        | `volumeSource`                 |
+|              | `volumeConfig.options["endpointURL"]`   | Yes | No | The s3 compatible service endpoint (i.e. minio url)          |                        | |
 |              | `volumeConfig.endpointURL`              | No | The s3 compatible service endpoint (i.e. minio url)          |                        | |
 |              | `volumeConfig.replicas`                 | Yes | The number of nodes this data should be replicated on. |                        | `nodeAffinity`                 |
 |              | `volumeConfig.options["dataPath"]`                 | No | The  data path on the node where s3 data would be downloaded |                        | `volumeSource`                 |
 |              | `volumeConfig.options["awsCredentialsSecretName]` | Yes | The name of the secret with AWS credentials to access the s3 data              |                        | |
 |              | `volumeConfig.options["timeoutForDataDownload"]`  | No | The timeout for download of s3 data. Defaults to 5 minutes. [[Format]](https://golang.org/pkg/time/#ParseDuration) |                        | |
+|              | `volumeConfig.options["distributionStrategy"]`    | No | The [distribution strategy](#data-distribution) to use to distribute the data across the replicas |                        | |
 | `NFS`        | `volumeConfig.options["server"]`        | Yes | Address of the NFS server.                             |`ReadWriteMany`         | `volumeSource`                 |
 |              | `volumeConfig.options["path"]`          | Yes | The path exported by the NFS server.                   |`ReadOnlyMany`          | |
 |              | `volumeConfig.accessMode     `          | Yes | Access mode for the volume config.                     |                        | |
@@ -214,25 +212,6 @@ Example status fields for the different source types and a description on
 what needs to be changed in the [pod template][pod-example] to use these
 source types is given below.
 
-* S3-Dev:
-  ```yaml
-    - id: vol1
-    message: success
-    nodeAffinity: {}
-    volumeSource:
-      persistentVolumeClaim:
-        claimName: kvc-resource-a150fd63-11c4-11e8-8397-0a580a440340
-  ```
-  The claim can be used in a pod to access the data. More specifically, the
-  snippet below from the CR status above needs to inserted in the
-  [volumes field][pod-example-vol] of the example [pod template][pod-example]
-  in order to use it with the pod.
-
-  ```yaml
-      persistentVolumeClaim:
-        claimName: kvc-resource-a150fd63-11c4-11e8-8397-0a580a440340
-  ```
-
 * S3:
   ```yaml
   - id: vol1
@@ -248,7 +227,7 @@ source types is given below.
             - cluster-node-2
     volumeSource:
       hostPath:
-        path: /var/datasets/kvc-resource-a2140d72-11c2-11e8-8397-0a580a440340
+        path: /var/datasets/vck-resource-a2140d72-11c2-11e8-8397-0a580a440340
   ```
   The [node affinity][node-affinity] above can be used as-is in a pod spec
   along with the host path above as a volume to access the s3 data.
@@ -258,7 +237,7 @@ source types is given below.
 
   ```yaml
       hostPath:
-        path: /var/datasets/kvc-resource-a2140d72-11c2-11e8-8397-0a580a440340
+        path: /var/datasets/vck-resource-a2140d72-11c2-11e8-8397-0a580a440340
   ```
 
   ```yaml
@@ -280,7 +259,7 @@ source types is given below.
         nodeAffinity: {}
         volumeSource:
           persistentVolumeClaim:
-            claimName: kvc-resource-a216ed4a-11c2-11e8-8397-0a580a440340
+            claimName: vck-resource-a216ed4a-11c2-11e8-8397-0a580a440340
   ```
   The claim can be used in a pod to access the data.
   More specifically, the snippet below from the CR status above needs to inserted in the
@@ -289,7 +268,7 @@ source types is given below.
 
   ```yaml
       persistentVolumeClaim:
-        claimName: kvc-resource-a150fd63-11c4-11e8-8397-0a580a440340
+        claimName: vck-resource-a150fd63-11c4-11e8-8397-0a580a440340
   ```
   ### Caveats ###
     The NFS server ip and path are not validated, so please ensure that the servers are routable and paths are valid prior to the creation of the VolumeManager CR.
@@ -313,7 +292,7 @@ source types is given below.
             - cluster-node-2
     volumeSource:
       hostPath:
-        path: /var/datasets/kvc-resource-a2140d72-11c2-11e8-8397-0a580a440340
+        path: /var/datasets/vck-resource-a2140d72-11c2-11e8-8397-0a580a440340
   ```
   The [node affinity][node-affinity] above can be used as-is in a pod spec
   along with the host path above as a volume to access the pachyderm data.
@@ -323,7 +302,7 @@ source types is given below.
 
   ```yaml
       hostPath:
-        path: /var/datasets/kvc-resource-a2140d72-11c2-11e8-8397-0a580a440340
+        path: /var/datasets/vck-resource-a2140d72-11c2-11e8-8397-0a580a440340
   ```
 
   ```yaml
@@ -342,6 +321,37 @@ source types is given below.
 
 To add a new source type, a new handler specific to the source type is required. Please refer to the [developer manual][dev-doc] for more details.
 
+## Data distribution
+
+For the S3 source type the user can provide a distribution strategy which should be of the form: `{"glob_pattern_1": #replicas, "glob_pattern_2": #replicas, ...}`. [Glob][glob] patterns are supported in this case and the total number of replicas across all the patterns
+should equal the number or replicas in the spec.
+The strategy specifies that the files found in the specified source by applying the given glob pattern will be replicated across #replicas nodes, For example for the given yaml:
+```yaml
+apiVersion: vck.intelai.org/v1
+kind: VolumeManager
+metadata:
+  name: vck-example1
+  namespace: <insert-namespace-here>
+spec:
+  volumeConfigs:
+    - id: "vol1"
+      replicas: 4
+      sourceType: "S3"
+      accessMode: "ReadWriteOnce"
+      capacity: 5Gi
+      labels:
+        key1: val1
+        key2: val2
+      options:
+        awsCredentialsSecretName: aws-secret
+        sourceURL: "s3://foo/bar"
+        distributionStrategy: '{"*0_1*": 2, "*1_1*": 2}'
+        # dataPath: <insert-data-path-here-optional>"
+```
+
+all files matching the pattern `*0_1*` in the bucket `s3://foo/bar` would be synced in 2 replicas and all files matching `*1_1*` would be synced in the remaining 2 replicas.
+
+
 [ops-doc]: ops.md
 [dev-doc]: dev.md
 [arch-doc]: arch.md
@@ -351,10 +361,11 @@ To add a new source type, a new handler specific to the source type is required.
 [helm]: https://docs.helm.sh/using_helm/
 [kubectl]: https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [cr-example]: ../resources/customresources/s3/one-vc.yaml
-[pod-example]: ../resources/pods/kvc-pod.yaml
-[pod-example-vol]: ../resources/pods/kvc-pod.yaml#L10
-[pod-example-aff]: ../resources/pods/kvc-pod.yaml#L7
-[dep-example]: ../resources/deployments/kvc-deployment.yaml
+[pod-example]: ../resources/pods/vck-pod.yaml
+[pod-example-vol]: ../resources/pods/vck-pod.yaml#L10
+[pod-example-aff]: ../resources/pods/vck-pod.yaml#L7
+[dep-example]: ../resources/deployments/vck-deployment.yaml
 [secret-example]: ../resources/secrets/aws-secret.yaml
 [secret-encoding]: https://kubernetes.io/docs/concepts/configuration/secret/#creating-a-secret-manually
 [pachyderm]: http://pachyderm.io
+[glob]: https://en.wikipedia.org/wiki/Glob_(programming)

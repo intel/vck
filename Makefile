@@ -1,3 +1,21 @@
+#
+# Copyright (c) 2018 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http:#www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+
 .PHONY: docker test
 
 all: test
@@ -22,8 +40,8 @@ prereq:
 dep-ensure:
 	dep ensure
 
-build: prereq dep-ensure code-generation lint test
-	go build -gcflags "-N -l" github.com/kubeflow/experimental-kvc
+build: prereq code-generation lint test
+	go build -gcflags "-N -l" github.com/IntelAI/vck
 
 lint:
 	gometalinter --config=./lint.json --vendor .
@@ -33,6 +51,8 @@ lint:
 	gometalinter --config=./lint.json ./pkg/hooks/...
 	gometalinter --config=./lint.json ./pkg/controller/...
 	gometalinter --config=./lint.json ./pkg/handlers/...
+	gometalinter --config=./lint.json ./pkg/util/...
+	gometalinter --config=./lint.json ./test/...
 
 test:
 	go test -v --cover ./pkg/resource/...
@@ -43,7 +63,7 @@ test:
 test-e2e:
 	go test -v ./test/e2e/...
 
-code-generation:
+code-generation: dep-ensure
 	./hack/update-codegen.sh
 
 push-image: docker

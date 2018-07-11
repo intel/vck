@@ -16,17 +16,6 @@
 // SPDX-License-Identifier: EPL-2.0
 //
 
-package util
-
-import (
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-)
-
-// BuildConfig gets the client config.
-func BuildConfig(kubeconfig string) (*rest.Config, error) {
-	if kubeconfig != "" {
-		return clientcmd.BuildConfigFromFlags("", kubeconfig)
-	}
-	return rest.InClusterConfig()
-}
+// +k8s:deepcopy-gen=package
+// +groupName=vck.intelai.org
+package v1
