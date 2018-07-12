@@ -16,7 +16,7 @@
 // SPDX-License-Identifier: EPL-2.0
 //
 
-package v1
+package v1alpha1
 
 import (
 	"math/rand"

@@ -33,16 +33,16 @@ import (
 	"github.com/golang/glog"
 
 	"bytes"
-	vckv1 "github.com/IntelAI/vck/pkg/apis/vck/v1"
+	vckv1alpha1 "github.com/IntelAI/vck/pkg/apis/vck/v1alpha1"
 	"github.com/IntelAI/vck/pkg/resource"
 )
 
 const (
-	s3SourceType vckv1.DataSourceType = "S3"
+	s3SourceType vckv1alpha1.DataSourceType = "S3"
 )
 
 type s3Handler struct {
-	sourceType         vckv1.DataSourceType
+	sourceType         vckv1alpha1.DataSourceType
 	k8sClientset       kubernetes.Interface
 	k8sResourceClients []resource.Client
 }
@@ -56,34 +56,34 @@ func NewS3Handler(k8sClientset kubernetes.Interface, resourceClients []resource.
 	}
 }
 
-func (h *s3Handler) GetSourceType() vckv1.DataSourceType {
+func (h *s3Handler) GetSourceType() vckv1alpha1.DataSourceType {
 	return h.sourceType
 }
 
-func (h *s3Handler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1.OwnerReference) vckv1.Volume {
+func (h *s3Handler) OnAdd(ns string, vc vckv1alpha1.VolumeConfig, controllerRef metav1.OwnerReference) vckv1alpha1.Volume {
 	if len(vc.Labels) == 0 {
-		return vckv1.Volume{
+		return vckv1alpha1.Volume{
 			ID:      vc.ID,
 			Message: fmt.Sprintf("labels cannot be empty"),
 		}
 	}
 
 	if _, ok := vc.Options["awsCredentialsSecretName"]; !ok {
-		return vckv1.Volume{
+		return vckv1alpha1.Volume{
 			ID:      vc.ID,
 			Message: fmt.Sprintf("awsCredentialsSecretName key has to be set in options"),
 		}
 	}
 
 	if vc.AccessMode != "ReadWriteOnce" {
-		return vckv1.Volume{
+		return vckv1alpha1.Volume{
 			ID:      vc.ID,
 			Message: fmt.Sprintf("access mode has to be ReadWriteOnce"),
 		}
 	}
 
 	if _, ok := vc.Options["sourceURL"]; !ok {
-		return vckv1.Volume{
+		return vckv1alpha1.Volume{
 			ID:      vc.ID,
 			Message: fmt.Sprintf("sourceURL has to be set in options"),
 		}
@@ -104,7 +104,7 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1
 	if _, ok := vc.Options["timeoutForDataDownload"]; ok {
 		timeout, err = time.ParseDuration(vc.Options["timeoutForDataDownload"])
 		if err != nil {
-			return vckv1.Volume{
+			return vckv1alpha1.Volume{
 				ID:      vc.ID,
 				Message: fmt.Sprintf("error while parsing timeout for data download: %v", err),
 			}
@@ -114,7 +114,7 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1
 	nodeClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "nodes")
 	nodeList, err := nodeClient.List(ns, map[string]string{})
 	if err != nil {
-		return vckv1.Volume{
+		return vckv1alpha1.Volume{
 			ID:      vc.ID,
 			Message: fmt.Sprintf("error getting node list: %v", err),
 		}
@@ -122,7 +122,7 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1
 
 	// If number of nodes < replicas, then return immediately.
 	if len(nodeList) < vc.Replicas {
-		return vckv1.Volume{
+		return vckv1alpha1.Volume{
 			ID: vc.ID,
 			Message: fmt.Sprintf("replicas [%v] greater than number of nodes [%v]",
 				vc.Replicas, len(nodeList)),
@@ -138,7 +138,7 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1
 
 		err := json.Unmarshal([]byte(distributionStrategy), &distributionMap)
 		if err != nil {
-			return vckv1.Volume{
+			return vckv1alpha1.Volume{
 				ID:      vc.ID,
 				Message: fmt.Sprintf("invalid distributionStrategy [%v] specified, it must be a map[string]int", distributionStrategy),
 			}
@@ -153,7 +153,7 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1
 			}
 		}
 		if replicaCount != vc.Replicas {
-			return vckv1.Volume{
+			return vckv1alpha1.Volume{
 				ID:      vc.ID,
 				Message: fmt.Sprintf("total number of replicas: [%v] in distributionStrategy [%v], does not match number or replicas provided: [%v]", replicaCount, distributionStrategy, vc.Replicas),
 			}
@@ -171,7 +171,7 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1
 
 	s3URL, err := url.Parse(vc.Options["sourceURL"])
 	if err != nil {
-		return vckv1.Volume{
+		return vckv1alpha1.Volume{
 			ID:      vc.ID,
 			Message: fmt.Sprintf("error while parsing URL [%s]: %v", vc.Options["sourceURL"], err),
 		}
@@ -186,7 +186,7 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1
 		vckNames = append(vckNames, vckName)
 
 		err = podClient.Create(ns, struct {
-			vckv1.VolumeConfig
+			vckv1alpha1.VolumeConfig
 			metav1.OwnerReference
 			NS              string
 			VCKName         string
@@ -211,7 +211,7 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1
 		})
 
 		if err != nil {
-			return vckv1.Volume{
+			return vckv1alpha1.Volume{
 				ID:      vc.ID,
 				Message: fmt.Sprintf("error during sub-resource [%s] creation: %v", podClient.Plural(), err),
 			}
@@ -219,7 +219,7 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1
 	}
 
 	usedNodeNames := []string{}
-	nodeLabelKey := fmt.Sprintf("%s/%s-%s-%s", vckv1.GroupName, ns, controllerRef.Name, vc.ID)
+	nodeLabelKey := fmt.Sprintf("%s/%s-%s-%s", vckv1alpha1.GroupName, ns, controllerRef.Name, vc.ID)
 	for _, vckName := range vckNames {
 		err := waitForPodSuccess(podClient, vckName, ns, timeout)
 
@@ -228,7 +228,7 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1
 
 			podResource := h.k8sClientset.CoreV1().RESTClient().Get().Namespace(ns).Name(vckName).Resource("pods")
 			if podResource == nil {
-				return vckv1.Volume{
+				return vckv1alpha1.Volume{
 					ID:      vc.ID,
 					Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, vckName, err),
 				}
@@ -236,7 +236,7 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1
 
 			logReq := podResource.SubResource("log")
 			if logReq == nil {
-				return vckv1.Volume{
+				return vckv1alpha1.Volume{
 					ID:      vc.ID,
 					Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, vckName, err),
 				}
@@ -244,7 +244,7 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1
 
 			readCloser, logErr := logReq.Stream()
 			if logErr != nil {
-				return vckv1.Volume{
+				return vckv1alpha1.Volume{
 					ID:      vc.ID,
 					Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, vckName, err),
 				}
@@ -253,7 +253,7 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1
 			defer readCloser.Close()
 			logBuf := new(bytes.Buffer)
 			logBuf.ReadFrom(readCloser)
-			return vckv1.Volume{
+			return vckv1alpha1.Volume{
 				ID:      vc.ID,
 				Message: fmt.Sprintf("%v [name: %v]: %v", downloadErrMsg, vckName, logBuf.String()),
 			}
@@ -261,7 +261,7 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1
 
 		podObj, err := podClient.Get(ns, vckName)
 		if err != nil {
-			return vckv1.Volume{
+			return vckv1alpha1.Volume{
 				ID:      vc.ID,
 				Message: fmt.Sprintf("error getting pod [name: %v]: %v", vckName, err),
 			}
@@ -269,7 +269,7 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1
 
 		pod, ok := podObj.(*corev1.Pod)
 		if !ok {
-			return vckv1.Volume{
+			return vckv1alpha1.Volume{
 				ID:      vc.ID,
 				Message: fmt.Sprintf("object returned from podclient.Get() is not a pod"),
 			}
@@ -279,7 +279,7 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1
 
 		node, err := nodeClient.Get("", pod.Spec.NodeName)
 		if err != nil {
-			return vckv1.Volume{
+			return vckv1alpha1.Volume{
 				ID:      vc.ID,
 				Message: fmt.Sprintf("could not get node %s, error: %v", pod.Spec.NodeName, err),
 			}
@@ -288,7 +288,7 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1
 		err = updateNodeWithLabels(nodeClient, node.(*corev1.Node), []string{nodeLabelKey}, "add")
 
 		if err != nil {
-			return vckv1.Volume{
+			return vckv1alpha1.Volume{
 				ID:      vc.ID,
 				Message: fmt.Sprintf("could not label node %s, error: %v", pod.Spec.NodeName, err),
 			}
@@ -296,7 +296,7 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1
 
 	}
 
-	return vckv1.Volume{
+	return vckv1alpha1.Volume{
 		ID: vc.ID,
 		VolumeSource: corev1.VolumeSource{
 			HostPath: &corev1.HostPathVolumeSource{
@@ -317,12 +317,12 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1
 				},
 			},
 		},
-		Message: vckv1.SuccessfulVolumeStatusMessage,
+		Message: vckv1alpha1.SuccessfulVolumeStatusMessage,
 	}
 }
 
-func (h *s3Handler) OnDelete(ns string, vc vckv1.VolumeConfig, vStatus vckv1.Volume, controllerRef metav1.OwnerReference) {
-	nodeLabelKey := fmt.Sprintf("%s/%s-%s-%s", vckv1.GroupName, ns, controllerRef.Name, vc.ID)
+func (h *s3Handler) OnDelete(ns string, vc vckv1alpha1.VolumeConfig, vStatus vckv1alpha1.Volume, controllerRef metav1.OwnerReference) {
+	nodeLabelKey := fmt.Sprintf("%s/%s-%s-%s", vckv1alpha1.GroupName, ns, controllerRef.Name, vc.ID)
 	podClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "pods")
 
 	if vStatus.VolumeSource != (corev1.VolumeSource{}) {
@@ -332,7 +332,7 @@ func (h *s3Handler) OnDelete(ns string, vc vckv1.VolumeConfig, vStatus vckv1.Vol
 			vckNames = append(vckNames, vckName)
 
 			err := podClient.Create(ns, struct {
-				vckv1.VolumeConfig
+				vckv1alpha1.VolumeConfig
 				metav1.OwnerReference
 				NS              string
 				VCKName         string

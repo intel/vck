@@ -16,7 +16,7 @@
 // SPDX-License-Identifier: EPL-2.0
 //
 
-package v1
+package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,7 +27,7 @@ import (
 // TODO: Auto-generate this file when https://github.com/kubernetes/code-generator/issues/24 get's resolved.
 
 // SchemeGroupVersion is group version used to register these objects
-var SchemeGroupVersion = schema.GroupVersion{Group: GroupName, Version: "v1"}
+var SchemeGroupVersion = schema.GroupVersion{Group: GroupName, Version: Version}
 
 // Kind takes an unqualified kind and returns back a Group qualified GroupKind
 func Kind(kind string) schema.GroupKind {

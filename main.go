@@ -121,7 +121,7 @@ func main() {
 	}
 
 	// Create hooks
-	hooks := hooks.NewVolumeManagerHooks(crdClient.VckV1().VolumeManagers(*namespace), dataHandlers)
+	hooks := hooks.NewVolumeManagerHooks(crdClient.VckV1alpha1().VolumeManagers(*namespace), dataHandlers)
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()

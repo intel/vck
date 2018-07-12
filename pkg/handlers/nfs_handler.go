@@ -28,16 +28,16 @@ import (
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/client-go/kubernetes"
 
-	vckv1 "github.com/IntelAI/vck/pkg/apis/vck/v1"
+	vckv1alpha1 "github.com/IntelAI/vck/pkg/apis/vck/v1alpha1"
 	"github.com/IntelAI/vck/pkg/resource"
 )
 
 const (
-	nfsSourceType vckv1.DataSourceType = "NFS"
+	nfsSourceType vckv1alpha1.DataSourceType = "NFS"
 )
 
 type nfsHandler struct {
-	sourceType         vckv1.DataSourceType
+	sourceType         vckv1alpha1.DataSourceType
 	k8sClientset       kubernetes.Interface
 	k8sResourceClients []resource.Client
 }
@@ -51,34 +51,34 @@ func NewNFSHandler(k8sClientset kubernetes.Interface, resourceClients []resource
 	}
 }
 
-func (h *nfsHandler) GetSourceType() vckv1.DataSourceType {
+func (h *nfsHandler) GetSourceType() vckv1alpha1.DataSourceType {
 	return h.sourceType
 }
 
-func (h *nfsHandler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1.OwnerReference) vckv1.Volume {
+func (h *nfsHandler) OnAdd(ns string, vc vckv1alpha1.VolumeConfig, controllerRef metav1.OwnerReference) vckv1alpha1.Volume {
 	if len(vc.Labels) == 0 {
-		return vckv1.Volume{
+		return vckv1alpha1.Volume{
 			ID:      vc.ID,
 			Message: fmt.Sprintf("labels cannot be empty"),
 		}
 	}
 
 	if _, ok := vc.Options["server"]; !ok {
-		return vckv1.Volume{
+		return vckv1alpha1.Volume{
 			ID:      vc.ID,
 			Message: fmt.Sprintf("server has to be set in options"),
 		}
 	}
 
 	if _, ok := vc.Options["path"]; !ok {
-		return vckv1.Volume{
+		return vckv1alpha1.Volume{
 			ID:      vc.ID,
 			Message: fmt.Sprintf("path has to be set in options"),
 		}
 	}
 
 	if vc.AccessMode != "ReadWriteMany" && vc.AccessMode != "ReadOnlyMany" {
-		return vckv1.Volume{
+		return vckv1alpha1.Volume{
 			ID:      vc.ID,
 			Message: fmt.Sprintf("access mode has to be either ReadWriteMany or ReadOnlyMany"),
 		}
@@ -91,7 +91,7 @@ func (h *nfsHandler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav
 		}
 
 		err := client.Create(ns, struct {
-			vckv1.VolumeConfig
+			vckv1alpha1.VolumeConfig
 			metav1.OwnerReference
 			NS                  string
 			NodeName            string
@@ -114,25 +114,25 @@ func (h *nfsHandler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav
 		})
 
 		if err != nil {
-			return vckv1.Volume{
+			return vckv1alpha1.Volume{
 				ID:      vc.ID,
 				Message: fmt.Sprintf("error during sub-resource [%s] creation: %v", client.Plural(), err),
 			}
 		}
 	}
 
-	return vckv1.Volume{
+	return vckv1alpha1.Volume{
 		ID: vc.ID,
 		VolumeSource: corev1.VolumeSource{
 			PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 				ClaimName: vckName,
 			},
 		},
-		Message: vckv1.SuccessfulVolumeStatusMessage,
+		Message: vckv1alpha1.SuccessfulVolumeStatusMessage,
 	}
 }
 
-func (h *nfsHandler) OnDelete(ns string, vc vckv1.VolumeConfig, vStatus vckv1.Volume, controllerRef metav1.OwnerReference) {
+func (h *nfsHandler) OnDelete(ns string, vc vckv1alpha1.VolumeConfig, vStatus vckv1alpha1.Volume, controllerRef metav1.OwnerReference) {
 	for _, client := range h.k8sResourceClients {
 		if client.Plural() == "nodes" || client.Plural() == "pods" {
 			continue

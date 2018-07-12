@@ -30,16 +30,16 @@ import (
 
 	"github.com/golang/glog"
 
-	vckv1 "github.com/IntelAI/vck/pkg/apis/vck/v1"
+	vckv1alpha1 "github.com/IntelAI/vck/pkg/apis/vck/v1alpha1"
 	"github.com/IntelAI/vck/pkg/resource"
 )
 
 const (
-	pachydermSourceType vckv1.DataSourceType = "Pachyderm"
+	pachydermSourceType vckv1alpha1.DataSourceType = "Pachyderm"
 )
 
 type pachydermHandler struct {
-	sourceType         vckv1.DataSourceType
+	sourceType         vckv1alpha1.DataSourceType
 	k8sClientset       kubernetes.Interface
 	k8sResourceClients []resource.Client
 }
@@ -53,47 +53,47 @@ func NewPachydermHandler(k8sClientset kubernetes.Interface, resourceClients []re
 	}
 }
 
-func (h *pachydermHandler) GetSourceType() vckv1.DataSourceType {
+func (h *pachydermHandler) GetSourceType() vckv1alpha1.DataSourceType {
 	return h.sourceType
 }
 
-func (h *pachydermHandler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1.OwnerReference) vckv1.Volume {
+func (h *pachydermHandler) OnAdd(ns string, vc vckv1alpha1.VolumeConfig, controllerRef metav1.OwnerReference) vckv1alpha1.Volume {
 	if len(vc.Labels) == 0 {
-		return vckv1.Volume{
+		return vckv1alpha1.Volume{
 			ID:      vc.ID,
 			Message: fmt.Sprintf("labels cannot be empty"),
 		}
 	}
 
 	if _, ok := vc.Options["repo"]; !ok {
-		return vckv1.Volume{
+		return vckv1alpha1.Volume{
 			ID:      vc.ID,
 			Message: fmt.Sprintf("repo has to be set in options"),
 		}
 	}
 	if _, ok := vc.Options["branch"]; !ok {
-		return vckv1.Volume{
+		return vckv1alpha1.Volume{
 			ID:      vc.ID,
 			Message: fmt.Sprintf("branch has to be set in options"),
 		}
 	}
 
 	if _, ok := vc.Options["inputPath"]; !ok {
-		return vckv1.Volume{
+		return vckv1alpha1.Volume{
 			ID:      vc.ID,
 			Message: fmt.Sprintf("inputPath has to be set in options"),
 		}
 	}
 
 	if _, ok := vc.Options["outputPath"]; !ok {
-		return vckv1.Volume{
+		return vckv1alpha1.Volume{
 			ID:      vc.ID,
 			Message: fmt.Sprintf("outputPath has to be set in options"),
 		}
 	}
 
 	if vc.AccessMode != "ReadWriteOnce" {
-		return vckv1.Volume{
+		return vckv1alpha1.Volume{
 			ID:      vc.ID,
 			Message: fmt.Sprintf("access mode has to be ReadWriteOnce"),
 		}
@@ -115,7 +115,7 @@ func (h *pachydermHandler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef
 	if _, ok := vc.Options["timeoutForDataDownload"]; ok {
 		timeout, err = time.ParseDuration(vc.Options["timeoutForDataDownload"])
 		if err != nil {
-			return vckv1.Volume{
+			return vckv1alpha1.Volume{
 				ID:      vc.ID,
 				Message: fmt.Sprintf("error while parsing timeout for data download: %v", err),
 			}
@@ -125,7 +125,7 @@ func (h *pachydermHandler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef
 	nodeClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "nodes")
 	nodeList, err := nodeClient.List(ns, map[string]string{})
 	if err != nil {
-		return vckv1.Volume{
+		return vckv1alpha1.Volume{
 			ID:      vc.ID,
 			Message: fmt.Sprintf("error getting node list: %v", err),
 		}
@@ -133,7 +133,7 @@ func (h *pachydermHandler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef
 
 	// If number of nodes < replicas, then return immediately.
 	if len(nodeList) < vc.Replicas {
-		return vckv1.Volume{
+		return vckv1alpha1.Volume{
 			ID: vc.ID,
 			Message: fmt.Sprintf("replicas [%v] greater than number of nodes [%v]",
 				vc.Replicas, len(nodeList)),
@@ -153,7 +153,7 @@ func (h *pachydermHandler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef
 		vckNames = append(vckNames, vckName)
 
 		err = podClient.Create(ns, struct {
-			vckv1.VolumeConfig
+			vckv1alpha1.VolumeConfig
 			metav1.OwnerReference
 			NS                  string
 			VCKName             string
@@ -175,7 +175,7 @@ func (h *pachydermHandler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef
 		})
 
 		if err != nil {
-			return vckv1.Volume{
+			return vckv1alpha1.Volume{
 				ID:      vc.ID,
 				Message: fmt.Sprintf("error during sub-resource [%s] creation: %v", podClient.Plural(), err),
 			}
@@ -183,11 +183,11 @@ func (h *pachydermHandler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef
 	}
 
 	usedNodeNames := []string{}
-	nodeLabelKey := fmt.Sprintf("%s/%s-%s-%s", vckv1.GroupName, ns, controllerRef.Name, vc.ID)
+	nodeLabelKey := fmt.Sprintf("%s/%s-%s-%s", vckv1alpha1.GroupName, ns, controllerRef.Name, vc.ID)
 	for _, vckName := range vckNames {
 		err := waitForPodSuccess(podClient, vckName, ns, timeout)
 		if err != nil {
-			return vckv1.Volume{
+			return vckv1alpha1.Volume{
 				ID: vc.ID,
 				// TODO(balajismaniam): append pod logs to this message if possible.
 				Message: fmt.Sprintf("error during data download using pod [name: %v]: %v", vckName, err),
@@ -196,7 +196,7 @@ func (h *pachydermHandler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef
 
 		podObj, err := podClient.Get(ns, vckName)
 		if err != nil {
-			return vckv1.Volume{
+			return vckv1alpha1.Volume{
 				ID:      vc.ID,
 				Message: fmt.Sprintf("error getting pod [name: %v]: %v", vckName, err),
 			}
@@ -204,7 +204,7 @@ func (h *pachydermHandler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef
 
 		pod, ok := podObj.(*corev1.Pod)
 		if !ok {
-			return vckv1.Volume{
+			return vckv1alpha1.Volume{
 				ID:      vc.ID,
 				Message: fmt.Sprintf("object returned from podclient.Get() is not a pod"),
 			}
@@ -214,7 +214,7 @@ func (h *pachydermHandler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef
 
 		node, err := nodeClient.Get("", pod.Spec.NodeName)
 		if err != nil {
-			return vckv1.Volume{
+			return vckv1alpha1.Volume{
 				ID:      vc.ID,
 				Message: fmt.Sprintf("could not get node %s, error: %v", pod.Spec.NodeName, err),
 			}
@@ -223,7 +223,7 @@ func (h *pachydermHandler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef
 		err = updateNodeWithLabels(nodeClient, node.(*corev1.Node), []string{nodeLabelKey}, "add")
 
 		if err != nil {
-			return vckv1.Volume{
+			return vckv1alpha1.Volume{
 				ID:      vc.ID,
 				Message: fmt.Sprintf("could not label node %s, error: %v", pod.Spec.NodeName, err),
 			}
@@ -231,7 +231,7 @@ func (h *pachydermHandler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef
 
 	}
 
-	return vckv1.Volume{
+	return vckv1alpha1.Volume{
 		ID: vc.ID,
 		VolumeSource: corev1.VolumeSource{
 			HostPath: &corev1.HostPathVolumeSource{
@@ -252,12 +252,12 @@ func (h *pachydermHandler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef
 				},
 			},
 		},
-		Message: vckv1.SuccessfulVolumeStatusMessage,
+		Message: vckv1alpha1.SuccessfulVolumeStatusMessage,
 	}
 }
 
-func (h *pachydermHandler) OnDelete(ns string, vc vckv1.VolumeConfig, vStatus vckv1.Volume, controllerRef metav1.OwnerReference) {
-	nodeLabelKey := fmt.Sprintf("%s/%s-%s-%s", vckv1.GroupName, ns, controllerRef.Name, vc.ID)
+func (h *pachydermHandler) OnDelete(ns string, vc vckv1alpha1.VolumeConfig, vStatus vckv1alpha1.Volume, controllerRef metav1.OwnerReference) {
+	nodeLabelKey := fmt.Sprintf("%s/%s-%s-%s", vckv1alpha1.GroupName, ns, controllerRef.Name, vc.ID)
 	podClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "pods")
 
 	if vStatus.VolumeSource != (corev1.VolumeSource{}) {
@@ -267,7 +267,7 @@ func (h *pachydermHandler) OnDelete(ns string, vc vckv1.VolumeConfig, vStatus vc
 			vckNames = append(vckNames, vckName)
 
 			err := podClient.Create(ns, struct {
-				vckv1.VolumeConfig
+				vckv1alpha1.VolumeConfig
 				metav1.OwnerReference
 				NS              string
 				VCKName         string

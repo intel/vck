@@ -39,7 +39,7 @@ CODEGEN_PKG=${CODEGEN_PKG:-$(cd ${SCRIPT_ROOT}; ls -d -1 ./vendor/k8s.io/code-ge
 #                  instead of the $GOPATH directly. For normal projects this can be dropped.
 ${CODEGEN_PKG}/generate-groups.sh all \
   github.com/intelai/vck/pkg/client github.com/IntelAI/vck/pkg/apis \
-  vck:v1 --go-header-file pkg/apis/vck/v1/doc.go.txt
+  vck:v1alpha1 --go-header-file pkg/apis/vck/v1alpha1/doc.go.txt
 
 # This hack is required as the autogens don't work for upper case letters in package names.
 # This issue: https://github.com/kubernetes/code-generator/issues/22 needs to be resolved to remove this hack.
