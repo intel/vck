@@ -21,14 +21,14 @@ package handlers
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	vckv1 "github.com/IntelAI/vck/pkg/apis/vck/v1"
+	vckv1alpha1 "github.com/IntelAI/vck/pkg/apis/vck/v1alpha1"
 )
 
 // DataHandler is the interface which defines the handler methods
 type DataHandler interface {
-	GetSourceType() vckv1.DataSourceType
-	OnAdd(namespace string, vc vckv1.VolumeConfig, controllerRef metav1.OwnerReference) vckv1.Volume
-	OnDelete(namespace string, vc vckv1.VolumeConfig, vStatus vckv1.Volume, controllerRef metav1.OwnerReference)
+	GetSourceType() vckv1alpha1.DataSourceType
+	OnAdd(namespace string, vc vckv1alpha1.VolumeConfig, controllerRef metav1.OwnerReference) vckv1alpha1.Volume
+	OnDelete(namespace string, vc vckv1alpha1.VolumeConfig, vStatus vckv1alpha1.Volume, controllerRef metav1.OwnerReference)
 }
 
 const (

@@ -1,4 +1,4 @@
-apiVersion: vck.intelai.org/v1
+apiVersion: vck.intelai.org/v1alpha1
 kind: VolumeManager
 metadata:
   name: vck-example

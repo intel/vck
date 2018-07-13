@@ -35,9 +35,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	crv1 "github.com/IntelAI/vck/pkg/apis/vck/v1"
-	crv1_client "github.com/IntelAI/vck/pkg/client/clientset/versioned"
-	crv1_volume_manager "github.com/IntelAI/vck/pkg/client/clientset/versioned/typed/vck/v1"
+	crv1alpha1 "github.com/IntelAI/vck/pkg/apis/vck/v1alpha1"
+	crv1alpha1_client "github.com/IntelAI/vck/pkg/client/clientset/versioned"
+	crv1alpha1_volume_manager "github.com/IntelAI/vck/pkg/client/clientset/versioned/typed/vck/v1alpha1"
 	"github.com/IntelAI/vck/pkg/states"
 	"github.com/IntelAI/vck/pkg/util"
 )
@@ -48,7 +48,7 @@ var (
 	nfsServerIP = flag.String("nfsserverip", "", "NFS server IP address")
 )
 
-func makeClients(t *testing.T) (crv1_volume_manager.VolumeManagerInterface, *kubernetes.Clientset) {
+func makeClients(t *testing.T) (crv1alpha1_volume_manager.VolumeManagerInterface, *kubernetes.Clientset) {
 	user, err := user.Current()
 	require.Nil(t, err)
 
@@ -59,20 +59,20 @@ func makeClients(t *testing.T) (crv1_volume_manager.VolumeManagerInterface, *kub
 	require.Nil(t, err)
 	require.NotNil(t, k8sClient)
 
-	crdClient, err := crv1_client.NewForConfig(config)
+	crdClient, err := crv1alpha1_client.NewForConfig(config)
 	require.Nil(t, err)
 	require.NotNil(t, crdClient)
 
-	return crdClient.VckV1().VolumeManagers(*namespace), k8sClient
+	return crdClient.VckV1alpha1().VolumeManagers(*namespace), k8sClient
 }
 
-func makeVolumeManager(volumeConfigs []crv1.VolumeConfig) *crv1.VolumeManager {
+func makeVolumeManager(volumeConfigs []crv1alpha1.VolumeConfig) *crv1alpha1.VolumeManager {
 	name := fmt.Sprintf("vck-e2e-test-%s", uuid.NewUUID())
-	return &crv1.VolumeManager{
+	return &crv1alpha1.VolumeManager{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
-		Spec: crv1.VolumeManagerSpec{
+		Spec: crv1alpha1.VolumeManagerSpec{
 			VolumeConfigs: volumeConfigs,
 			State:         states.Running,
 		},
@@ -80,7 +80,7 @@ func makeVolumeManager(volumeConfigs []crv1.VolumeConfig) *crv1.VolumeManager {
 }
 
 // WaitForCRState polls for an expected CR state until it reaches a timeout.
-func waitForCRState(crdClient crv1_volume_manager.VolumeManagerInterface, name string, state states.State) error {
+func waitForCRState(crdClient crv1alpha1_volume_manager.VolumeManagerInterface, name string, state states.State) error {
 	return waitPoll(func() (bool, error) {
 		volman, err := crdClient.Get(name, metav1.GetOptions{})
 		if err == nil && volman.Status.State == state {
@@ -100,7 +100,7 @@ func TestVolumeManager(t *testing.T) {
 
 	testCases := []struct {
 		description   string
-		volumeConfigs []crv1.VolumeConfig
+		volumeConfigs []crv1alpha1.VolumeConfig
 		expSuccess    bool
 		expError      string
 		expHP         bool
@@ -110,7 +110,7 @@ func TestVolumeManager(t *testing.T) {
 		// Positive test cases.
 		{
 			description: "single vc - S3 - no error",
-			volumeConfigs: []crv1.VolumeConfig{
+			volumeConfigs: []crv1alpha1.VolumeConfig{
 				{
 					ID:         "vol1",
 					Replicas:   1,
@@ -136,7 +136,7 @@ func TestVolumeManager(t *testing.T) {
 		},
 		{
 			description: "single vc - S3 - with distributionStrategy - no error",
-			volumeConfigs: []crv1.VolumeConfig{
+			volumeConfigs: []crv1alpha1.VolumeConfig{
 				{
 					ID:         "vol1",
 					Replicas:   1,
@@ -163,7 +163,7 @@ func TestVolumeManager(t *testing.T) {
 		},
 		{
 			description: "single vc - NFS - no error",
-			volumeConfigs: []crv1.VolumeConfig{
+			volumeConfigs: []crv1alpha1.VolumeConfig{
 				{
 					ID:         "vol1",
 					SourceType: "NFS",
@@ -187,7 +187,7 @@ func TestVolumeManager(t *testing.T) {
 		},
 		{
 			description: "multiple vc - S3 and NFS - no error",
-			volumeConfigs: []crv1.VolumeConfig{
+			volumeConfigs: []crv1alpha1.VolumeConfig{
 				{
 					ID:         "vol1",
 					Replicas:   1,
@@ -227,7 +227,7 @@ func TestVolumeManager(t *testing.T) {
 		},
 		{
 			description: "single vc - Pachyderm - non-recursive - no error",
-			volumeConfigs: []crv1.VolumeConfig{
+			volumeConfigs: []crv1alpha1.VolumeConfig{
 				{
 					ID:         "vol1",
 					Replicas:   1,
@@ -254,7 +254,7 @@ func TestVolumeManager(t *testing.T) {
 		},
 		{
 			description: "single vc - Pachyderm - recursive - no error",
-			volumeConfigs: []crv1.VolumeConfig{
+			volumeConfigs: []crv1alpha1.VolumeConfig{
 				{
 					ID:         "vol1",
 					Replicas:   1,
@@ -282,7 +282,7 @@ func TestVolumeManager(t *testing.T) {
 		// Negative test cases.
 		{
 			description: "single vc - S3 - no label error",
-			volumeConfigs: []crv1.VolumeConfig{
+			volumeConfigs: []crv1alpha1.VolumeConfig{
 				{
 					ID:         "vol1",
 					Replicas:   1,
@@ -305,7 +305,7 @@ func TestVolumeManager(t *testing.T) {
 		},
 		{
 			description: "single vc - S3 - no creds error",
-			volumeConfigs: []crv1.VolumeConfig{
+			volumeConfigs: []crv1alpha1.VolumeConfig{
 				{
 					ID:         "vol1",
 					Replicas:   1,
@@ -330,7 +330,7 @@ func TestVolumeManager(t *testing.T) {
 		},
 		{
 			description: "single vc - NFS - no label error",
-			volumeConfigs: []crv1.VolumeConfig{
+			volumeConfigs: []crv1alpha1.VolumeConfig{
 				{
 					ID:         "vol1",
 					SourceType: "NFS",
@@ -351,7 +351,7 @@ func TestVolumeManager(t *testing.T) {
 		},
 		{
 			description: "single vc - NFS - no server in options error",
-			volumeConfigs: []crv1.VolumeConfig{
+			volumeConfigs: []crv1alpha1.VolumeConfig{
 				{
 					ID:         "vol1",
 					SourceType: "NFS",
@@ -374,7 +374,7 @@ func TestVolumeManager(t *testing.T) {
 		},
 		{
 			description: "single vc - NFS - no path in options error",
-			volumeConfigs: []crv1.VolumeConfig{
+			volumeConfigs: []crv1alpha1.VolumeConfig{
 				{
 					ID:         "vol1",
 					SourceType: "NFS",
@@ -397,7 +397,7 @@ func TestVolumeManager(t *testing.T) {
 		},
 		{
 			description: "single vc - S3 - time out error due to bad url",
-			volumeConfigs: []crv1.VolumeConfig{
+			volumeConfigs: []crv1alpha1.VolumeConfig{
 				{
 					ID:         "vol1",
 					Replicas:   1,
@@ -424,7 +424,7 @@ func TestVolumeManager(t *testing.T) {
 		},
 		{
 			description: "single vc - S3 - timeout error due to bad endpoint",
-			volumeConfigs: []crv1.VolumeConfig{
+			volumeConfigs: []crv1alpha1.VolumeConfig{
 				{
 					ID:         "vol1",
 					Replicas:   1,
@@ -451,7 +451,7 @@ func TestVolumeManager(t *testing.T) {
 		},
 		{
 			description: "multiple vc - S3 and NFS - S3 failed due to no creds error",
-			volumeConfigs: []crv1.VolumeConfig{
+			volumeConfigs: []crv1alpha1.VolumeConfig{
 				{
 					ID:         "vol1",
 					Replicas:   1,
@@ -490,7 +490,7 @@ func TestVolumeManager(t *testing.T) {
 		},
 		{
 			description: "single vc - Pachyderm - ",
-			volumeConfigs: []crv1.VolumeConfig{
+			volumeConfigs: []crv1alpha1.VolumeConfig{
 				{
 					ID:         "vol1",
 					Replicas:   1,
@@ -535,7 +535,7 @@ func TestVolumeManager(t *testing.T) {
 			require.Equal(t, states.Running, volman.Status.State)
 
 			for _, vol := range volman.Status.Volumes {
-				require.Equal(t, crv1.SuccessfulVolumeStatusMessage, vol.Message)
+				require.Equal(t, crv1alpha1.SuccessfulVolumeStatusMessage, vol.Message)
 			}
 
 			if testCase.expHP {

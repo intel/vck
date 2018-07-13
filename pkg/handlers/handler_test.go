@@ -20,7 +20,7 @@ package handlers
 
 import (
 	"fmt"
-	vckv1 "github.com/IntelAI/vck/pkg/apis/vck/v1"
+	vckv1alpha1 "github.com/IntelAI/vck/pkg/apis/vck/v1alpha1"
 	"github.com/IntelAI/vck/pkg/resource"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
@@ -92,25 +92,25 @@ func TestHandler(t *testing.T) {
 	ownerRef := metav1.OwnerReference{}
 
 	testCases := map[string]struct {
-		volumeConfig  vckv1.VolumeConfig
+		volumeConfig  vckv1alpha1.VolumeConfig
 		handler       DataHandler
 		failedMessage string
 	}{
 		// S3 handler
 		"[s3_handler] labels not set": {
-			volumeConfig:  vckv1.VolumeConfig{},
+			volumeConfig:  vckv1alpha1.VolumeConfig{},
 			handler:       NewS3Handler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 			failedMessage: "labels cannot be empty",
 		},
 		"[s3_handler] awsCredentialsSecretName not set": {
-			volumeConfig: vckv1.VolumeConfig{
+			volumeConfig: vckv1alpha1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 			},
 			handler:       NewS3Handler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 			failedMessage: "awsCredentialsSecretName key has to be set in options",
 		},
 		"[s3_handler] Wrong access mode": {
-			volumeConfig: vckv1.VolumeConfig{
+			volumeConfig: vckv1alpha1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"awsCredentialsSecretName": "foobar",
@@ -121,7 +121,7 @@ func TestHandler(t *testing.T) {
 			failedMessage: "access mode has to be ReadWriteOnce",
 		},
 		"[s3_handler] sourceURL not set": {
-			volumeConfig: vckv1.VolumeConfig{
+			volumeConfig: vckv1alpha1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"awsCredentialsSecretName": "foobar",
@@ -132,7 +132,7 @@ func TestHandler(t *testing.T) {
 			failedMessage: "sourceURL has to be set in options",
 		},
 		"[s3_handler] Wrong timeoutForDataDownload format": {
-			volumeConfig: vckv1.VolumeConfig{
+			volumeConfig: vckv1alpha1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"awsCredentialsSecretName": "foobar",
@@ -145,7 +145,7 @@ func TestHandler(t *testing.T) {
 			failedMessage: "error while parsing timeout for data download",
 		},
 		"[s3_handler] Node List Failing": {
-			volumeConfig: vckv1.VolumeConfig{
+			volumeConfig: vckv1alpha1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"awsCredentialsSecretName": "foobar",
@@ -157,7 +157,7 @@ func TestHandler(t *testing.T) {
 			failedMessage: "error getting node list",
 		},
 		"[s3_handler] replicas > Num nodes": {
-			volumeConfig: vckv1.VolumeConfig{
+			volumeConfig: vckv1alpha1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"awsCredentialsSecretName": "foobar",
@@ -170,7 +170,7 @@ func TestHandler(t *testing.T) {
 			failedMessage: "replicas [2] greater than number of nodes [1]",
 		},
 		"[s3_handler] Invalid distribution strategy": {
-			volumeConfig: vckv1.VolumeConfig{
+			volumeConfig: vckv1alpha1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"awsCredentialsSecretName": "foobar",
@@ -184,7 +184,7 @@ func TestHandler(t *testing.T) {
 			failedMessage: "invalid distributionStrategy",
 		},
 		"[s3_handler] # replicas in distribution strategy != # replicas": {
-			volumeConfig: vckv1.VolumeConfig{
+			volumeConfig: vckv1alpha1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"awsCredentialsSecretName": "foobar",
@@ -198,7 +198,7 @@ func TestHandler(t *testing.T) {
 			failedMessage: "does not match number or replicas provided",
 		},
 		"[s3_handler] Any create failed": {
-			volumeConfig: vckv1.VolumeConfig{
+			volumeConfig: vckv1alpha1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"awsCredentialsSecretName": "foobar",
@@ -213,19 +213,19 @@ func TestHandler(t *testing.T) {
 
 		// NFS handler
 		"[nfs_handler] labels not set": {
-			volumeConfig:  vckv1.VolumeConfig{},
+			volumeConfig:  vckv1alpha1.VolumeConfig{},
 			handler:       NewNFSHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 			failedMessage: "labels cannot be empty",
 		},
 		"[nfs_handler] server not set": {
-			volumeConfig: vckv1.VolumeConfig{
+			volumeConfig: vckv1alpha1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 			},
 			handler:       NewNFSHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 			failedMessage: "server has to be set in options",
 		},
 		"[nfs_handler] path not set": {
-			volumeConfig: vckv1.VolumeConfig{
+			volumeConfig: vckv1alpha1.VolumeConfig{
 				Labels:  map[string]string{"foo": "bar"},
 				Options: map[string]string{"server": "foo"},
 			},
@@ -233,7 +233,7 @@ func TestHandler(t *testing.T) {
 			failedMessage: "path has to be set in options",
 		},
 		"[nfs_handler] Wrong access mode": {
-			volumeConfig: vckv1.VolumeConfig{
+			volumeConfig: vckv1alpha1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"server": "foo",
@@ -245,7 +245,7 @@ func TestHandler(t *testing.T) {
 			failedMessage: "access mode has to be either ReadWriteMany or ReadOnlyMany",
 		},
 		"[nfs_handler] Any create failed": {
-			volumeConfig: vckv1.VolumeConfig{
+			volumeConfig: vckv1alpha1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"server": "foo",
@@ -259,19 +259,19 @@ func TestHandler(t *testing.T) {
 
 		// Pachyderm handler
 		"[pachyderm_handler] labels not set": {
-			volumeConfig:  vckv1.VolumeConfig{},
+			volumeConfig:  vckv1alpha1.VolumeConfig{},
 			handler:       NewPachydermHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 			failedMessage: "labels cannot be empty",
 		},
 		"[pachyderm_handler] repo not set": {
-			volumeConfig: vckv1.VolumeConfig{
+			volumeConfig: vckv1alpha1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 			},
 			handler:       NewPachydermHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 			failedMessage: "repo has to be set in options",
 		},
 		"[pachyderm_handler] branch not set": {
-			volumeConfig: vckv1.VolumeConfig{
+			volumeConfig: vckv1alpha1.VolumeConfig{
 				Labels:  map[string]string{"foo": "bar"},
 				Options: map[string]string{"repo": "foo"},
 			},
@@ -279,7 +279,7 @@ func TestHandler(t *testing.T) {
 			failedMessage: "branch has to be set in options",
 		},
 		"[pachyderm_handler] inputPathnot set": {
-			volumeConfig: vckv1.VolumeConfig{
+			volumeConfig: vckv1alpha1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"repo":   "foo",
@@ -290,7 +290,7 @@ func TestHandler(t *testing.T) {
 			failedMessage: "inputPath has to be set in options",
 		},
 		"[pachyderm_handler] outputPath not set": {
-			volumeConfig: vckv1.VolumeConfig{
+			volumeConfig: vckv1alpha1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"repo":      "foo",
@@ -302,7 +302,7 @@ func TestHandler(t *testing.T) {
 			failedMessage: "outputPath has to be set in options",
 		},
 		"[pachyderm_handler] Wrong access mode": {
-			volumeConfig: vckv1.VolumeConfig{
+			volumeConfig: vckv1alpha1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"repo":       "foo",
@@ -316,7 +316,7 @@ func TestHandler(t *testing.T) {
 			failedMessage: "access mode has to be ReadWriteOnce",
 		},
 		"[pachyderm_handler] replicas > Num nodes": {
-			volumeConfig: vckv1.VolumeConfig{
+			volumeConfig: vckv1alpha1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"repo":       "foo",
@@ -331,7 +331,7 @@ func TestHandler(t *testing.T) {
 			failedMessage: "replicas [2] greater than number of nodes [1]",
 		},
 		"[pachyderm_handler] Any create failed": {
-			volumeConfig: vckv1.VolumeConfig{
+			volumeConfig: vckv1alpha1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
 				Options: map[string]string{
 					"repo":       "foo",
@@ -353,7 +353,7 @@ func TestHandler(t *testing.T) {
 
 		// Assert stuff
 		require.NotNil(t, volume)
-		require.NotEqual(t, volume.Message, vckv1.SuccessfulVolumeStatusMessage)
+		require.NotEqual(t, volume.Message, vckv1alpha1.SuccessfulVolumeStatusMessage)
 		require.Contains(t, volume.Message, tc.failedMessage)
 	}
 }

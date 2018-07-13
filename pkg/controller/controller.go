@@ -22,8 +22,8 @@ import (
 	"context"
 	"fmt"
 
-	vckv1_client "github.com/IntelAI/vck/pkg/client/clientset/versioned"
-	vckv1_informer "github.com/IntelAI/vck/pkg/client/informers/externalversions"
+	vckv1alpha1_client "github.com/IntelAI/vck/pkg/client/clientset/versioned"
+	vckv1alpha1_informer "github.com/IntelAI/vck/pkg/client/informers/externalversions"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -48,11 +48,11 @@ func handlerFuncs(h Hooks) cache.ResourceEventHandlerFuncs {
 // to a set of supplied callback functions.
 type Controller struct {
 	Hooks  Hooks
-	Client vckv1_client.Interface
+	Client vckv1alpha1_client.Interface
 }
 
 // New returns a new Controller.
-func New(hooks Hooks, client vckv1_client.Interface) *Controller {
+func New(hooks Hooks, client vckv1alpha1_client.Interface) *Controller {
 	return &Controller{
 		Hooks:  hooks,
 		Client: client,
@@ -76,8 +76,8 @@ func (c *Controller) Run(ctx context.Context, namespace string) error {
 
 func (c *Controller) watch(ctx context.Context, namespace string) {
 
-	informer := vckv1_informer.NewFilteredSharedInformerFactory(c.Client, 0, namespace, nil)
-	informer.Vck().V1().VolumeManagers().Informer().AddEventHandler(handlerFuncs(c.Hooks))
+	informer := vckv1alpha1_informer.NewFilteredSharedInformerFactory(c.Client, 0, namespace, nil)
+	informer.Vck().V1alpha1().VolumeManagers().Informer().AddEventHandler(handlerFuncs(c.Hooks))
 
 	go informer.Start(ctx.Done())
 

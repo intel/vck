@@ -22,7 +22,7 @@ import (
 	"context"
 	"testing"
 
-	vckv1 "github.com/IntelAI/vck/pkg/apis/vck/v1"
+	vckv1alpha1 "github.com/IntelAI/vck/pkg/apis/vck/v1alpha1"
 	"github.com/IntelAI/vck/pkg/client/clientset/versioned/fake"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -75,7 +75,7 @@ func TestController(t *testing.T) {
 	go controller.Run(ctx, namespace)
 
 	// Create the CR using the fake client
-	volume, err := volumeManagerClient.Create(&vckv1.VolumeManager{
+	volume, err := volumeManagerClient.Create(&vckv1alpha1.VolumeManager{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "volume1",
 		},

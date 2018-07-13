@@ -40,7 +40,7 @@ prereq:
 dep-ensure:
 	dep ensure
 
-build: prereq code-generation lint test
+build: prereq dep-ensure code-generation lint test
 	go build -gcflags "-N -l" github.com/IntelAI/vck
 
 lint:
@@ -63,7 +63,7 @@ test:
 test-e2e:
 	go test -v ./test/e2e/...
 
-code-generation: dep-ensure
+code-generation:
 	./hack/update-codegen.sh
 
 push-image: docker
