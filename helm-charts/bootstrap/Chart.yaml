@@ -1,0 +1,4 @@
+apiVersion: v1
+description: kube-volume-controller-e2e-bootstrap
+name: kube-volume-controller-e2e-bootstrap
+version: v0.1.0

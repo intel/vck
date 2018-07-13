@@ -1,0 +1,19 @@
+{{- if .Values.pachyderm.bootstrap -}}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pachyderm-bootstrap
+  namespace: {{ .Values.namespace }}
+spec:
+  restartPolicy: OnFailure
+  containers:
+  - command:
+    - bash
+    - -c
+    - export ADDRESS={{ .Values.pachyderm.address }} && pachctl version &&
+      pachctl create-repo test && pachctl create-branch test master &&
+      pachctl start-commit test master && touch /test &&
+      pachctl put-file test master s3/test -f /test && pachctl finish-commit test master
+    image: volumecontroller/pachctl
+    name: pachyderm
+{{end}}
