@@ -1,20 +1,8 @@
-// Copyright 2017 Google Inc. All Rights Reserved.
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//     http://www.apache.org/licenses/LICENSE-2.0
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-package main
+package initialzer
 
 import (
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -33,28 +21,30 @@ import (
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 )
 
 const (
-	defaultAnnotation      = "initializer.kubernetes.io/vck"
-	defaultInitializerName = "vck.initializer.kubernetes.io"
-	defaultNamespace       = "vck"
+	defaultAnnotation        = "initializer.kubernetes.io/vck"
+	defaultInitializerName   = "vck.initializer.kubernetes.io"
+	defaultRequireAnnotation = true
 )
 
 var (
 	annotation        string
 	initializerName   string
-	namespace         string
 	requireAnnotation bool
 )
 
 type data struct {
-	Name       string   `json:"name"`
-	ID         string   `json:"id"`
-	Containers []string `json:"containers,omitempty"`
-	MountPath  string   `json:"mount-path"`
+	Name       string       `json:"name"`
+	ID         string       `json:"id,omitempty"`
+	Containers []containers `json:"containers,omitempty"`
+}
+
+type containers struct {
+	Name      string `json:"name"`
+	MountPath string `json:"mount-path,omitempty"`
 }
 
 type config struct {
@@ -62,36 +52,25 @@ type config struct {
 	Volumes    []corev1.Volume
 }
 
-func main() {
-	flag.StringVar(&annotation, "annotation", defaultAnnotation, "The annotation to trigger initialization")
-	flag.StringVar(&initializerName, "initializer-name", defaultInitializerName, "The initializer name")
-	flag.StringVar(&namespace, "namespace", defaultNamespace, "The configuration namespace")
-	flag.BoolVar(&requireAnnotation, "require-annotation", true, "Require annotation for initialization")
-	flag.Parse()
+// Initializer watches a deployment and delegates create events
+// to a set of supplied callback functions.
+type Initializer struct {
+	ClientSet *kubernetes.Clientset
+	CRDClient *vckv1_client.Clientset
+}
 
-	log.Println("Starting the Kubernetes initializer...")
-	log.Printf("Initializer name set to: %s", initializerName)
-
-	clusterConfig, err := rest.InClusterConfig()
-	if err != nil {
-		log.Fatal(err.Error())
+// New returns a new Initializer.
+func New(clientset *kubernetes.Clientset, crdClient *vckv1_client.Clientset) *Initializer {
+	return &Initializer{
+		ClientSet: clientset,
+		CRDClient: crdClient,
 	}
+}
 
-	clientset, err := kubernetes.NewForConfig(clusterConfig)
-	if err != nil {
-		log.Fatal(err)
-	}
-	crdClient, err := vckv1_client.NewForConfig(clusterConfig)
-	if err != nil {
-		panic(err)
-	}
-
-	// Watch uninitialized Deployments in all namespaces.
-	restClient := clientset.AppsV1beta1().RESTClient()
+// RunIntializer starts a vck inistializer
+func (i *Initializer) RunIntializer() {
+	restClient := i.ClientSet.AppsV1beta1().RESTClient()
 	watchlist := cache.NewListWatchFromClient(restClient, "deployments", corev1.NamespaceAll, fields.Everything())
-
-	// Wrap the returned watchlist to workaround the inability to include
-	// the `IncludeUninitialized` list option when setting up watch clients.
 	includeUninitializedWatchlist := &cache.ListWatch{
 		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
 			options.IncludeUninitialized = true
@@ -104,17 +83,16 @@ func main() {
 	}
 
 	resyncPeriod := 30 * time.Second
-
 	_, controller := cache.NewInformer(includeUninitializedWatchlist, &v1beta1.Deployment{}, resyncPeriod,
 		cache.ResourceEventHandlerFuncs{
 			AddFunc: func(obj interface{}) {
 				o := obj.(*v1beta1.Deployment)
-				err := initializeDeployment(o, clientset, crdClient)
+				err := initializeDeployment(o, i)
 				if err != nil {
 					log.Println(err)
 					log.Println("Deleteting Deployment " + o.Name)
 					deletePolicy := metav1.DeletePropagationBackground
-					err := clientset.AppsV1().Deployments(o.Namespace).Delete(o.Name, &metav1.DeleteOptions{
+					err := i.ClientSet.AppsV1().Deployments(o.Namespace).Delete(o.Name, &metav1.DeleteOptions{
 						PropagationPolicy: &deletePolicy,
 					})
 					if err != nil {
@@ -136,9 +114,9 @@ func main() {
 
 	log.Println("Shutdown signal received, exiting...")
 	close(stop)
-}
 
-func initializeDeployment(deployment *v1beta1.Deployment, clientset *kubernetes.Clientset, crdClient *vckv1_client.Clientset) error {
+}
+func initializeDeployment(deployment *v1beta1.Deployment, initializer *Initializer) error {
 	if deployment.ObjectMeta.GetInitializers() != nil {
 		pendingInitializers := deployment.ObjectMeta.GetInitializers().Pending
 
@@ -159,7 +137,7 @@ func initializeDeployment(deployment *v1beta1.Deployment, clientset *kubernetes.
 				_, ok := a[annotation]
 				if !ok {
 					log.Printf("Required '%s' annotation missing; skipping vck initializing", annotation)
-					_, err := clientset.AppsV1beta1().Deployments(deployment.Namespace).Update(initializedDeployment)
+					_, err := initializer.ClientSet.AppsV1beta1().Deployments(deployment.Namespace).Update(initializedDeployment)
 					if err != nil {
 						return err
 					}
@@ -171,23 +149,26 @@ func initializeDeployment(deployment *v1beta1.Deployment, clientset *kubernetes.
 				if err != nil {
 					return err
 				}
-				fmt.Println("Unmarshal:", info.MountPath)
-				vckVM, err := crdClient.VckV1().VolumeManagers(deployment.GetNamespace()).Get(info.Name, metav1.GetOptions{})
+				fmt.Println("Unmarshal:", info.Name)
+				vckVM, err := initializer.CRDClient.VckV1().VolumeManagers(deployment.GetNamespace()).Get(info.Name, metav1.GetOptions{})
 				if err != nil {
 					return err
 				}
-				volumeVCK, affinityVCK, err := addVolumesAffinity(vckVM, info)
+				volumeVCK, affinityVCK, err := getVolumesAffinity(vckVM, info)
 				if err != nil {
 					return err
 				}
-				if info.Containers == nil {
+				if len(info.Containers) == 0 {
 					for _, container := range deployment.Spec.Template.Spec.Containers {
-						info.Containers = append(info.Containers, container.Name)
+						tempContainer := containers{
+							Name:      container.Name,
+							MountPath: "/var/datasets",
+						}
+						info.Containers = append(info.Containers, tempContainer)
 					}
 				}
-
 				for _, container := range info.Containers {
-					volumeMount, containerID, err := addVolumeMount(deployment, vckVM, container, info.MountPath)
+					volumeMount, containerID, err := addVolumeMount(deployment, vckVM.Name, container)
 					if err != nil {
 						return err
 					}
@@ -212,7 +193,7 @@ func initializeDeployment(deployment *v1beta1.Deployment, clientset *kubernetes.
 				return err
 			}
 
-			_, err = clientset.AppsV1beta1().Deployments(deployment.Namespace).Patch(deployment.Name, types.StrategicMergePatchType, patchBytes)
+			_, err = initializer.ClientSet.AppsV1beta1().Deployments(deployment.Namespace).Patch(deployment.Name, types.StrategicMergePatchType, patchBytes)
 			if err != nil {
 				return err
 			}
@@ -221,11 +202,24 @@ func initializeDeployment(deployment *v1beta1.Deployment, clientset *kubernetes.
 	return nil
 }
 
-func addVolumesAffinity(vckVM *vckv1.VolumeManager, info *data) (*corev1.Volume, *corev1.Affinity, error) {
+func getVolumesAffinity(vckVM *vckv1.VolumeManager, info *data) (*corev1.Volume, *corev1.Affinity, error) {
+	if len(info.ID) == 0 {
+		item := vckVM.Status.Volumes[0]
+		volumeVCK := corev1.Volume{
+			Name: vckVM.Name,
+			VolumeSource: corev1.VolumeSource{
+				HostPath: item.VolumeSource.HostPath,
+			},
+		}
+		affinityVCK := corev1.Affinity{
+			NodeAffinity: &item.NodeAffinity,
+		}
+		return &volumeVCK, &affinityVCK, nil
+	}
 	for _, item := range vckVM.Status.Volumes {
 		if info.ID == item.ID {
 			volumeVCK := corev1.Volume{
-				Name: "dataset-claim",
+				Name: vckVM.Name,
 				VolumeSource: corev1.VolumeSource{
 					HostPath: item.VolumeSource.HostPath,
 				},
@@ -240,14 +234,17 @@ func addVolumesAffinity(vckVM *vckv1.VolumeManager, info *data) (*corev1.Volume,
 
 }
 
-func addVolumeMount(deployment *v1beta1.Deployment, vckVM *vckv1.VolumeManager, container string, mountPath string) (*corev1.VolumeMount, int, error) {
+func addVolumeMount(deployment *v1beta1.Deployment, name string, container containers) (*corev1.VolumeMount, int, error) {
 	containerID := -1
+	if len(container.MountPath) == 0 {
+		container.MountPath = "/var/datasets"
+	}
 	for id, item := range deployment.Spec.Template.Spec.Containers {
-		if container == item.Name {
+		if container.Name == item.Name {
 			containerID = id
 			volumeMount := corev1.VolumeMount{
-				MountPath: mountPath,
-				Name:      "dataset-claim",
+				MountPath: container.MountPath,
+				Name:      name,
 			}
 			return &volumeMount, containerID, nil
 		}

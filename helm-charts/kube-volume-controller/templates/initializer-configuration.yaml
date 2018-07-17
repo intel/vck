@@ -1,7 +1,7 @@
 apiVersion: admissionregistration.k8s.io/v1alpha1
 kind: InitializerConfiguration
 metadata:
-  name: envvckoy
+  name: vck
 initializers:
   - name: vck.initializer.kubernetes.io
     rules:

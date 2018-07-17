@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+
 	"github.com/IntelAI/vck/pkg/resource/reify"
 
 	apiv1 "k8s.io/api/core/v1"
@@ -13,6 +14,7 @@ import (
 	"github.com/IntelAI/vck/pkg/controller"
 	"github.com/IntelAI/vck/pkg/handlers"
 	"github.com/IntelAI/vck/pkg/hooks"
+	initializer "github.com/IntelAI/vck/pkg/initializer"
 	"github.com/IntelAI/vck/pkg/resource"
 	"github.com/IntelAI/vck/pkg/util"
 	corev1 "k8s.io/api/core/v1"
@@ -110,6 +112,11 @@ func main() {
 
 	// Start a controller for instances of our custom resource.
 	controller := controller.New(hooks, crdClient)
+
+	// Start initializer for vck
+	initializer := initializer.New(k8sClientset, crdClient)
+	go initializer.RunIntializer()
+
 	go controller.Run(ctx, *namespace)
 
 	<-ctx.Done()

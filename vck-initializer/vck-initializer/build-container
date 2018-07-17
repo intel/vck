@@ -1,5 +1,0 @@
-#!/bin/bash
-./build
-docker build -t gcr.io/constant-cubist-173123/vck-initializer:0.0.1 .
-gcloud docker -- push gcr.io/constant-cubist-173123/vck-initializer:0.0.1
-rm vck-initializer
