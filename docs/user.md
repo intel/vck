@@ -169,8 +169,11 @@ command below.
 $ kubectl create -f resources/deployments/vck-deployment.yaml
 deployment "vck-example-deployment" created
 ```
-## Create a Deployment using the  VCK initializer
+
+## Create a Deployment using the VCK initializer
+
 The VCK Initializer will ensure the  volume manager data is only injected into Deployments with an `initializer.kubernetes.io/vck` annotation set to a non-empty value.
+
 ```yaml
 
 "initializer.kubernetes.io/vck": '{
@@ -194,7 +197,9 @@ The VCK Initializer will ensure the  volume manager data is only injected into D
 | container.mount-path | no       | Path for the VCK to mount the volume           | /var/dataset |
 
 The id key is optional it picks the first volume by default, similarly the container object is optional it picks all containers by default and appends it to default mount path "/var/datasets". If the container object just contains the name,vck is appended to default mount path  "/var/datasets".
+
 * Annotation with only name
+
 ```yaml
 
 "initializer.kubernetes.io/vck": '{
@@ -203,6 +208,7 @@ The id key is optional it picks the first volume by default, similarly the conta
 ```
 
 * Annotation with no containers
+
 ```yaml
 "initializer.kubernetes.io/vck": '{
         "name": "<insert-your-vck-name>",
@@ -211,6 +217,7 @@ The id key is optional it picks the first volume by default, similarly the conta
 ```
 
 * Annotation with no container.mount-path
+
 ```yaml
 "initializer.kubernetes.io/vck": '{
         "name": "<insert-your-vck-name>",
@@ -223,11 +230,8 @@ The id key is optional it picks the first volume by default, similarly the conta
       }'
 ```
 
-
-
-
-
 ## Types of Sources
+
 The following source types are currently implemented:
 * S3: Files present in an S3 bucket and provided as `volumeConfig.sourceURL` in the CR are downloaded/synced onto the number of nodes equal to `volumeConfig.replicas` and made available as a hostPath volume. Node affinity details are provided through `volume.nodeAffinity` to guide the scheduling of pods.
 * NFS: The path exported by an NFS server is mounted and made available as a PVC.
