@@ -170,7 +170,7 @@ $ kubectl create -f resources/deployments/vck-deployment.yaml
 deployment "vck-example-deployment" created
 ```
 
-## Create a Deployment using the VCK initializer
+## Create a Deployment using the VCK Initializer
 
 The VCK Initializer will ensure the  volume manager data is only injected into Deployments with an `initializer.kubernetes.io/vck` annotation set to a non-empty value.
 
