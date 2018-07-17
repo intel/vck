@@ -21,6 +21,7 @@ package main
 import (
 	"context"
 	"flag"
+
 	"github.com/IntelAI/vck/pkg/resource/reify"
 
 	apiv1 "k8s.io/api/core/v1"

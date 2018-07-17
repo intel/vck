@@ -188,8 +188,7 @@ A brief description of each source type is provided below.
 | Type         | Fields | Required                         |  Description                                          | Supported Access Modes | Field(s) provided in CR status |
 |:-------------|:----------------------------------------|:----|:--------------------------------------------------|:-----------------------|:-------------------------------|
 | `S3`         | `volumeConfig.options["sourceURL"]`     | Yes | The s3 url to download the data from. End the sourceURL with a `/` to recursively copy | `ReadWriteOnce`        | `volumeSource`                 |
-|              | `volumeConfig.options["endpointURL"]`   | Yes | No | The s3 compatible service endpoint (i.e. minio url)          |                        | |
-|              | `volumeConfig.endpointURL`              | No | The s3 compatible service endpoint (i.e. minio url)          |                        | |
+|              | `volumeConfig.options["endpointURL"]`   | No | The s3 compatible service endpoint (i.e. minio url)          |                        | |
 |              | `volumeConfig.replicas`                 | Yes | The number of nodes this data should be replicated on. |                        | `nodeAffinity`                 |
 |              | `volumeConfig.options["dataPath"]`                 | No | The  data path on the node where s3 data would be downloaded |                        | `volumeSource`                 |
 |              | `volumeConfig.options["awsCredentialsSecretName]` | Yes | The name of the secret with AWS credentials to access the s3 data              |                        | |

@@ -1,0 +1,22 @@
+{{- if .Values.webhook.install -}}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: validation-webhook
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: validation-webhook
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: validation-webhook
+    spec:
+      containers:
+      - name: validation-webhook
+        image: {{ .Values.registry }}{{ .Values.org }}/{{ .Values.repo }}:{{ .Values.tag }}
+        imagePullPolicy: IfNotPresent
+        command:
+          - "/validation-webhook"
+{{end}}

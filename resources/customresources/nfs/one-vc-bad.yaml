@@ -1,0 +1,18 @@
+apiVersion: vck.intelai.org/v1
+kind: VolumeManager
+metadata:
+  name: vck-example2
+  namespace: cody
+spec:
+  volumeConfigs:
+    - id: "vol1"
+      replicas: 1
+      sourceType: "NFS"
+      accessMode: "ReadWriteMany"
+      capacity: 5Gi
+      labels:
+        key1: val1
+        key2: val2
+      options:
+        server: <insert-server-ip-here>
+        path: <insert-exported-path-here>

@@ -7,3 +7,9 @@ pkg/apis/vck/v1alpha1/zz_generated.deepcopy.go
 pkg/client
 vendor
 vendor.orig
+.DS_Store
+pkg/webhook/.vscode/launch.json
+pkg/webhook/webhook
+pkg/webhook/debug.test
+pkg/webhook/debug
+pkg/apis/vck/v1/zz_generated.deepcopy.go

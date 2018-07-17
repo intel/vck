@@ -25,7 +25,9 @@ jobs:
           name: Build container
           command: |
             go install -gcflags "-N -l" github.com/IntelAI/vck
+            go install -gcflags "-N -l" github.com/IntelAI/vck/pkg/validation-webhook
             cp /go/bin/vck ./vck
+            cp /go/bin/validation-webhook ./validation-webhook
             docker login -u $DOCKER_USER -p $DOCKER_PASS
             make push-image
   e2e:

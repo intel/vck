@@ -55,27 +55,7 @@ func (h *nfsHandler) GetSourceType() vckv1alpha1.DataSourceType {
 	return h.sourceType
 }
 
-func (h *nfsHandler) OnAdd(ns string, vc vckv1alpha1.VolumeConfig, controllerRef metav1.OwnerReference) vckv1alpha1.Volume {
-	if len(vc.Labels) == 0 {
-		return vckv1alpha1.Volume{
-			ID:      vc.ID,
-			Message: fmt.Sprintf("labels cannot be empty"),
-		}
-	}
-
-	if _, ok := vc.Options["server"]; !ok {
-		return vckv1alpha1.Volume{
-			ID:      vc.ID,
-			Message: fmt.Sprintf("server has to be set in options"),
-		}
-	}
-
-	if _, ok := vc.Options["path"]; !ok {
-		return vckv1alpha1.Volume{
-			ID:      vc.ID,
-			Message: fmt.Sprintf("path has to be set in options"),
-		}
-	}
+func (h *nfsHandler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1.OwnerReference) vckv1.Volume {
 
 	if vc.AccessMode != "ReadWriteMany" && vc.AccessMode != "ReadOnlyMany" {
 		return vckv1alpha1.Volume{
