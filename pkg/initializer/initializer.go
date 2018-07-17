@@ -12,6 +12,7 @@ import (
 
 	vckv1 "github.com/IntelAI/vck/pkg/apis/vck/v1"
 	vckv1_client "github.com/IntelAI/vck/pkg/client/clientset/versioned"
+	state "github.com/IntelAI/vck/pkg/states"
 	"k8s.io/api/apps/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,15 +26,8 @@ import (
 )
 
 const (
-	defaultAnnotation        = "initializer.kubernetes.io/vck"
-	defaultInitializerName   = "vck.initializer.kubernetes.io"
-	defaultRequireAnnotation = true
-)
-
-var (
-	annotation        string
-	initializerName   string
-	requireAnnotation bool
+	annotation      = "initializer.kubernetes.io/vck"
+	initializerName = "vck.initializer.kubernetes.io"
 )
 
 type data struct {
@@ -132,52 +126,53 @@ func initializeDeployment(deployment *v1beta1.Deployment, initializer *Initializ
 			} else {
 				initializedDeployment.ObjectMeta.Initializers.Pending = append(pendingInitializers[:0], pendingInitializers[1:]...)
 			}
-			if requireAnnotation {
-				a := deployment.ObjectMeta.GetAnnotations()
-				_, ok := a[annotation]
-				if !ok {
-					log.Printf("Required '%s' annotation missing; skipping vck initializing", annotation)
-					_, err := initializer.ClientSet.AppsV1beta1().Deployments(deployment.Namespace).Update(initializedDeployment)
-					if err != nil {
-						return err
-					}
-					return nil
-				}
-				//log.Print("annotation: ", a[annotation])
-				info := &data{}
-				err := json.Unmarshal([]byte(a[annotation]), info)
+			a := deployment.ObjectMeta.GetAnnotations()
+			_, ok := a[annotation]
+			if !ok {
+				log.Printf("Required '%s' annotation missing; skipping vck initializing", annotation)
+				_, err := initializer.ClientSet.AppsV1beta1().Deployments(deployment.Namespace).Update(initializedDeployment)
 				if err != nil {
 					return err
 				}
-				fmt.Println("Unmarshal:", info.Name)
-				vckVM, err := initializer.CRDClient.VckV1().VolumeManagers(deployment.GetNamespace()).Get(info.Name, metav1.GetOptions{})
-				if err != nil {
-					return err
-				}
-				volumeVCK, affinityVCK, err := getVolumesAffinity(vckVM, info)
-				if err != nil {
-					return err
-				}
-				if len(info.Containers) == 0 {
-					for _, container := range deployment.Spec.Template.Spec.Containers {
-						tempContainer := containers{
-							Name:      container.Name,
-							MountPath: "/var/datasets",
-						}
-						info.Containers = append(info.Containers, tempContainer)
-					}
-				}
-				for _, container := range info.Containers {
-					volumeMount, containerID, err := addVolumeMount(deployment, vckVM.Name, container)
-					if err != nil {
-						return err
-					}
-					initializedDeployment.Spec.Template.Spec.Containers[containerID].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[containerID].VolumeMounts, *volumeMount)
-				}
-				initializedDeployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, *volumeVCK)
-				initializedDeployment.Spec.Template.Spec.Affinity = affinityVCK
-
+				return nil
 			}
+			//log.Print("annotation: ", a[annotation])
+			info := &data{}
+			err := json.Unmarshal([]byte(a[annotation]), info)
+			if err != nil {
+				return err
+			}
+			fmt.Println("Unmarshal:", info.Name)
+			vckVM, err := initializer.CRDClient.VckV1().VolumeManagers(deployment.GetNamespace()).Get(info.Name, metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+			if vckVM.Status.State == state.Running && len(vckVM.Status.Volumes) > 0 {
+				return errors.New("given vck is not in usable state")
+			}
+			volumeVCK, affinityVCK, err := getVolumesAffinity(vckVM, info)
+			if err != nil {
+				return err
+			}
+			if len(info.Containers) == 0 {
+				for _, container := range deployment.Spec.Template.Spec.Containers {
+					tempContainer := containers{
+						Name:      container.Name,
+						MountPath: "/var/datasets",
+					}
+					info.Containers = append(info.Containers, tempContainer)
+				}
+			}
+			for _, container := range info.Containers {
+				volumeMount, containerID, err := addVolumeMount(deployment, vckVM.Name, container)
+				if err != nil {
+					return err
+				}
+				initializedDeployment.Spec.Template.Spec.Containers[containerID].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[containerID].VolumeMounts, *volumeMount)
+			}
+			initializedDeployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, *volumeVCK)
+			initializedDeployment.Spec.Template.Spec.Affinity = affinityVCK
+
 			oldData, err := json.Marshal(deployment)
 			if err != nil {
 				return err
