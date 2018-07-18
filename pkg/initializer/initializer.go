@@ -147,10 +147,10 @@ func initializeDeployment(deployment *v1beta1.Deployment, initializer *Initializ
 			if err != nil {
 				return err
 			}
-			if vckVM.Status.State == state.Running && len(vckVM.Status.Volumes) > 0 {
-				return errors.New("given vck is not in usable state")
+			if vckVM.Status.State != state.Running && len(vckVM.Status.Volumes) == 0 {
+				return errors.New("given vck is not in usable state " + string(vckVM.Status.State))
 			}
-			volumeVCK, affinityVCK, err := getVolumesAffinity(vckVM, info)
+			volumeVCK, affinityVCK, mountName, err := getVolumesAffinity(vckVM, info)
 			if err != nil {
 				return err
 			}
@@ -164,7 +164,7 @@ func initializeDeployment(deployment *v1beta1.Deployment, initializer *Initializ
 				}
 			}
 			for _, container := range info.Containers {
-				volumeMount, containerID, err := addVolumeMount(deployment, vckVM.Name, container)
+				volumeMount, containerID, err := addVolumeMount(deployment, mountName, container)
 				if err != nil {
 					return err
 				}
@@ -197,7 +197,7 @@ func initializeDeployment(deployment *v1beta1.Deployment, initializer *Initializ
 	return nil
 }
 
-func getVolumesAffinity(vckVM *vckv1.VolumeManager, info *data) (*corev1.Volume, *corev1.Affinity, error) {
+func getVolumesAffinity(vckVM *vckv1.VolumeManager, info *data) (*corev1.Volume, *corev1.Affinity, string, error) {
 	if len(info.ID) == 0 {
 		item := vckVM.Status.Volumes[0]
 		volumeVCK := corev1.Volume{
@@ -209,12 +209,12 @@ func getVolumesAffinity(vckVM *vckv1.VolumeManager, info *data) (*corev1.Volume,
 		affinityVCK := corev1.Affinity{
 			NodeAffinity: &item.NodeAffinity,
 		}
-		return &volumeVCK, &affinityVCK, nil
+		return &volumeVCK, &affinityVCK, (vckVM.Name + vckVM.Status.Volumes[0].ID), nil
 	}
-	for _, item := range vckVM.Status.Volumes {
+	for i, item := range vckVM.Status.Volumes {
 		if info.ID == item.ID {
 			volumeVCK := corev1.Volume{
-				Name: vckVM.Name,
+				Name: vckVM.Name + vckVM.Status.Volumes[i].ID,
 				VolumeSource: corev1.VolumeSource{
 					HostPath: item.VolumeSource.HostPath,
 				},
@@ -222,10 +222,10 @@ func getVolumesAffinity(vckVM *vckv1.VolumeManager, info *data) (*corev1.Volume,
 			affinityVCK := corev1.Affinity{
 				NodeAffinity: &item.NodeAffinity,
 			}
-			return &volumeVCK, &affinityVCK, nil
+			return &volumeVCK, &affinityVCK, (vckVM.Name + vckVM.Status.Volumes[i].ID), nil
 		}
 	}
-	return nil, nil, errors.New("given id for vck does not exists")
+	return nil, nil, "", errors.New("given id for vck does not exists")
 
 }
 

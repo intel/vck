@@ -203,7 +203,7 @@ The id key is optional it picks the first volume by default, similarly the conta
 ```yaml
 
 "initializer.kubernetes.io/vck": '{
-        "name": "<insert-your-vck-name>",
+        "name": "<insert-your-vck-name>"
       }'
 ```
 
@@ -212,7 +212,7 @@ The id key is optional it picks the first volume by default, similarly the conta
 ```yaml
 "initializer.kubernetes.io/vck": '{
         "name": "<insert-your-vck-name>",
-        "id": "<insert-your-vck-id>",
+        "id": "<insert-your-vck-id>"
       }'
 ```
 
@@ -224,7 +224,7 @@ The id key is optional it picks the first volume by default, similarly the conta
         "id": "<insert-your-vck-id>",
         "containers": [
           {
-            "name": "<insert-your contianer-name>",
+            "name": "<insert-your contianer-name>"
           }
         ],
       }'
