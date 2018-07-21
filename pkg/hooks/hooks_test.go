@@ -19,10 +19,10 @@
 package hooks
 
 import (
-	vckv1alpha1 "github.com/IntelAI/vck/pkg/apis/vck/v1alpha1"
-	vckv1alpha1_fake "github.com/IntelAI/vck/pkg/client/clientset/versioned/fake"
-	"github.com/IntelAI/vck/pkg/handlers"
-	"github.com/IntelAI/vck/pkg/states"
+	vckv1alpha1 "github.com/ppkube/vck/pkg/apis/vck/v1alpha1"
+	vckv1alpha1_fake "github.com/ppkube/vck/pkg/client/clientset/versioned/fake"
+	"github.com/ppkube/vck/pkg/handlers"
+	"github.com/ppkube/vck/pkg/states"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"

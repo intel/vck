@@ -23,7 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"encoding/json"
-	"github.com/IntelAI/vck/pkg/resource/reify"
+	"github.com/ppkube/vck/pkg/resource/reify"
 	"github.com/golang/glog"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"

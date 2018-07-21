@@ -33,8 +33,8 @@ import (
 	"github.com/golang/glog"
 
 	"bytes"
-	vckv1alpha1 "github.com/IntelAI/vck/pkg/apis/vck/v1alpha1"
-	"github.com/IntelAI/vck/pkg/resource"
+	vckv1alpha1 "github.com/ppkube/vck/pkg/apis/vck/v1alpha1"
+	"github.com/ppkube/vck/pkg/resource"
 )
 
 const (

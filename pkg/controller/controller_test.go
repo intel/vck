@@ -22,8 +22,8 @@ import (
 	"context"
 	"testing"
 
-	vckv1alpha1 "github.com/IntelAI/vck/pkg/apis/vck/v1alpha1"
-	"github.com/IntelAI/vck/pkg/client/clientset/versioned/fake"
+	vckv1alpha1 "github.com/ppkube/vck/pkg/apis/vck/v1alpha1"
+	"github.com/ppkube/vck/pkg/client/clientset/versioned/fake"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
