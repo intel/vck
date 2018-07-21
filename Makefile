@@ -22,6 +22,7 @@ all: test
 
 VERSION := $(shell git describe --tags --always --dirty)
 
+DOCKER_REG=tsz.io/volumecontroller
 IMAGE_NAME=kube-volume-controller
 
 docker:
@@ -40,7 +41,7 @@ prereq:
 dep-ensure:
 	dep ensure
 
-build: prereq dep-ensure code-generation lint test
+build: prereq code-generation lint test
 	go build -gcflags "-N -l" github.com/ppkube/vck
 
 lint:
@@ -63,11 +64,11 @@ test:
 test-e2e:
 	go test -v ./test/e2e/...
 
-code-generation:
+code-generation: dep-ensure
 	./hack/update-codegen.sh
 
 push-image: docker
 	@ echo "tagging container"
-	docker tag $(IMAGE_NAME):$(VERSION) volumecontroller/$(IMAGE_NAME):$(VERSION)
+	docker tag $(IMAGE_NAME):$(VERSION) $(DOCKER_REG)/$(IMAGE_NAME):$(VERSION)
 	@ echo "pushing container to gcr.io"
-	docker push volumecontroller/$(IMAGE_NAME):$(VERSION)
+	docker push $(DOCKER_REG)/$(IMAGE_NAME):$(VERSION)
