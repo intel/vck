@@ -1,6 +1,19 @@
 # Volume Controller for Kubernetes (VCK)
 
 [![CircleCI](https://circleci.com/gh/IntelAI/vck.svg?style=svg)](https://circleci.com/gh/IntelAI/vck)
+
+## NOTES
+
+This project is forked from IntelAI/vck and slightly adapted so that it can be easily used in other packages.
+
+After forking, the following actions were performed.
+
+Replace package names:
+
+```bash
+find . -name "*.go" | xargs -n1 sed -i 's\IntelAI/vck\ppkube/vck\g'
+```
+
 ## Overview
 
 This project provides basic volume and data management in Kubernetes v1.9+

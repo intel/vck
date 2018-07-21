@@ -26,7 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"github.com/IntelAI/vck/pkg/resource"
+	"github.com/ppkube/vck/pkg/resource"
 )
 
 func getNodeNames(nodeList []metav1.Object) []string {

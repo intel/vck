@@ -28,8 +28,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/client-go/kubernetes"
 
-	vckv1alpha1 "github.com/IntelAI/vck/pkg/apis/vck/v1alpha1"
-	"github.com/IntelAI/vck/pkg/resource"
+	vckv1alpha1 "github.com/ppkube/vck/pkg/apis/vck/v1alpha1"
+	"github.com/ppkube/vck/pkg/resource"
 )
 
 const (
