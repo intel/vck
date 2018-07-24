@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	vckv1 "github.com/IntelAI/vck/pkg/apis/vck/v1"
+	vckv1alpha1 "github.com/IntelAI/vck/pkg/apis/vck/v1alpha1"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,13 +16,13 @@ type testClient struct {
 func TestHandler(t *testing.T) {
 
 	failTestCases := map[string]struct {
-		volumeManager vckv1.VolumeManager
+		volumeManager vckv1alpha1.VolumeManager
 		failedMessage string
 	}{
 		"s3 tests missing test": {
-			volumeManager: vckv1.VolumeManager{
-				Spec: vckv1.VolumeManagerSpec{
-					VolumeConfigs: []vckv1.VolumeConfig{
+			volumeManager: vckv1alpha1.VolumeManager{
+				Spec: vckv1alpha1.VolumeManagerSpec{
+					VolumeConfigs: []vckv1alpha1.VolumeConfig{
 						{
 							ID:         "vol1",
 							SourceType: "S3",
@@ -37,9 +37,9 @@ func TestHandler(t *testing.T) {
 				"to be set in options. sourceURL has to be a valid URL.",
 		},
 		"s3 tests incorrect values test": {
-			volumeManager: vckv1.VolumeManager{
-				Spec: vckv1.VolumeManagerSpec{
-					VolumeConfigs: []vckv1.VolumeConfig{
+			volumeManager: vckv1alpha1.VolumeManager{
+				Spec: vckv1alpha1.VolumeManagerSpec{
+					VolumeConfigs: []vckv1alpha1.VolumeConfig{
 						{
 							ID:         "vol1",
 							Replicas:   0,
@@ -58,9 +58,9 @@ func TestHandler(t *testing.T) {
 				"than 1. sourceURL has to be a valid URL. endpointURL has to be a valid URL.",
 		},
 		"nfs tests": {
-			volumeManager: vckv1.VolumeManager{
-				Spec: vckv1.VolumeManagerSpec{
-					VolumeConfigs: []vckv1.VolumeConfig{
+			volumeManager: vckv1alpha1.VolumeManager{
+				Spec: vckv1alpha1.VolumeManagerSpec{
+					VolumeConfigs: []vckv1alpha1.VolumeConfig{
 						{
 							ID:         "vol1",
 							SourceType: "NFS",
@@ -72,9 +72,9 @@ func TestHandler(t *testing.T) {
 			failedMessage: "labels cannot be empty. server has to be set in options. path has to be set in options.",
 		},
 		"pachyderm tests": {
-			volumeManager: vckv1.VolumeManager{
-				Spec: vckv1.VolumeManagerSpec{
-					VolumeConfigs: []vckv1.VolumeConfig{
+			volumeManager: vckv1alpha1.VolumeManager{
+				Spec: vckv1alpha1.VolumeManagerSpec{
+					VolumeConfigs: []vckv1alpha1.VolumeConfig{
 						{
 							ID:         "vol1",
 							SourceType: "Pachyderm",
@@ -88,9 +88,9 @@ func TestHandler(t *testing.T) {
 				"be set in options. outputPath has to be set in options.",
 		},
 		"multiple id test": {
-			volumeManager: vckv1.VolumeManager{
-				Spec: vckv1.VolumeManagerSpec{
-					VolumeConfigs: []vckv1.VolumeConfig{
+			volumeManager: vckv1alpha1.VolumeManager{
+				Spec: vckv1alpha1.VolumeManagerSpec{
+					VolumeConfigs: []vckv1alpha1.VolumeConfig{
 						{
 							ID:         "vol1",
 							Replicas:   1,
@@ -127,12 +127,12 @@ func TestHandler(t *testing.T) {
 	}
 
 	successTestCases := map[string]struct {
-		volumeManager vckv1.VolumeManager
+		volumeManager vckv1alpha1.VolumeManager
 	}{
 		"s3 tests": {
-			volumeManager: vckv1.VolumeManager{
-				Spec: vckv1.VolumeManagerSpec{
-					VolumeConfigs: []vckv1.VolumeConfig{
+			volumeManager: vckv1alpha1.VolumeManager{
+				Spec: vckv1alpha1.VolumeManagerSpec{
+					VolumeConfigs: []vckv1alpha1.VolumeConfig{
 						{
 							ID:         "vol1",
 							Replicas:   3,
@@ -152,9 +152,9 @@ func TestHandler(t *testing.T) {
 			},
 		},
 		"nfs tests": {
-			volumeManager: vckv1.VolumeManager{
-				Spec: vckv1.VolumeManagerSpec{
-					VolumeConfigs: []vckv1.VolumeConfig{
+			volumeManager: vckv1alpha1.VolumeManager{
+				Spec: vckv1alpha1.VolumeManagerSpec{
+					VolumeConfigs: []vckv1alpha1.VolumeConfig{
 						{
 							ID:         "vol1",
 							Replicas:   1,
@@ -174,9 +174,9 @@ func TestHandler(t *testing.T) {
 			},
 		},
 		"pachyderm tests": {
-			volumeManager: vckv1.VolumeManager{
-				Spec: vckv1.VolumeManagerSpec{
-					VolumeConfigs: []vckv1.VolumeConfig{
+			volumeManager: vckv1alpha1.VolumeManager{
+				Spec: vckv1alpha1.VolumeManagerSpec{
+					VolumeConfigs: []vckv1alpha1.VolumeConfig{
 						{
 							ID:         "vol1",
 							Replicas:   1,
@@ -198,9 +198,9 @@ func TestHandler(t *testing.T) {
 			},
 		},
 		"multiple id test": {
-			volumeManager: vckv1.VolumeManager{
-				Spec: vckv1.VolumeManagerSpec{
-					VolumeConfigs: []vckv1.VolumeConfig{
+			volumeManager: vckv1alpha1.VolumeManager{
+				Spec: vckv1alpha1.VolumeManagerSpec{
+					VolumeConfigs: []vckv1alpha1.VolumeConfig{
 						{
 							ID:         "vol1",
 							Replicas:   1,

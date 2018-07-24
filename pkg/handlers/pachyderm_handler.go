@@ -57,7 +57,7 @@ func (h *pachydermHandler) GetSourceType() vckv1alpha1.DataSourceType {
 	return h.sourceType
 }
 
-func (h *pachydermHandler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1.OwnerReference) vckv1.Volume {
+func (h *pachydermHandler) OnAdd(ns string, vc vckv1alpha1.VolumeConfig, controllerRef metav1.OwnerReference) vckv1alpha1.Volume {
 	if vc.AccessMode != "ReadWriteOnce" {
 		return vckv1alpha1.Volume{
 			ID:      vc.ID,

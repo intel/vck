@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strings"
 
-	vckv1 "github.com/IntelAI/vck/pkg/apis/vck/v1"
+	vckv1alpha1 "github.com/IntelAI/vck/pkg/apis/vck/v1alpha1"
 	"github.com/golang/glog"
 	"k8s.io/api/admission/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,7 +34,7 @@ func admitVolumeManager(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	glog.V(2).Info("admitting volume manager")
 
 	raw := ar.Request.Object.Raw
-	vm := vckv1.VolumeManager{}
+	vm := vckv1alpha1.VolumeManager{}
 	deserializer := codecs.UniversalDeserializer()
 	if _, _, err := deserializer.Decode(raw, nil, &vm); err != nil {
 		glog.Error(err)
@@ -46,7 +46,7 @@ func admitVolumeManager(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	return reviewResponse
 }
 
-func validateNFS(vc vckv1.VolumeConfig) string {
+func validateNFS(vc vckv1alpha1.VolumeConfig) string {
 	errs := []string{}
 	if len(vc.Labels) == 0 {
 		errs = append(errs, "labels cannot be empty.")
@@ -67,7 +67,7 @@ func validateNFS(vc vckv1.VolumeConfig) string {
 	return strings.Join(errs, " ")
 }
 
-func validateS3(vc vckv1.VolumeConfig) string {
+func validateS3(vc vckv1alpha1.VolumeConfig) string {
 	errs := []string{}
 	if len(vc.Labels) == 0 {
 		errs = append(errs, "labels cannot be empty.")
@@ -98,7 +98,7 @@ func validateS3(vc vckv1.VolumeConfig) string {
 	return strings.Join(errs, " ")
 }
 
-func validatePachyderm(vc vckv1.VolumeConfig) string {
+func validatePachyderm(vc vckv1alpha1.VolumeConfig) string {
 	errs := []string{}
 	if len(vc.Labels) == 0 {
 		errs = append(errs, "labels cannot be empty.")
@@ -130,7 +130,7 @@ func validatePachyderm(vc vckv1.VolumeConfig) string {
 	return strings.Join(errs, " ")
 }
 
-func validateVolumeManager(vm vckv1.VolumeManager) *v1beta1.AdmissionResponse {
+func validateVolumeManager(vm vckv1alpha1.VolumeManager) *v1beta1.AdmissionResponse {
 	log.Println("Validating Volume Manager(s)...")
 	errs := []string{}
 	ids := make(map[string]bool)
@@ -217,9 +217,9 @@ func serveVolumeManager(w http.ResponseWriter, r *http.Request) {
 
 //Main starts server
 func main() {
-	scheme.AddKnownTypes(vckv1.SchemeGroupVersion,
-		&vckv1.VolumeManager{},
-		&vckv1.VolumeManagerList{},
+	scheme.AddKnownTypes(vckv1alpha1.SchemeGroupVersion,
+		&vckv1alpha1.VolumeManager{},
+		&vckv1alpha1.VolumeManagerList{},
 	)
 	log.Println("Starting Server...")
 	http.HandleFunc("/validation-webhook", serveVolumeManager)

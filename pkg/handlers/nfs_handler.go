@@ -55,7 +55,7 @@ func (h *nfsHandler) GetSourceType() vckv1alpha1.DataSourceType {
 	return h.sourceType
 }
 
-func (h *nfsHandler) OnAdd(ns string, vc vckv1.VolumeConfig, controllerRef metav1.OwnerReference) vckv1.Volume {
+func (h *nfsHandler) OnAdd(ns string, vc vckv1alpha1.VolumeConfig, controllerRef metav1.OwnerReference) vckv1alpha1.Volume {
 
 	if vc.AccessMode != "ReadWriteMany" && vc.AccessMode != "ReadOnlyMany" {
 		return vckv1alpha1.Volume{
