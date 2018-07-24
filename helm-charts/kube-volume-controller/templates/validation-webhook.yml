@@ -3,7 +3,7 @@ kind: ValidatingWebhookConfiguration
 metadata:
   name: validation-webhook-config
 webhooks:
-- name: validation-webhook.cody.intelai.org
+- name: validation-webhook.intelai.org
   rules:
   - apiGroups:
     - "vck.intelai.org"
