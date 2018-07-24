@@ -11,6 +11,7 @@ spec:
   template:
     metadata:
       labels:
+        role: webhook
         app: validation-webhook
     spec:
       containers:
