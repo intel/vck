@@ -22,7 +22,7 @@ spec:
         apiVersion:
           type: string
           enum:
-          - "vck.intelai.org/v1"
+          - "vck.intelai.org/v1alpha1"
         kind:
           enum:
           - "VolumeManager"
