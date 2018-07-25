@@ -139,7 +139,7 @@ func validatePachyderm(vc vckv1alpha1.VolumeConfig) string {
 }
 
 func validateVolumeManager(vm vckv1alpha1.VolumeManager) *v1beta1.AdmissionResponse {
-	log.Println("Validating Volume Manager(s)...")
+	log.Println("Validating Volume Manager...")
 	errs := []string{}
 	ids := make(map[string]bool)
 	for _, vc := range vm.Spec.VolumeConfigs {

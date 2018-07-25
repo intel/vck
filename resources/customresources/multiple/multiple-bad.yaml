@@ -1,7 +1,7 @@
 apiVersion: vck.intelai.org/v1alpha1
 kind: VolumeManager
 metadata:
-  name: vck-example2
+  name: vck-example
   namespace: cody
 spec:
   volumeConfigs:
@@ -16,3 +16,14 @@ spec:
       options:
         server: <insert-server-ip-here>
         path: <insert-exported-path-here>
+    - id: "vol1"
+      replicas: 0
+      sourceType: "S3"
+      sourceURL: "s3://neon-stockdatasets/cifar-100-python.tar.gz"
+      accessMode: "ReadWriteOnce"
+      capacity: 5Gi
+      labels:
+        key3: val3
+        key4: val4
+      options:
+        awsCredentialsSecretName: <insert-secret-name-for-aws-credentials>

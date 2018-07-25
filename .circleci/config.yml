@@ -53,6 +53,7 @@ jobs:
               --set clusterrole.install=true \
               --set storageclass.install=true \
               --set crd.install=true \
+              --set webhook.install=true \
               --set tag=$(git describe --tags --always --dirty) \
               --set log_level=4
             export S3_SERVER_IP=$(kubectl get svc ${S3_SVC_NAME} -o json | jq -r .spec.clusterIP)
