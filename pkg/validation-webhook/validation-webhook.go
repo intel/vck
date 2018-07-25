@@ -1,7 +1,9 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/json"
+	"flag"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -15,6 +17,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 )
+
+//Config struct
+type Config struct {
+	CertFile string
+	KeyFile  string
+}
 
 var scheme = runtime.NewScheme()
 
@@ -217,11 +225,30 @@ func serveVolumeManager(w http.ResponseWriter, r *http.Request) {
 
 //Main starts server
 func main() {
+	var config Config
+
+	flag.StringVar(&config.CertFile, "tls-cert-file", "/etc/webhook/certs/cert.pem", ""+
+		"File containing the default x509 Certificate for HTTPS. (CA cert, if any, concatenated "+
+		"after server cert).")
+
+	flag.StringVar(&config.KeyFile, "tls-private-key-file", "/etc/webhook/certs/key.pem", ""+
+		"File containing the default x509 private key matching --tls-cert-file.")
+
 	scheme.AddKnownTypes(vckv1alpha1.SchemeGroupVersion,
 		&vckv1alpha1.VolumeManager{},
 		&vckv1alpha1.VolumeManagerList{},
 	)
+
+	pair, err := tls.LoadX509KeyPair(config.CertFile, config.KeyFile)
+	if err != nil {
+		glog.Errorf("Failed to load key pair: %v", err)
+	}
+
 	log.Println("Starting Server...")
 	http.HandleFunc("/validation-webhook", serveVolumeManager)
-	log.Fatal(http.ListenAndServe(":443", nil))
+	server := &http.Server{
+		Addr:      ":443",
+		TLSConfig: &tls.Config{Certificates: []tls.Certificate{pair}},
+	}
+	log.Fatal(server.ListenAndServeTLS("", ""))
 }

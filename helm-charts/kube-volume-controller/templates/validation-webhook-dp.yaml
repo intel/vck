@@ -18,6 +18,17 @@ spec:
       - name: validation-webhook
         image: {{ .Values.registry }}{{ .Values.org }}/{{ .Values.repo }}:{{ .Values.tag }}
         imagePullPolicy: IfNotPresent
+        args:
+            - -tlsCertFile=/etc/webhook/certs/cert.pem
+            - -tlsKeyFile=/etc/webhook/certs/key.pem
         command:
           - "/validation-webhook"
+        volumeMounts:
+            - name: webhook-certs
+              mountPath: /etc/webhook/certs
+              readOnly: true
+      volumes:
+        - name: webhook-certs
+          secret:
+            secretName: validation-webhook-cert
 {{end}}
