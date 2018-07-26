@@ -137,41 +137,83 @@ func initializeDeployment(deployment *v1beta1.Deployment, initializer *Initializ
 				return nil
 			}
 			//log.Print("annotation: ", a[annotation])
-			info := &data{}
-			err := json.Unmarshal([]byte(a[annotation]), info)
+			infoArray := make([]data, 0)
+			nodeSelectorTermArr := make([]corev1.NodeSelectorTerm, 0)
+			err := json.Unmarshal([]byte(a[annotation]), &infoArray)
 			if err != nil {
 				return err
 			}
-			fmt.Println("Unmarshal:", info.Name)
-			vckVM, err := initializer.CRDClient.VckV1().VolumeManagers(deployment.GetNamespace()).Get(info.Name, metav1.GetOptions{})
-			if err != nil {
-				return err
-			}
-			if vckVM.Status.State != state.Running && len(vckVM.Status.Volumes) == 0 {
-				return errors.New("given vck is not in usable state " + string(vckVM.Status.State))
-			}
-			volumeVCK, affinityVCK, mountName, err := getVolumesAffinity(vckVM, info)
-			if err != nil {
-				return err
-			}
-			if len(info.Containers) == 0 {
-				for _, container := range deployment.Spec.Template.Spec.Containers {
-					tempContainer := containers{
-						Name:      container.Name,
-						MountPath: "/var/datasets",
-					}
-					info.Containers = append(info.Containers, tempContainer)
-				}
-			}
-			for _, container := range info.Containers {
-				volumeMount, containerID, err := addVolumeMount(deployment, mountName, container)
+			fmt.Println("Unmarshal:", infoArray[0].Name)
+			for _, info := range infoArray {
+
+				vckVM, err := initializer.CRDClient.VckV1().VolumeManagers(deployment.GetNamespace()).Get(info.Name, metav1.GetOptions{})
 				if err != nil {
 					return err
 				}
-				initializedDeployment.Spec.Template.Spec.Containers[containerID].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[containerID].VolumeMounts, *volumeMount)
+				if vckVM.Status.State != state.Running && len(vckVM.Status.Volumes) == 0 {
+					return errors.New("given vck is not in usable state " + string(vckVM.Status.State))
+				}
+				volumeVCK, nodeSelectorTerm, err := getVolumesAffinity(vckVM, &info)
+				if err != nil {
+					return err
+				}
+				if len(info.Containers) == 0 {
+					for _, container := range deployment.Spec.Template.Spec.Containers {
+						tempContainer := containers{
+							Name:      container.Name,
+							MountPath: "/var/datasets",
+						}
+						info.Containers = append(info.Containers, tempContainer)
+					}
+				}
+				for _, container := range info.Containers {
+					if info.ID == "" {
+						info.ID = vckVM.Status.Volumes[0].ID
+					}
+					volumeMount, containerID, err := addVolumeMount(deployment, info.Name+info.ID, container)
+					if err != nil {
+						return err
+					}
+
+					initializedDeployment.Spec.Template.Spec.Containers[containerID].VolumeMounts = append(initializedDeployment.Spec.Template.Spec.Containers[containerID].VolumeMounts, *volumeMount)
+				}
+				found := false
+				for _, item := range initializedDeployment.Spec.Template.Spec.Volumes {
+					if item.Name == volumeVCK.Name {
+						found = true
+						break
+					}
+				}
+				if !found {
+					initializedDeployment.Spec.Template.Spec.Volumes = append(initializedDeployment.Spec.Template.Spec.Volumes, *volumeVCK)
+				}
+				found = false
+				for _, item1 := range nodeSelectorTermArr {
+					for _, item2 := range *nodeSelectorTerm {
+						if item1.MatchExpressions[0].Key == item2.MatchExpressions[0].Key {
+							found = true
+							break
+						}
+					}
+					if found {
+						break
+					}
+				}
+				if !found {
+					nodeSelectorTermArr = append(nodeSelectorTermArr, *nodeSelectorTerm...)
+				}
+
 			}
-			initializedDeployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, *volumeVCK)
-			initializedDeployment.Spec.Template.Spec.Affinity = affinityVCK
+
+			vckAffinity := corev1.Affinity{
+				NodeAffinity: &corev1.NodeAffinity{
+					RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+						NodeSelectorTerms: nodeSelectorTermArr,
+					},
+				},
+			}
+
+			initializedDeployment.Spec.Template.Spec.Affinity = &vckAffinity
 
 			oldData, err := json.Marshal(deployment)
 			if err != nil {
@@ -192,40 +234,39 @@ func initializeDeployment(deployment *v1beta1.Deployment, initializer *Initializ
 			if err != nil {
 				return err
 			}
+
 		}
 	}
 	return nil
 }
 
-func getVolumesAffinity(vckVM *vckv1.VolumeManager, info *data) (*corev1.Volume, *corev1.Affinity, string, error) {
+func getVolumesAffinity(vckVM *vckv1.VolumeManager, info *data) (*corev1.Volume, *[]corev1.NodeSelectorTerm, error) {
 	if len(info.ID) == 0 {
 		item := vckVM.Status.Volumes[0]
 		volumeVCK := corev1.Volume{
-			Name: vckVM.Name,
+			Name: info.Name + vckVM.Status.Volumes[0].ID,
 			VolumeSource: corev1.VolumeSource{
 				HostPath: item.VolumeSource.HostPath,
 			},
 		}
-		affinityVCK := corev1.Affinity{
-			NodeAffinity: &item.NodeAffinity,
-		}
-		return &volumeVCK, &affinityVCK, (vckVM.Name + vckVM.Status.Volumes[0].ID), nil
+		nodeSelectorTerm := vckVM.Status.Volumes[0].NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms
+		log.Print("matchExpression: ", nodeSelectorTerm)
+		return &volumeVCK, &nodeSelectorTerm, nil
 	}
 	for i, item := range vckVM.Status.Volumes {
 		if info.ID == item.ID {
 			volumeVCK := corev1.Volume{
-				Name: vckVM.Name + vckVM.Status.Volumes[i].ID,
+				Name: info.Name + info.ID,
 				VolumeSource: corev1.VolumeSource{
 					HostPath: item.VolumeSource.HostPath,
 				},
 			}
-			affinityVCK := corev1.Affinity{
-				NodeAffinity: &item.NodeAffinity,
-			}
-			return &volumeVCK, &affinityVCK, (vckVM.Name + vckVM.Status.Volumes[i].ID), nil
+			nodeSelectorTerm := vckVM.Status.Volumes[i].NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms
+			log.Print("matchExpression: ", nodeSelectorTerm)
+			return &volumeVCK, &nodeSelectorTerm, nil
 		}
 	}
-	return nil, nil, "", errors.New("given id for vck does not exists")
+	return nil, nil, errors.New("given id for vck does not exists")
 
 }
 
