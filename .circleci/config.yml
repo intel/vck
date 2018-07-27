@@ -43,6 +43,8 @@ jobs:
             KUBE_CONFIG=${GKE_KUBECONFIG_KVCCI}
             echo "${KUBE_CONFIG}" | base64 --decode > "${HOME}/.kube/config"
             kubectl create ns "vck-${CIRCLE_BUILD_NUM}"
+            export CA_BUNDLE=$(kubectl get configmap -n kube-system extension-apiserver-authentication -o=jsonpath='{.data.client-ca-file}' | base64 | tr -d '\n')
+            sh ./resources/scripts/cert.sh
             kubectl create secret generic s3-creds \
               --from-literal=awsAccessKeyID=${MINIO_ACCESS_KEY_ID} \
               --from-literal=awsSecretAccessKey=${MINIO_SECRET_ACCESS_KEY} \
@@ -55,7 +57,8 @@ jobs:
               --set crd.install=true \
               --set webhook.install=true \
               --set tag=$(git describe --tags --always --dirty) \
-              --set log_level=4
+              --set log_level=4- \
+              --set caBundle=${CA_BUNDLE}
             export S3_SERVER_IP=$(kubectl get svc ${S3_SVC_NAME} -o json | jq -r .spec.clusterIP)
             export NFS_SERVER_IP=$(kubectl get svc ${NFS_SERVER_SVC_NAME} -o json | jq -r .spec.clusterIP)
             make dep-ensure
