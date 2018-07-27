@@ -33,7 +33,7 @@ func TestHandler(t *testing.T) {
 				},
 			},
 			failedMessage: "labels cannot be empty. replicas cannot be empty or less than 1. " +
-				"awsCredentialsSecretName has to be set in options. sourceURL has " +
+				"awsCredentialsSecretName key has to be set in options. sourceURL has " +
 				"to be set in options. sourceURL has to be a valid URL.",
 		},
 		"s3 tests incorrect values test": {

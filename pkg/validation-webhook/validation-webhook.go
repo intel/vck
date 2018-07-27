@@ -86,7 +86,7 @@ func validateS3(vc vckv1alpha1.VolumeConfig) string {
 	}
 
 	if _, ok := vc.Options["awsCredentialsSecretName"]; !ok {
-		errs = append(errs, "awsCredentialsSecretName has to be set in options.")
+		errs = append(errs, "awsCredentialsSecretName key has to be set in options.")
 	}
 
 	if _, ok := vc.Options["sourceURL"]; !ok {

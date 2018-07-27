@@ -44,7 +44,7 @@ jobs:
             echo "${KUBE_CONFIG}" | base64 --decode > "${HOME}/.kube/config"
             kubectl create ns "vck-${CIRCLE_BUILD_NUM}"
             export CA_BUNDLE=$(kubectl get configmap -n kube-system extension-apiserver-authentication -o=jsonpath='{.data.client-ca-file}' | base64 | tr -d '\n')
-            bash ./resources/scripts/cert.sh --namespace="vck-${CIRCLE_BUILD_NUM}"
+            bash ./resources/scripts/cert.sh --service validation-webhook-svc --namespace "vck-${CIRCLE_BUILD_NUM}" --secret validation-webhook-cert
             kubectl create secret generic s3-creds \
               --from-literal=awsAccessKeyID=${MINIO_ACCESS_KEY_ID} \
               --from-literal=awsSecretAccessKey=${MINIO_SECRET_ACCESS_KEY} \
