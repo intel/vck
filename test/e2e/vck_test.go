@@ -99,13 +99,14 @@ func TestVolumeManager(t *testing.T) {
 	crdClient, _ := makeClients(t)
 
 	testCases := []struct {
-		description   string
-		volumeConfigs []crv1alpha1.VolumeConfig
-		expSuccess    bool
-		expError      string
-		expHP         bool
-		expNA         bool
-		expPVC        bool
+		description      string
+		volumeConfigs    []crv1alpha1.VolumeConfig
+		expSuccess       bool
+		expError         string
+		expHP            bool
+		expNA            bool
+		expPVC           bool
+		expAdmissionFail bool
 	}{
 		// Positive test cases.
 		{
@@ -128,11 +129,12 @@ func TestVolumeManager(t *testing.T) {
 					},
 				},
 			},
-			expSuccess: true,
-			expError:   "",
-			expHP:      true,
-			expNA:      true,
-			expPVC:     false,
+			expSuccess:       true,
+			expError:         "",
+			expHP:            true,
+			expNA:            true,
+			expPVC:           false,
+			expAdmissionFail: false,
 		},
 		{
 			description: "single vc - S3 - with distributionStrategy - no error",
@@ -155,11 +157,12 @@ func TestVolumeManager(t *testing.T) {
 					},
 				},
 			},
-			expSuccess: true,
-			expError:   "",
-			expHP:      true,
-			expNA:      true,
-			expPVC:     false,
+			expSuccess:       true,
+			expError:         "",
+			expHP:            true,
+			expNA:            true,
+			expPVC:           false,
+			expAdmissionFail: false,
 		},
 		{
 			description: "single vc - NFS - no error",
@@ -179,11 +182,12 @@ func TestVolumeManager(t *testing.T) {
 					},
 				},
 			},
-			expSuccess: true,
-			expError:   "",
-			expHP:      false,
-			expNA:      false,
-			expPVC:     true,
+			expSuccess:       true,
+			expError:         "",
+			expHP:            false,
+			expNA:            false,
+			expPVC:           true,
+			expAdmissionFail: false,
 		},
 		{
 			description: "multiple vc - S3 and NFS - no error",
@@ -205,7 +209,7 @@ func TestVolumeManager(t *testing.T) {
 					},
 				},
 				{
-					ID:         "vol1",
+					ID:         "vol2",
 					SourceType: "NFS",
 					AccessMode: "ReadWriteMany",
 					Capacity:   ".5Gi",
@@ -219,11 +223,12 @@ func TestVolumeManager(t *testing.T) {
 					},
 				},
 			},
-			expSuccess: true,
-			expError:   "",
-			expHP:      true,
-			expNA:      true,
-			expPVC:     true,
+			expSuccess:       true,
+			expError:         "",
+			expHP:            true,
+			expNA:            true,
+			expPVC:           true,
+			expAdmissionFail: false,
 		},
 		{
 			description: "single vc - Pachyderm - non-recursive - no error",
@@ -246,11 +251,12 @@ func TestVolumeManager(t *testing.T) {
 					},
 				},
 			},
-			expSuccess: true,
-			expError:   "",
-			expHP:      true,
-			expNA:      true,
-			expPVC:     false,
+			expSuccess:       true,
+			expError:         "",
+			expHP:            true,
+			expNA:            true,
+			expPVC:           false,
+			expAdmissionFail: false,
 		},
 		{
 			description: "single vc - Pachyderm - recursive - no error",
@@ -273,11 +279,12 @@ func TestVolumeManager(t *testing.T) {
 					},
 				},
 			},
-			expSuccess: true,
-			expError:   "",
-			expHP:      true,
-			expNA:      true,
-			expPVC:     false,
+			expSuccess:       true,
+			expError:         "",
+			expHP:            true,
+			expNA:            true,
+			expPVC:           false,
+			expAdmissionFail: false,
 		},
 		// Negative test cases.
 		{
@@ -297,11 +304,12 @@ func TestVolumeManager(t *testing.T) {
 					},
 				},
 			},
-			expSuccess: false,
-			expError:   fmt.Sprintf("labels cannot be empty"),
-			expHP:      false,
-			expNA:      false,
-			expPVC:     false,
+			expSuccess:       false,
+			expError:         fmt.Sprintf("admission webhook \"validation-webhook.intelai.org\" denied the request: labels cannot be empty."),
+			expHP:            false,
+			expNA:            false,
+			expPVC:           false,
+			expAdmissionFail: true,
 		},
 		{
 			description: "single vc - S3 - no creds error",
@@ -322,11 +330,12 @@ func TestVolumeManager(t *testing.T) {
 					},
 				},
 			},
-			expSuccess: false,
-			expError:   fmt.Sprintf("awsCredentialsSecretName key has to be set in options"),
-			expHP:      false,
-			expNA:      false,
-			expPVC:     false,
+			expSuccess:       false,
+			expError:         fmt.Sprintf("admission webhook \"validation-webhook.intelai.org\" denied the request: awsCredentialsSecretName key has to be set in options."),
+			expHP:            false,
+			expNA:            false,
+			expPVC:           false,
+			expAdmissionFail: true,
 		},
 		{
 			description: "single vc - NFS - no label error",
@@ -343,11 +352,12 @@ func TestVolumeManager(t *testing.T) {
 					},
 				},
 			},
-			expSuccess: false,
-			expError:   fmt.Sprintf("labels cannot be empty"),
-			expHP:      false,
-			expNA:      false,
-			expPVC:     false,
+			expSuccess:       false,
+			expError:         fmt.Sprintf("admission webhook \"validation-webhook.intelai.org\" denied the request: labels cannot be empty."),
+			expHP:            false,
+			expNA:            false,
+			expPVC:           false,
+			expAdmissionFail: true,
 		},
 		{
 			description: "single vc - NFS - no server in options error",
@@ -366,11 +376,12 @@ func TestVolumeManager(t *testing.T) {
 					},
 				},
 			},
-			expSuccess: false,
-			expError:   fmt.Sprintf("server has to be set in options"),
-			expHP:      false,
-			expNA:      false,
-			expPVC:     false,
+			expSuccess:       false,
+			expError:         fmt.Sprintf("admission webhook \"validation-webhook.intelai.org\" denied the request: server has to be set in options."),
+			expHP:            false,
+			expNA:            false,
+			expPVC:           false,
+			expAdmissionFail: true,
 		},
 		{
 			description: "single vc - NFS - no path in options error",
@@ -389,11 +400,12 @@ func TestVolumeManager(t *testing.T) {
 					},
 				},
 			},
-			expSuccess: false,
-			expError:   fmt.Sprintf("path has to be set in options"),
-			expHP:      false,
-			expNA:      false,
-			expPVC:     false,
+			expSuccess:       false,
+			expError:         fmt.Sprintf("admission webhook \"validation-webhook.intelai.org\" denied the request: path has to be set in options."),
+			expHP:            false,
+			expNA:            false,
+			expPVC:           false,
+			expAdmissionFail: true,
 		},
 		{
 			description: "single vc - S3 - time out error due to bad url",
@@ -416,11 +428,12 @@ func TestVolumeManager(t *testing.T) {
 					},
 				},
 			},
-			expSuccess: false,
-			expError:   fmt.Sprintf("mc: <ERROR> Unable to validate source"),
-			expHP:      false,
-			expNA:      false,
-			expPVC:     false,
+			expSuccess:       false,
+			expError:         fmt.Sprintf("mc: <ERROR> Unable to validate source"),
+			expHP:            false,
+			expNA:            false,
+			expPVC:           false,
+			expAdmissionFail: false,
 		},
 		{
 			description: "single vc - S3 - timeout error due to bad endpoint",
@@ -443,11 +456,12 @@ func TestVolumeManager(t *testing.T) {
 					},
 				},
 			},
-			expSuccess: false,
-			expError:   fmt.Sprintf("mc: <ERROR> Unable to validate source"),
-			expHP:      false,
-			expNA:      false,
-			expPVC:     false,
+			expSuccess:       false,
+			expError:         fmt.Sprintf("admission webhook \"validation-webhook.intelai.org\" denied the request: endpointURL has to be a valid URL."),
+			expHP:            false,
+			expNA:            false,
+			expPVC:           false,
+			expAdmissionFail: true,
 		},
 		{
 			description: "multiple vc - S3 and NFS - S3 failed due to no creds error",
@@ -468,7 +482,7 @@ func TestVolumeManager(t *testing.T) {
 					},
 				},
 				{
-					ID:         "vol1",
+					ID:         "vol2",
 					SourceType: "NFS",
 					AccessMode: "ReadWriteMany",
 					Capacity:   ".5Gi",
@@ -482,11 +496,12 @@ func TestVolumeManager(t *testing.T) {
 					},
 				},
 			},
-			expSuccess: false,
-			expError:   fmt.Sprintf("awsCredentialsSecretName key has to be set in options"),
-			expHP:      false,
-			expNA:      false,
-			expPVC:     false,
+			expSuccess:       false,
+			expError:         fmt.Sprintf("admission webhook \"validation-webhook.intelai.org\" denied the request: awsCredentialsSecretName key has to be set in options."),
+			expHP:            false,
+			expNA:            false,
+			expPVC:           false,
+			expAdmissionFail: true,
 		},
 		{
 			description: "single vc - Pachyderm - ",
@@ -510,11 +525,53 @@ func TestVolumeManager(t *testing.T) {
 					},
 				},
 			},
-			expSuccess: true,
-			expError:   "",
-			expHP:      true,
-			expNA:      true,
-			expPVC:     false,
+			expSuccess:       true,
+			expError:         "",
+			expHP:            true,
+			expNA:            true,
+			expPVC:           false,
+			expAdmissionFail: false,
+		},
+		{
+			description: "multiple vc - S3 and NFS - S3 failed due to same id",
+			volumeConfigs: []crv1alpha1.VolumeConfig{
+				{
+					ID:         "vol1",
+					Replicas:   1,
+					SourceType: "S3",
+					AccessMode: "ReadWriteOnce",
+					Capacity:   "5Gi",
+					Labels: map[string]string{
+						"key1": "val1",
+						"key2": "val2",
+					},
+					Options: map[string]string{
+						"awsCredentialsSecretName": "s3-creds",
+						"sourceURL":                "s3://e2e-test/cifar-100-python.tar.gz",
+						"endpointURL":              fmt.Sprintf("http://%s:9000", *s3ServerIP),
+					},
+				},
+				{
+					ID:         "vol1",
+					SourceType: "NFS",
+					AccessMode: "ReadWriteMany",
+					Capacity:   ".5Gi",
+					Labels: map[string]string{
+						"key3": "val3",
+						"key4": "val4",
+					},
+					Options: map[string]string{
+						"server": *nfsServerIP,
+						"path":   "/",
+					},
+				},
+			},
+			expSuccess:       false,
+			expError:         fmt.Sprintf("admission webhook \"validation-webhook.intelai.org\" denied the request: Cannot have duplicate id: vol1."),
+			expHP:            false,
+			expNA:            false,
+			expPVC:           false,
+			expAdmissionFail: true,
 		},
 	}
 
@@ -522,76 +579,84 @@ func TestVolumeManager(t *testing.T) {
 		fmt.Printf("%s", testCase.description)
 		volman := makeVolumeManager(testCase.volumeConfigs)
 		createdVolman, err := crdClient.Create(volman)
-		require.Nil(t, err)
+		if testCase.expAdmissionFail == false {
+			require.Nil(t, err)
+		} else {
+			require.Error(t, err)
+			require.Equal(t, err.Error(), testCase.expError)
+		}
 		defer func() {
 			delOpts := &metav1.DeleteOptions{}
 			crdClient.Delete(volman.GetName(), delOpts)
 		}()
-		if testCase.expSuccess {
-			err := waitForCRState(crdClient, createdVolman.GetName(), states.Running)
-			require.Nil(t, err)
-			volman, err := crdClient.Get(createdVolman.GetName(), metav1.GetOptions{})
-			require.Nil(t, err)
-			require.Equal(t, states.Running, volman.Status.State)
+		if testCase.expAdmissionFail == false {
+			if testCase.expSuccess {
+				err := waitForCRState(crdClient, createdVolman.GetName(), states.Running)
+				require.Nil(t, err)
+				volman, err := crdClient.Get(createdVolman.GetName(), metav1.GetOptions{})
+				require.Nil(t, err)
+				require.Equal(t, states.Running, volman.Status.State)
 
-			for _, vol := range volman.Status.Volumes {
-				require.Equal(t, crv1alpha1.SuccessfulVolumeStatusMessage, vol.Message)
-			}
-
-			if testCase.expHP {
-				gotHP := false
 				for _, vol := range volman.Status.Volumes {
-					if vol.VolumeSource.HostPath != nil {
-						gotHP = true
-						break
-					}
+					require.Equal(t, crv1alpha1.SuccessfulVolumeStatusMessage, vol.Message)
 				}
-				require.True(t, gotHP)
 
-				if testCase.expNA {
-					gotNA := false
+				if testCase.expHP {
+					gotHP := false
 					for _, vol := range volman.Status.Volumes {
-						if vol.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution != nil {
-							gotNA = true
+						if vol.VolumeSource.HostPath != nil {
+							gotHP = true
 							break
 						}
 					}
-					require.True(t, gotNA)
+					require.True(t, gotHP)
+
+					if testCase.expNA {
+						gotNA := false
+						for _, vol := range volman.Status.Volumes {
+							if vol.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution != nil {
+								gotNA = true
+								break
+							}
+						}
+						require.True(t, gotNA)
+					}
+				}
+
+				// TODO(balajismaniam): check if the PV and PVC were created.
+				if testCase.expPVC {
+					gotPVC := false
+					for _, vol := range volman.Status.Volumes {
+						if vol.VolumeSource.PersistentVolumeClaim != nil {
+							gotPVC = true
+							break
+						}
+					}
+					require.True(t, gotPVC)
 				}
 			}
 
-			// TODO(balajismaniam): check if the PV and PVC were created.
-			if testCase.expPVC {
-				gotPVC := false
-				for _, vol := range volman.Status.Volumes {
-					if vol.VolumeSource.PersistentVolumeClaim != nil {
-						gotPVC = true
-						break
+			if !testCase.expSuccess {
+				err := waitForCRState(crdClient, createdVolman.GetName(), states.Failed)
+				require.Nil(t, err)
+				volman, err := crdClient.Get(createdVolman.GetName(), metav1.GetOptions{})
+				require.Nil(t, err)
+
+				require.Equal(t, states.Failed, volman.Status.State)
+				require.Equal(t, fmt.Sprintf("failed to deploy all the sub-resources"), volman.Status.Message)
+
+				if testCase.expError != "" {
+					gotMessage := false
+					for _, vol := range volman.Status.Volumes {
+						if strings.Contains(vol.Message, testCase.expError) {
+							gotMessage = true
+							break
+						}
 					}
+					require.True(t, gotMessage)
 				}
-				require.True(t, gotPVC)
 			}
 		}
 
-		if !testCase.expSuccess {
-			err := waitForCRState(crdClient, createdVolman.GetName(), states.Failed)
-			require.Nil(t, err)
-			volman, err := crdClient.Get(createdVolman.GetName(), metav1.GetOptions{})
-			require.Nil(t, err)
-
-			require.Equal(t, states.Failed, volman.Status.State)
-			require.Equal(t, fmt.Sprintf("failed to deploy all the sub-resources"), volman.Status.Message)
-
-			if testCase.expError != "" {
-				gotMessage := false
-				for _, vol := range volman.Status.Volumes {
-					if strings.Contains(vol.Message, testCase.expError) {
-						gotMessage = true
-						break
-					}
-				}
-				require.True(t, gotMessage)
-			}
-		}
 	}
 }

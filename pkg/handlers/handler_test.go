@@ -20,14 +20,16 @@ package handlers
 
 import (
 	"fmt"
+	"testing"
+
 	vckv1alpha1 "github.com/IntelAI/vck/pkg/apis/vck/v1alpha1"
+
 	"github.com/IntelAI/vck/pkg/resource"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
-	"testing"
 )
 
 type testClient struct {
@@ -97,18 +99,6 @@ func TestHandler(t *testing.T) {
 		failedMessage string
 	}{
 		// S3 handler
-		"[s3_handler] labels not set": {
-			volumeConfig:  vckv1alpha1.VolumeConfig{},
-			handler:       NewS3Handler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
-			failedMessage: "labels cannot be empty",
-		},
-		"[s3_handler] awsCredentialsSecretName not set": {
-			volumeConfig: vckv1alpha1.VolumeConfig{
-				Labels: map[string]string{"foo": "bar"},
-			},
-			handler:       NewS3Handler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
-			failedMessage: "awsCredentialsSecretName key has to be set in options",
-		},
 		"[s3_handler] Wrong access mode": {
 			volumeConfig: vckv1alpha1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
@@ -119,17 +109,6 @@ func TestHandler(t *testing.T) {
 			},
 			handler:       NewS3Handler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
 			failedMessage: "access mode has to be ReadWriteOnce",
-		},
-		"[s3_handler] sourceURL not set": {
-			volumeConfig: vckv1alpha1.VolumeConfig{
-				Labels: map[string]string{"foo": "bar"},
-				Options: map[string]string{
-					"awsCredentialsSecretName": "foobar",
-				},
-				AccessMode: "ReadWriteOnce",
-			},
-			handler:       NewS3Handler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
-			failedMessage: "sourceURL has to be set in options",
 		},
 		"[s3_handler] Wrong timeoutForDataDownload format": {
 			volumeConfig: vckv1alpha1.VolumeConfig{
@@ -212,26 +191,6 @@ func TestHandler(t *testing.T) {
 		},
 
 		// NFS handler
-		"[nfs_handler] labels not set": {
-			volumeConfig:  vckv1alpha1.VolumeConfig{},
-			handler:       NewNFSHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
-			failedMessage: "labels cannot be empty",
-		},
-		"[nfs_handler] server not set": {
-			volumeConfig: vckv1alpha1.VolumeConfig{
-				Labels: map[string]string{"foo": "bar"},
-			},
-			handler:       NewNFSHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
-			failedMessage: "server has to be set in options",
-		},
-		"[nfs_handler] path not set": {
-			volumeConfig: vckv1alpha1.VolumeConfig{
-				Labels:  map[string]string{"foo": "bar"},
-				Options: map[string]string{"server": "foo"},
-			},
-			handler:       NewNFSHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
-			failedMessage: "path has to be set in options",
-		},
 		"[nfs_handler] Wrong access mode": {
 			volumeConfig: vckv1alpha1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},
@@ -258,49 +217,6 @@ func TestHandler(t *testing.T) {
 		},
 
 		// Pachyderm handler
-		"[pachyderm_handler] labels not set": {
-			volumeConfig:  vckv1alpha1.VolumeConfig{},
-			handler:       NewPachydermHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
-			failedMessage: "labels cannot be empty",
-		},
-		"[pachyderm_handler] repo not set": {
-			volumeConfig: vckv1alpha1.VolumeConfig{
-				Labels: map[string]string{"foo": "bar"},
-			},
-			handler:       NewPachydermHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
-			failedMessage: "repo has to be set in options",
-		},
-		"[pachyderm_handler] branch not set": {
-			volumeConfig: vckv1alpha1.VolumeConfig{
-				Labels:  map[string]string{"foo": "bar"},
-				Options: map[string]string{"repo": "foo"},
-			},
-			handler:       NewPachydermHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
-			failedMessage: "branch has to be set in options",
-		},
-		"[pachyderm_handler] inputPathnot set": {
-			volumeConfig: vckv1alpha1.VolumeConfig{
-				Labels: map[string]string{"foo": "bar"},
-				Options: map[string]string{
-					"repo":   "foo",
-					"branch": "master",
-				},
-			},
-			handler:       NewPachydermHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
-			failedMessage: "inputPath has to be set in options",
-		},
-		"[pachyderm_handler] outputPath not set": {
-			volumeConfig: vckv1alpha1.VolumeConfig{
-				Labels: map[string]string{"foo": "bar"},
-				Options: map[string]string{
-					"repo":      "foo",
-					"branch":    "master",
-					"inputPath": "s3/",
-				},
-			},
-			handler:       NewPachydermHandler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
-			failedMessage: "outputPath has to be set in options",
-		},
 		"[pachyderm_handler] Wrong access mode": {
 			volumeConfig: vckv1alpha1.VolumeConfig{
 				Labels: map[string]string{"foo": "bar"},

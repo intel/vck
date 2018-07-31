@@ -33,6 +33,7 @@ import (
 	"github.com/golang/glog"
 
 	"bytes"
+
 	vckv1alpha1 "github.com/IntelAI/vck/pkg/apis/vck/v1alpha1"
 	"github.com/IntelAI/vck/pkg/resource"
 )
@@ -61,31 +62,10 @@ func (h *s3Handler) GetSourceType() vckv1alpha1.DataSourceType {
 }
 
 func (h *s3Handler) OnAdd(ns string, vc vckv1alpha1.VolumeConfig, controllerRef metav1.OwnerReference) vckv1alpha1.Volume {
-	if len(vc.Labels) == 0 {
-		return vckv1alpha1.Volume{
-			ID:      vc.ID,
-			Message: fmt.Sprintf("labels cannot be empty"),
-		}
-	}
-
-	if _, ok := vc.Options["awsCredentialsSecretName"]; !ok {
-		return vckv1alpha1.Volume{
-			ID:      vc.ID,
-			Message: fmt.Sprintf("awsCredentialsSecretName key has to be set in options"),
-		}
-	}
-
 	if vc.AccessMode != "ReadWriteOnce" {
 		return vckv1alpha1.Volume{
 			ID:      vc.ID,
 			Message: fmt.Sprintf("access mode has to be ReadWriteOnce"),
-		}
-	}
-
-	if _, ok := vc.Options["sourceURL"]; !ok {
-		return vckv1alpha1.Volume{
-			ID:      vc.ID,
-			Message: fmt.Sprintf("sourceURL has to be set in options"),
 		}
 	}
 

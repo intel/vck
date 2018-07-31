@@ -58,40 +58,6 @@ func (h *pachydermHandler) GetSourceType() vckv1alpha1.DataSourceType {
 }
 
 func (h *pachydermHandler) OnAdd(ns string, vc vckv1alpha1.VolumeConfig, controllerRef metav1.OwnerReference) vckv1alpha1.Volume {
-	if len(vc.Labels) == 0 {
-		return vckv1alpha1.Volume{
-			ID:      vc.ID,
-			Message: fmt.Sprintf("labels cannot be empty"),
-		}
-	}
-
-	if _, ok := vc.Options["repo"]; !ok {
-		return vckv1alpha1.Volume{
-			ID:      vc.ID,
-			Message: fmt.Sprintf("repo has to be set in options"),
-		}
-	}
-	if _, ok := vc.Options["branch"]; !ok {
-		return vckv1alpha1.Volume{
-			ID:      vc.ID,
-			Message: fmt.Sprintf("branch has to be set in options"),
-		}
-	}
-
-	if _, ok := vc.Options["inputPath"]; !ok {
-		return vckv1alpha1.Volume{
-			ID:      vc.ID,
-			Message: fmt.Sprintf("inputPath has to be set in options"),
-		}
-	}
-
-	if _, ok := vc.Options["outputPath"]; !ok {
-		return vckv1alpha1.Volume{
-			ID:      vc.ID,
-			Message: fmt.Sprintf("outputPath has to be set in options"),
-		}
-	}
-
 	if vc.AccessMode != "ReadWriteOnce" {
 		return vckv1alpha1.Volume{
 			ID:      vc.ID,

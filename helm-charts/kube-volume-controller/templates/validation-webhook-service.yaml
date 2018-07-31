@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: validation-webhook-svc
+  namespace: {{ .Values.namespace }}
+  labels:
+    role: webhook
+    app: validation-webhook
+spec:
+  ports:
+  - port: 443
+    targetPort: 443
+  selector:
+    role: webhook
+    app: validation-webhook

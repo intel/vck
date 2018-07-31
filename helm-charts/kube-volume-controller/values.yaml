@@ -30,3 +30,6 @@ storageclass:
 # Note: CRD is a cluster-scoped object. It might already be installed.
 crd:
   install: true
+
+webhook:
+  install: true

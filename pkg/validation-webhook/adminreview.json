@@ -1,0 +1,69 @@
+{
+  "kind": "AdmissionReview",
+  "apiVersion": "admission.k8s.io/v1beta1",
+  "request": {
+    "uid": "0df28fbd-5f5f-11e8-bc74-36e6bb280816",
+    "kind": {
+      "group": "",
+      "version": "v1",
+      "kind": "VolumeManager"
+    },
+    "resource": {
+      "group": "",
+      "version": "v1",
+      "resource": "volumemanagers"
+    },
+    "namespace": "cody",
+    "operation": "CREATE",
+    "userInfo": {
+      "username": "system:serviceaccount:kube-system:replicaset-controller",
+      "uid": "a7e0ab33-5f29-11e8-8a3c-36e6bb280816",
+      "groups": [
+        "system:serviceaccounts",
+        "system:serviceaccounts:kube-system",
+        "system:authenticated"
+      ]
+    },
+    "object": {
+      "metadata": {
+        "name": "vck-example",
+        "namespace": "<insert-namespace-here>"
+      },
+      "spec": {
+        "volumeConfigs": [
+          {
+            "id": "vol1",
+            "replicas": 1,
+            "sourceType": "NFS",
+            "accessMode": "ReadWriteMmany",
+            "capacity": "5Gi",
+            "labels": {
+              "key1": "val1",
+              "key2": "val2"
+            },
+            "options": {
+              "server": "<insert-server-ip-here>"
+            }
+          },
+          {
+            "id": "vol1",
+            "sourceType": "S3",
+            "accessMode": "ReadWriteOnce",
+            "capacity": "5Gi",
+            "labels": {
+              "key3": "val3",
+              "key4": "val4"
+            },
+            "options": {
+              "sourceURL": "http://codyhsieh.com",
+              "endpointURL": "http://codyhsieh.com",
+              "awsCredentialsSecretName": "<insert-secret-name-for-aws-credentials>"
+            }
+          }
+        ]
+      }
+},
+      "status": {}
+    },
+    "oldObject": null
+}

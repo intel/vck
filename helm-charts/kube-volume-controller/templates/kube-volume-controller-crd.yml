@@ -12,4 +12,62 @@ spec:
     singular: volumemanager
   scope: Namespaced
   version: v1alpha1
+  validation:
+   # openAPIV3Schema is the schema for validating custom objects.
+    openAPIV3Schema:
+      required:
+      - apiVersion
+      - kind
+      properties:
+        apiVersion:
+          type: string
+          enum:
+          - "vck.intelai.org/v1alpha1"
+        kind:
+          enum:
+          - "VolumeManager"
+        metadata:
+          required:
+          - name
+          properties:
+            name:
+              type: string
+        spec:
+          properties:
+            volumeConfigs:
+              items:
+                required:
+                - id
+                - replicas
+                - sourceType
+                - accessMode
+                - capacity
+                - labels
+                properties:
+                  id:
+                    type: string
+                  replicas:
+                    type: integer
+                  sourceType:
+                    type: string
+                    enum:
+                    - "S3"
+                    - "NFS"
+                    - "Pachyderm"
+                  accessMode:
+                    type: string
+                    enum:
+                    - ReadWriteMany
+                    - ReadWriteOnce
+                    - ReadOnlyMany
+                  capacity:
+                    type: string
+                  labels:
+                    type: 
+            state:
+              enum:
+              - "Pending"
+              - "Running"
+              - "Failed"
+              - "Completed"
 {{end}}

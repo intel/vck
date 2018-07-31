@@ -24,4 +24,6 @@ ENV KUBERNETES_SERVICE_PORT 443
 RUN mkdir -p /vck-templates
 COPY ./pkg/templates /vck-templates
 COPY ./vck /
-CMD /vck
+COPY ./validation-webhook /
+CMD validation-webhook
+
