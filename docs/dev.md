@@ -241,6 +241,15 @@ corev1Scheme.AddKnownTypes(corev1.SchemeGroupVersion, &corev1.Pod{})
 
 Note: See [main.go][main-file] for examples on how to create clients for pod, nodes, pv and pvc using a [dynamic client][dyn-client].
 
+## Adding Additional Validation
+There could be cases in which additional validation is neccessary. Choose the respective method below that corresponds with your needs:
+
+
+1. [OpenAPI v3 schema] - This is the easiest method but has little flexibility. By modifying `kube-volume-controller-crd.yml`, required fields for all sourceTypes and required types for fields can be set.
+
+
+2. [Validation Webhook] - This is a bit more complicated but has significantly more flexibility. By modifying `validation-webhook.go`, any validation rule can be specified in the `validateVolumeManager` and `validate<Source Type>` functions.
+
 ## Docker Containers
 
 The [docker](../docker) directory containers dockerfiles for:
@@ -262,3 +271,5 @@ cd docker
 [dyn-client]: https://github.com/kubernetes/client-go/tree/master/dynamic
 [apiresource]: https://github.com/kubernetes/apimachinery/blob/master/pkg/apis/meta/v1/types.go#L825
 [unstructured]: https://github.com/kubernetes/apimachinery/blob/master/pkg/apis/meta/v1/unstructured/unstructured.go#L41
+[OpenAPI v3 schema]: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md#schemaObject
+[Validation Webhook]: https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#admission-webhooks
