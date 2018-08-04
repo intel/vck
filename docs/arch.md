@@ -171,7 +171,7 @@ information on usage, refer to the [user manual][user-doc].
 | S3-Dev                 | Deprecated| VCK will download the files from a specified S3 bucket and make it available for consumption in a node. This source type should only be used for development and testing purposes.      |
 | S3                     | Supported| VCK will download the files from a specified S3 bucket and provide nodes where hostPath volumes can be used.  |
 | NFS                    | Supported| VCK will make the specified path from an NFS server available for consumption.                                |
-[ [Pachyderm][pachyderm] | Supported| VCK will download the pachyderm repo data and make it available for consumption on a specified number of nodes|
+| [Pachyderm][pachyderm] | Supported| VCK will download the pachyderm repo data and make it available for consumption on a specified number of nodes|
 | [Aeon][aeon]           | Design   | -                                                                                                             |
 
 [pv]: https://kubernetes.io/docs/concepts/storage/persistent-volumes/
