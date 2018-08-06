@@ -6,6 +6,7 @@
     * [Installing the Controller for the first time](#installing-the-controller-for-the-first-time)
       * [Installing VCK Controller in your namespaces](#installing-vck-controller-in-your-namespaces)
       * [Custom Helm Options in VCK](#custom-helm-options-in-vck)
+      * [Installing VCK from tip of a branch](#installing-vck-from-tip-of-a-branch)
       * [Deleting VCK Controller from your namespace](#deleting-vck-controller-from-your-namespace)
 
 ## Prerequisites
@@ -109,6 +110,12 @@ $ helm install helm-charts/kube-volume-controller/ -n vck --wait \
   --set tag="v0.1.0" \
   --set log_level=4 \
   --set namespace=<vck_namespace>
+```
+
+#### Installing VCK from tip of a branch
+You can also install `VCK` from feature branches if needed. In this case follow same steps as described above, but set the `tag` option this way:
+```
+--set-string tag="$(git describe --tags --always --dirty)"
 ```
 
 ### Deleting VCK Controller from your namespace

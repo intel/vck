@@ -37,6 +37,11 @@ jobs:
       - run:
           name: install chart
           command: |
+            HELM_VERSION="v2.9.0"
+            curl -sfL http://storage.googleapis.com/kubernetes-helm/helm${HELM_VERSION}-linux-amd64.tar.gz -o /tmp/helm-${HELM_VERSION}-linux-amd64.tar.gz && \
+            tar xzf /tmp/helm-${HELM_VERSION}-linux-amd64.tar.gz && \
+            mv linux-amd64/helm /usr/local/bin && \
+            rm /tmp/helm-${HELM_VERSION}-linux-amd64.tar.gz && rm -r linux-amd64
             mkdir -p $HOME/.kube
             KUBE_CONFIG=${GKE_KUBECONFIG_KVCCI}
             echo "${KUBE_CONFIG}" | base64 --decode > "${HOME}/.kube/config"
@@ -51,7 +56,7 @@ jobs:
               --set clusterrole.install=true \
               --set storageclass.install=true \
               --set crd.install=true \
-              --set tag=$(git describe --tags --always --dirty) \
+              --set-string tag=$(git describe --tags --always --dirty) \
               --set log_level=4
             export S3_SERVER_IP=$(kubectl get svc ${S3_SVC_NAME} -o json | jq -r .spec.clusterIP)
             export NFS_SERVER_IP=$(kubectl get svc ${NFS_SERVER_SVC_NAME} -o json | jq -r .spec.clusterIP)
