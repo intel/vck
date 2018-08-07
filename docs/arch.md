@@ -89,6 +89,10 @@ below:
 | `status.message`              | `string`                                          | A message associated with the current state of this volume manager instance                                |
 
 Fields marked with `*` are mandatory.
+
+### Validation
+Mandatory fields as well as specific values for certain fields are validated through two primary methods: a [validating admission webhook] and the [OpenAPI v3 schema]. Both methods prevent any invalid volumeConfigs from being created at all. The OpenAPI v3 schema checks for any general invalid fields whereas the validation webhook checks for valid URLs, sourceType specific values, as well as duplicate IDs.
+
 ## The VCK Controller
 
 The VCK controller uses [volumes][vols], [volume sources][volsources], Pods to manage volumes and the associated
@@ -190,3 +194,5 @@ information on usage, refer to the [user manual][user-doc].
 [volsources]: https://github.com/kubernetes/api/blob/master/core/v1/types.go#L250
 [tolerations]: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/#concepts
 [pachyderm]: http://pachyderm.io
+[validating admission webhook]: https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#admission-webhooks
+[OpenAPI v3 schema]: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md#schemaObject
