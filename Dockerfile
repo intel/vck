@@ -25,5 +25,4 @@ RUN mkdir -p /vck-templates
 COPY ./pkg/templates /vck-templates
 COPY ./vck /
 COPY ./validation-webhook /
-CMD validation-webhook
 

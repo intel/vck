@@ -1,3 +1,4 @@
+{{- if .Values.webhook.install -}}
 apiVersion: v1
 kind: Service
 metadata:
@@ -13,3 +14,4 @@ spec:
   selector:
     role: webhook
     app: validation-webhook
+{{end}}

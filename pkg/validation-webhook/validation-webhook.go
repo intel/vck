@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"flag"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -139,7 +138,7 @@ func validatePachyderm(vc vckv1alpha1.VolumeConfig) string {
 }
 
 func validateVolumeManager(vm vckv1alpha1.VolumeManager) *v1beta1.AdmissionResponse {
-	log.Println("Validating Volume Manager...")
+	glog.V(2).Info("Validating Volume Manager...")
 	errs := []string{}
 	ids := make(map[string]bool)
 	for _, vc := range vm.Spec.VolumeConfigs {
@@ -164,7 +163,6 @@ func validateVolumeManager(vm vckv1alpha1.VolumeManager) *v1beta1.AdmissionRespo
 	}
 
 	if err := "" + strings.Join(errs, " "); err != "" {
-		log.Println(err)
 		return &v1beta1.AdmissionResponse{
 			Allowed: false,
 			Result: &metav1.Status{
@@ -172,7 +170,7 @@ func validateVolumeManager(vm vckv1alpha1.VolumeManager) *v1beta1.AdmissionRespo
 			},
 		}
 	}
-	log.Println("All Volume Manager(s) look good!")
+	glog.V(2).Info("All Volume Manager(s) look good!")
 	return &v1beta1.AdmissionResponse{
 		Allowed: true,
 	}
@@ -241,14 +239,14 @@ func main() {
 
 	pair, err := tls.LoadX509KeyPair(config.CertFile, config.KeyFile)
 	if err != nil {
-		glog.Errorf("Failed to load key pair: %v", err)
+		glog.Fatalf("Failed to load key pair: %v", err)
 	}
 
-	log.Println("Starting Server...")
-	http.HandleFunc("/validation-webhook", serveVolumeManager)
+	glog.V(2).Info("Starting Server...")
+	http.HandleFunc("/validate", serveVolumeManager)
 	server := &http.Server{
 		Addr:      ":443",
 		TLSConfig: &tls.Config{Certificates: []tls.Certificate{pair}},
 	}
-	log.Fatal(server.ListenAndServeTLS("", ""))
+	glog.Fatal(server.ListenAndServeTLS("", ""))
 }
