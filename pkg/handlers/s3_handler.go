@@ -160,7 +160,7 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1alpha1.VolumeConfig, controllerRef 
 		}
 	} else {
 		for i := 0; i < vc.Replicas; i++ {
-			copyCommand = append(copyCommand, "mc config host add s3 ${AWS_ENDPOINT_URL} ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY}; mc cp ${RECURSIVE_OPTION} s3/${BUCKET_NAME}${BUCKET_PATH} ${DATA_PATH}")
+			copyCommand = append(copyCommand, "mc config host add s3 ${AWS_ENDPOINT_URL} ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY}; time mc cp ${RECURSIVE_OPTION} s3/${BUCKET_NAME}${BUCKET_PATH} ${DATA_PATH}")
 		}
 	}
 
