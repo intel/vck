@@ -90,7 +90,7 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1alpha1.VolumeConfig, controllerRef 
 	}
 
 	if _, ok := vc.Options["endpointURL"]; !ok {
-		vc.Options["EndpointURL"] = "https://s3.amazonaws.com"
+		vc.Options["endpointURL"] = "https://s3.amazonaws.com"
 	}
 
 	// Check if dataPath  was set and  if not set default to /var/datasets.
@@ -133,6 +133,13 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1alpha1.VolumeConfig, controllerRef 
 	vckPath := fmt.Sprintf("%s/%s", vc.Options["dataPath"], vckDataPathSuffix)
 	copyCommand := []string{}
 
+	mcCredentialsString := "mc config host add s3 ${AWS_ENDPOINT_URL} ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY}"
+	if vc.Options["endpointURL"] == "https://s3.amazonaws.com" {
+		mcCredentialsString += " S3v4"
+	} else if vc.Options["endpointURL"] == "https://storage.googleapis.com" {
+		mcCredentialsString += " S3v2"
+	}
+
 	if distributionStrategy, ok := vc.Options["distributionStrategy"]; ok {
 		var distributionMap map[string]int
 
@@ -148,7 +155,7 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1alpha1.VolumeConfig, controllerRef 
 		for filter, replicas := range distributionMap {
 
 			for i := 0; i < replicas; i++ {
-				copyCommand = append(copyCommand, fmt.Sprintf("mc config host add s3 ${AWS_ENDPOINT_URL} ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY}; mc find s3/${BUCKET_NAME}${BUCKET_PATH} --path '%v' --exec 'mc cp {} %s'", filter, vckPath))
+				copyCommand = append(copyCommand, fmt.Sprintf("%s; mc find s3/${BUCKET_NAME}${BUCKET_PATH} --path '%v' --exec 'mc cp {} %s'", mcCredentialsString, filter, vckPath))
 				replicaCount++
 			}
 		}
@@ -160,7 +167,7 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1alpha1.VolumeConfig, controllerRef 
 		}
 	} else {
 		for i := 0; i < vc.Replicas; i++ {
-			copyCommand = append(copyCommand, "mc config host add s3 ${AWS_ENDPOINT_URL} ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY}; mc cp ${RECURSIVE_OPTION} s3/${BUCKET_NAME}${BUCKET_PATH} ${DATA_PATH}")
+			copyCommand = append(copyCommand, fmt.Sprintf("%s; time mc cp ${RECURSIVE_OPTION} s3/${BUCKET_NAME}${BUCKET_PATH} ${DATA_PATH}", mcCredentialsString))
 		}
 	}
 
