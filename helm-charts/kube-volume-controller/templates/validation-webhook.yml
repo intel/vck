@@ -19,6 +19,6 @@ webhooks:
     service:
       namespace: {{ .Values.namespace }}
       name: validation-webhook-svc
-      path: "/validate
+      path: "/validate"
     caBundle: {{.Values.caBundle}}
 {{end}}
