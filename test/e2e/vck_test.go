@@ -126,7 +126,7 @@ func TestVolumeManager(t *testing.T) {
 						"awsCredentialsSecretName": "s3-creds",
 						"sourceURL":                "s3://e2e-test/cifar-100-python.tar.gz",
 						"endpointURL":              fmt.Sprintf("http://%s:9000", *s3ServerIP),
-						"timeoutForDataDownload":   "5s",
+						"timeoutForDataDownload":   "10h",
 					},
 				},
 			},
@@ -207,7 +207,7 @@ func TestVolumeManager(t *testing.T) {
 						"awsCredentialsSecretName": "s3-creds",
 						"sourceURL":                "s3://e2e-test/cifar-100-python.tar.gz",
 						"endpointURL":              fmt.Sprintf("http://%s:9000", *s3ServerIP),
-						"timeoutForDataDownload":   "5s",
+						"timeoutForDataDownload":   "5h",
 					},
 				},
 				{
