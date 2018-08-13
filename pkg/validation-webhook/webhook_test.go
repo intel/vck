@@ -44,18 +44,20 @@ func TestHandler(t *testing.T) {
 							ID:         "vol1",
 							Replicas:   0,
 							SourceType: "S3",
-							AccessMode: "ReadWriteOnce",
+							AccessMode: "ReadWriteTwice",
 							Options: map[string]string{
 								"sourceURL":                "foo",
 								"endpointURL":              "bar",
 								"awsCredentialsSecretName": "secret",
+								"timeoutForDataDownload":   "5lightyears",
 							},
 						},
 					},
 				},
 			},
 			failedMessage: "labels cannot be empty. replicas cannot be empty or less " +
-				"than 1. sourceURL has to be a valid URL. endpointURL has to be a valid URL.",
+				"than 1. sourceURL has to be a valid URL. endpointURL has to be a valid URL." +
+				" timeoutForDataDownload has the incorrect format. accessMode must be ReadWriteOnce.",
 		},
 		"nfs tests": {
 			volumeManager: vckv1alpha1.VolumeManager{
@@ -64,12 +66,13 @@ func TestHandler(t *testing.T) {
 						{
 							ID:         "vol1",
 							SourceType: "NFS",
-							AccessMode: "ReadWriteMmany",
+							AccessMode: "ReadWriteOnce",
 						},
 					},
 				},
 			},
-			failedMessage: "labels cannot be empty. server has to be set in options. path has to be set in options.",
+			failedMessage: "labels cannot be empty. server has to be set in options. path has to be set in options." +
+				" accessMode must be ReadWriteMany or ReadOnlyMany.",
 		},
 		"pachyderm tests": {
 			volumeManager: vckv1alpha1.VolumeManager{
@@ -78,14 +81,18 @@ func TestHandler(t *testing.T) {
 						{
 							ID:         "vol1",
 							SourceType: "Pachyderm",
-							AccessMode: "ReadWriteOnce",
+							AccessMode: "ReadWriteTwice",
+							Options: map[string]string{
+								"timeoutForDataDownload": "5lightyears",
+							},
 						},
 					},
 				},
 			},
 			failedMessage: "labels cannot be empty. replicas cannot be empty or less than 1. " +
 				"repo has to be set in options. branch has to be set in options. inputPath has to " +
-				"be set in options. outputPath has to be set in options.",
+				"be set in options. outputPath has to be set in options. timeoutForDataDownload has the incorrect format." +
+				" accessMode must be ReadWriteOnce.",
 		},
 		"multiple id test": {
 			volumeManager: vckv1alpha1.VolumeManager{
@@ -159,13 +166,13 @@ func TestHandler(t *testing.T) {
 							ID:         "vol1",
 							Replicas:   1,
 							SourceType: "NFS",
-							AccessMode: "ReadWriteOnce",
+							AccessMode: "ReadWriteMany",
 							Labels: map[string]string{
 								"key3": "val3",
 								"key4": "val4",
 							},
 							Options: map[string]string{
-								"server": "s3://foo",
+								"server": "192.0.2.1",
 								"path":   "secret",
 							},
 						},

@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"flag"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	vckv1alpha1 "github.com/IntelAI/vck/pkg/apis/vck/v1alpha1"
 	"github.com/golang/glog"
@@ -59,8 +61,12 @@ func validateNFS(vc vckv1alpha1.VolumeConfig) string {
 		errs = append(errs, "labels cannot be empty.")
 	}
 
-	if _, ok := vc.Options["server"]; !ok {
+	if server, ok := vc.Options["server"]; !ok {
 		errs = append(errs, "server has to be set in options.")
+	} else {
+		if ip := net.ParseIP(server); ip == nil {
+			errs = append(errs, "server is not a valid IP.")
+		}
 	}
 
 	if _, ok := vc.Options["path"]; !ok {
@@ -69,6 +75,14 @@ func validateNFS(vc vckv1alpha1.VolumeConfig) string {
 
 	if vc.AccessMode == "" {
 		errs = append(errs, "accessMode has to be set.")
+	}
+
+	if vc.AccessMode != "ReadWriteMany" && vc.AccessMode != "ReadOnlyMany" {
+		if vc.AccessMode == "" {
+			errs = append(errs, "accessMode has to be set.")
+		} else {
+			errs = append(errs, "accessMode must be ReadWriteMany or ReadOnlyMany.")
+		}
 	}
 
 	return strings.Join(errs, " ")
@@ -96,9 +110,23 @@ func validateS3(vc vckv1alpha1.VolumeConfig) string {
 		errs = append(errs, "sourceURL has to be a valid URL.")
 	}
 
-	if sourceURL, ok := vc.Options["endpointURL"]; ok {
-		if _, err := url.ParseRequestURI(sourceURL); err != nil {
+	if endpointURL, ok := vc.Options["endpointURL"]; ok {
+		if _, err := url.ParseRequestURI(endpointURL); err != nil {
 			errs = append(errs, "endpointURL has to be a valid URL.")
+		}
+	}
+
+	if timeoutForDataDownload, ok := vc.Options["timeoutForDataDownload"]; ok {
+		if _, err := time.ParseDuration(timeoutForDataDownload); err != nil {
+			errs = append(errs, "timeoutForDataDownload has the incorrect format.")
+		}
+	}
+
+	if vc.AccessMode != "ReadWriteOnce" {
+		if vc.AccessMode == "" {
+			errs = append(errs, "accessMode has to be set.")
+		} else {
+			errs = append(errs, "accessMode must be ReadWriteOnce.")
 		}
 	}
 
@@ -131,9 +159,20 @@ func validatePachyderm(vc vckv1alpha1.VolumeConfig) string {
 		errs = append(errs, "outputPath has to be set in options.")
 	}
 
-	if vc.AccessMode == "" {
-		errs = append(errs, "accessMode has to be set.")
+	if timeoutForDataDownload, ok := vc.Options["timeoutForDataDownload"]; ok {
+		if _, err := time.ParseDuration(timeoutForDataDownload); err != nil {
+			errs = append(errs, "timeoutForDataDownload has the incorrect format.")
+		}
 	}
+
+	if vc.AccessMode != "ReadWriteOnce" {
+		if vc.AccessMode == "" {
+			errs = append(errs, "accessMode has to be set.")
+		} else {
+			errs = append(errs, "accessMode must be ReadWriteOnce.")
+		}
+	}
+
 	return strings.Join(errs, " ")
 }
 

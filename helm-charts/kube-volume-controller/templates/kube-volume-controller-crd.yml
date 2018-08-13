@@ -57,13 +57,11 @@ spec:
                   accessMode:
                     type: string
                     enum:
-                    - ReadWriteMany
-                    - ReadWriteOnce
-                    - ReadOnlyMany
+                    - "ReadWriteMany"
+                    - "ReadWriteOnce"
+                    - "ReadOnlyMany"
                   capacity:
                     type: string
-                  labels:
-                    type: 
             state:
               enum:
               - "Pending"
