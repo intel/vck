@@ -22,7 +22,7 @@ spec:
             - -tlsCertFile=/etc/webhook/certs/cert.pem
             - -tlsKeyFile=/etc/webhook/certs/key.pem
         command:
-          - "/validate"
+          - "/validation-webhook"
         volumeMounts:
             - name: webhook-certs
               mountPath: /etc/webhook/certs
