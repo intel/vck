@@ -247,8 +247,79 @@ There could be cases in which additional validation is neccessary. Choose the re
 
 1. [OpenAPI v3 schema] - This is the easiest method but has little flexibility. By modifying `kube-volume-controller-crd.yml`, required fields for all sourceTypes and required types for fields can be set.
 
+Example:
+
+Suppose we have the following VolumeManager
+```
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: volumemanagers.vck.intelai.org
+spec:
+  group: vck.intelai.org
+  names:
+    kind: VolumeManager
+    listKind: VolumeManagerList
+    plural: volumemanagers
+    singular: volumemanager
+  scope: Namespaced
+  version: v1alpha1
+```
+
+In order to add general validation rules we can add the following:
+```
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: volumemanagers.vck.intelai.org
+spec:
+  group: vck.intelai.org
+  names:
+    kind: VolumeManager
+    listKind: VolumeManagerList
+    plural: volumemanagers
+    singular: volumemanager
+  scope: Namespaced
+  version: v1alpha1
+  # We add validation here
+  validation:
+    openAPIV3Schema:
+      required:
+      - apiVersion
+      - kind
+      properties:
+        apiVersion:
+          type: string
+          enum:
+          - "vck.intelai.org/v1alpha1"
+        kind:
+          enum:
+          - "VolumeManager"
+        metadata:
+          required:
+          - name
+          properties:
+            name:
+              type: string
+```
+In this case we are requiring certain properties like apiVersion and kind while ensuring properties like apiVersion use type for format or enum for specific required values.
 
 2. [Validation Webhook] - This is a bit more complicated but has significantly more flexibility. By modifying `validation-webhook.go`, any validation rule can be specified in the `validateVolumeManager` and `validate<Source Type>` functions.
+
+Example:
+
+Suppose we want to add a new rule requiring dataPath which is an option specific to only S3. We would add the following to the `validateS3` function:
+```
+func validateS3(vc vckv1alpha1.VolumeConfig) string {
+	...
+	if _, ok := vc.Options["dataPath"]; !ok {
+		errs = append(errs, "dataPath has to be set in options.")
+	}
+	...
+	return strings.Join(errs, " ")
+}
+```
+
 
 ## Docker Containers
 
