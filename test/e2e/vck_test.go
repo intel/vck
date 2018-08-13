@@ -250,7 +250,7 @@ func TestVolumeManager(t *testing.T) {
 						"branch":                 "master",
 						"inputPath":              "s3/test",
 						"outputPath":             "test",
-						"timeoutForDataDownload": "5s",
+						"timeoutForDataDownload": "10h",
 					},
 				},
 			},
