@@ -135,6 +135,34 @@ func TestVolumeManager(t *testing.T) {
 			expPVC:     false,
 		},
 		{
+			description: "single vc - S3 - with resync - no error",
+			volumeConfigs: []crv1alpha1.VolumeConfig{
+				{
+					ID:         "vol1",
+					Replicas:   1,
+					SourceType: "S3",
+					AccessMode: "ReadWriteOnce",
+					Capacity:   "5Gi",
+					Labels: map[string]string{
+						"key1": "val1",
+						"key2": "val2",
+					},
+					Options: map[string]string{
+						"awsCredentialsSecretName": "s3-creds",
+						"sourceURL":                "s3://e2e-test/cifar-100-python.tar.gz",
+						"endpointURL":              fmt.Sprintf("http://%s:9000", *s3ServerIP),
+						"resync":                   "true",
+						"timeoutForDataDownload":   "20s",
+					},
+				},
+			},
+			expSuccess: true,
+			expError:   "",
+			expHP:      true,
+			expNA:      true,
+			expPVC:     false,
+		},
+		{
 			description: "single vc - S3 - with distributionStrategy - no error",
 			volumeConfigs: []crv1alpha1.VolumeConfig{
 				{
@@ -281,6 +309,33 @@ func TestVolumeManager(t *testing.T) {
 		},
 		// Negative test cases.
 		{
+			description: "single vc - S3 - non-existent source error",
+			volumeConfigs: []crv1alpha1.VolumeConfig{
+				{
+					ID:         "vol1",
+					Replicas:   1,
+					SourceType: "S3",
+					AccessMode: "ReadWriteOnce",
+					Capacity:   "5Gi",
+					Labels: map[string]string{
+						"key1": "val1",
+						"key2": "val2",
+					},
+					Options: map[string]string{
+						"awsCredentialsSecretName": "s3-creds",
+						"sourceURL":                "s3://e2e-test/foobarbaz.gz",
+						"endpointURL":              fmt.Sprintf("http://%s:9000", *s3ServerIP),
+						"timeoutForDataDownload":   "10s",
+					},
+				},
+			},
+			expSuccess: false,
+			expError:   fmt.Sprintf("error during data download using pod"),
+			expHP:      false,
+			expNA:      false,
+			expPVC:     false,
+		},
+		{
 			description: "single vc - S3 - no label error",
 			volumeConfigs: []crv1alpha1.VolumeConfig{
 				{
@@ -324,6 +379,60 @@ func TestVolumeManager(t *testing.T) {
 			},
 			expSuccess: false,
 			expError:   fmt.Sprintf("awsCredentialsSecretName key has to be set in options"),
+			expHP:      false,
+			expNA:      false,
+			expPVC:     false,
+		},
+		{
+			description: "single vc - S3 - resync is not boolean error",
+			volumeConfigs: []crv1alpha1.VolumeConfig{
+				{
+					ID:         "vol1",
+					Replicas:   1,
+					SourceType: "S3",
+					AccessMode: "ReadWriteOnce",
+					Capacity:   "5Gi",
+					Labels: map[string]string{
+						"key1": "val1",
+						"key2": "val2",
+					},
+					Options: map[string]string{
+						"awsCredentialsSecretName": "s3-creds",
+						"sourceURL":                "s3://e2e-test/cifar-100-python.tar.gz",
+						"endpointURL":              fmt.Sprintf("http://%s:9000", *s3ServerIP),
+						"resync":                   "foobar",
+					},
+				},
+			},
+			expSuccess: false,
+			expError:   fmt.Sprintf("error while parsing resync option"),
+			expHP:      false,
+			expNA:      false,
+			expPVC:     false,
+		},
+		{
+			description: "single vc - S3 - resync is set and replicas > 1 error",
+			volumeConfigs: []crv1alpha1.VolumeConfig{
+				{
+					ID:         "vol1",
+					Replicas:   2,
+					SourceType: "S3",
+					AccessMode: "ReadWriteOnce",
+					Capacity:   "5Gi",
+					Labels: map[string]string{
+						"key1": "val1",
+						"key2": "val2",
+					},
+					Options: map[string]string{
+						"awsCredentialsSecretName": "s3-creds",
+						"sourceURL":                "s3://e2e-test/cifar-100-python.tar.gz",
+						"endpointURL":              fmt.Sprintf("http://%s:9000", *s3ServerIP),
+						"resync":                   "true",
+					},
+				},
+			},
+			expSuccess: false,
+			expError:   fmt.Sprintf("replicas cannot be > 1 when resync is set"),
 			expHP:      false,
 			expNA:      false,
 			expPVC:     false,

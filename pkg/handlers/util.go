@@ -69,6 +69,25 @@ func waitForPodSuccess(podClient resource.Client, podName string, podNS string, 
 	}, timeout)
 }
 
+func isPodRunningAfterTimeout(podClient resource.Client, podName string, podNS string, timeout time.Duration) bool {
+	time.Sleep(timeout)
+	obj, err := podClient.Get(podNS, podName)
+	if err != nil {
+		return false
+	}
+
+	pod, ok := obj.(*corev1.Pod)
+	if !ok {
+		return false
+	}
+
+	if pod.Status.Phase == corev1.PodRunning {
+		return true
+	}
+
+	return false
+}
+
 func waitPoll(waitFunc func() (bool, error), timeout time.Duration) error {
 	return wait.Poll(1*time.Second, timeout, waitFunc)
 }

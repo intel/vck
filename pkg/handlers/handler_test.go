@@ -195,7 +195,7 @@ func TestHandler(t *testing.T) {
 				Replicas:   1,
 			},
 			handler:       NewS3Handler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
-			failedMessage: "does not match number or replicas provided",
+			failedMessage: "does not match number of replicas provided",
 		},
 		"[s3_handler] Any create failed": {
 			volumeConfig: vckv1alpha1.VolumeConfig{
@@ -209,6 +209,20 @@ func TestHandler(t *testing.T) {
 			},
 			handler:       NewS3Handler(fakek8sClient, []resource.Client{&testClient{plural: "pods", createShouldFail: true}, fakeNodeClient, fakePVClient, fakePVlient}),
 			failedMessage: "error during sub-resource",
+		},
+		"[s3_handler] resync set and replicas > 1": {
+			volumeConfig: vckv1alpha1.VolumeConfig{
+				Labels: map[string]string{"foo": "bar"},
+				Options: map[string]string{
+					"awsCredentialsSecretName": "foobar",
+					"sourceURL":                "s3://foo",
+					"resync":                   "true",
+				},
+				AccessMode: "ReadWriteOnce",
+				Replicas:   3,
+			},
+			handler:       NewS3Handler(fakek8sClient, []resource.Client{fakePodClient, fakeNodeClient, fakePVClient, fakePVlient}),
+			failedMessage: "replicas cannot be > 1 when resync is set",
 		},
 
 		// NFS handler
