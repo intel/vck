@@ -192,6 +192,7 @@ A brief description of each source type is provided below.
 |              | `volumeConfig.options["awsCredentialsSecretName]` | Yes | The name of the secret with AWS credentials to access the s3 data              |                        | |
 |              | `volumeConfig.options["timeoutForDataDownload"]`  | No | The timeout for download of s3 data. Defaults to 5 minutes. [[Format]](https://golang.org/pkg/time/#ParseDuration) |                        | |
 |              | `volumeConfig.options["distributionStrategy"]`    | No | The [distribution strategy](#data-distribution) to use to distribute the data across the replicas |                        | |
+|              | `volumeConfig.options["resync"]`    | No | The `resync` option syncs back the changes made in the local directory to the source. Please read through the [notes](#resync) before using this option. |                        | |
 | `NFS`        | `volumeConfig.options["server"]`        | Yes | Address of the NFS server.                             |`ReadWriteMany`         | `volumeSource`                 |
 |              | `volumeConfig.options["path"]`          | Yes | The path exported by the NFS server.                   |`ReadOnlyMany`          | |
 |              | `volumeConfig.accessMode     `          | Yes | Access mode for the volume config.                     |                        | |
@@ -347,6 +348,13 @@ spec:
 ```
 
 all files matching the pattern `*0_1*` in the bucket `s3://foo/bar` would be synced in 2 replicas and all files matching `*1_1*` would be synced in the remaining 2 replicas.
+
+## Resync
+
+For the S3 source type, the user can opt-in to resync the contents of the local directory with the source (i.e.,
+the S3 object soruce). VCK watches for any changes made to the local directory and syncs with the remote S3 object
+store when this option is enabled. When `resync` is set for the S3 source type, only one replica is supported. 
+Note that the files are overwritten in the remote S3 object store. 
 
 
 [ops-doc]: ops.md

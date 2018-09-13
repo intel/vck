@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -111,6 +112,25 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1alpha1.VolumeConfig, controllerRef 
 		}
 	}
 
+	resync := false
+	// Check if resync was set and use it.
+	if _, ok := vc.Options["resync"]; ok {
+		resync, err = strconv.ParseBool(vc.Options["resync"])
+		if err != nil {
+			return vckv1alpha1.Volume{
+				ID:      vc.ID,
+				Message: fmt.Sprintf("error while parsing resync option: %v", err),
+			}
+		}
+	}
+
+	if resync && vc.Replicas > 1 {
+		return vckv1alpha1.Volume{
+			ID:      vc.ID,
+			Message: fmt.Sprintf("replicas cannot be > 1 when resync is set"),
+		}
+	}
+
 	nodeClient := getK8SResourceClientFromPlural(h.k8sResourceClients, "nodes")
 	nodeList, err := nodeClient.List(ns, map[string]string{})
 	if err != nil {
@@ -149,18 +169,24 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1alpha1.VolumeConfig, controllerRef 
 
 			for i := 0; i < replicas; i++ {
 				copyCommand = append(copyCommand, fmt.Sprintf("mc config host add s3 ${AWS_ENDPOINT_URL} ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY}; mc find s3/${BUCKET_NAME}${BUCKET_PATH} --path '%v' --exec 'mc cp {} %s'", filter, vckPath))
+				if resync {
+					copyCommand[i] = strings.Join([]string{copyCommand[i], "mc mirror -w --overwrite ${DATA_PATH} s3/${BUCKET_NAME}"}, "; ")
+				}
 				replicaCount++
 			}
 		}
 		if replicaCount != vc.Replicas {
 			return vckv1alpha1.Volume{
 				ID:      vc.ID,
-				Message: fmt.Sprintf("total number of replicas: [%v] in distributionStrategy [%v], does not match number or replicas provided: [%v]", replicaCount, distributionStrategy, vc.Replicas),
+				Message: fmt.Sprintf("total number of replicas: [%v] in distributionStrategy [%v], does not match number of replicas provided: [%v]", replicaCount, distributionStrategy, vc.Replicas),
 			}
 		}
 	} else {
 		for i := 0; i < vc.Replicas; i++ {
 			copyCommand = append(copyCommand, "mc config host add s3 ${AWS_ENDPOINT_URL} ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY}; mc cp ${RECURSIVE_OPTION} s3/${BUCKET_NAME}${BUCKET_PATH} ${DATA_PATH}")
+			if resync {
+				copyCommand[i] = strings.Join([]string{copyCommand[i], "mc mirror -w --overwrite ${DATA_PATH} s3/${BUCKET_NAME}"}, "; ")
+			}
 		}
 	}
 
@@ -221,9 +247,15 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1alpha1.VolumeConfig, controllerRef 
 	usedNodeNames := []string{}
 	nodeLabelKey := fmt.Sprintf("%s/%s-%s-%s", vckv1alpha1.GroupName, ns, controllerRef.Name, vc.ID)
 	for _, vckName := range vckNames {
-		err := waitForPodSuccess(podClient, vckName, ns, timeout)
+		var err error
+		podRunning := true
+		if !resync {
+			err = waitForPodSuccess(podClient, vckName, ns, timeout)
+		} else {
+			podRunning = isPodRunningAfterTimeout(podClient, vckName, ns, timeout)
+		}
 
-		if err != nil {
+		if err != nil || !podRunning {
 			downloadErrMsg := "error during data download using pod"
 
 			podResource := h.k8sClientset.CoreV1().RESTClient().Get().Namespace(ns).Name(vckName).Resource("pods")
@@ -293,7 +325,6 @@ func (h *s3Handler) OnAdd(ns string, vc vckv1alpha1.VolumeConfig, controllerRef 
 				Message: fmt.Sprintf("could not label node %s, error: %v", pod.Spec.NodeName, err),
 			}
 		}
-
 	}
 
 	return vckv1alpha1.Volume{
@@ -402,7 +433,7 @@ func (h *s3Handler) OnDelete(ns string, vc vckv1alpha1.VolumeConfig, vStatus vck
 
 		err = updateNodeWithLabels(nodeClient, node.(*corev1.Node), []string{nodeLabelKey}, "delete")
 		if err != nil {
-			glog.Warningf("[s3-handler] OnDelete: error while deleting label for node nodes %v", err)
+			glog.Warningf("[s3-handler] OnDelete: error while deleting label from nodes %v", err)
 		}
 	}
 }
