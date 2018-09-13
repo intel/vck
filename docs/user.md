@@ -7,7 +7,7 @@
     * [Create a Pod using the Custom Resource Status](#create-a-pod-using-the-custom-resource-status)
     * [Create a Deployment using the Custom Resource Status](#create-a-deployment-using-the-custom-resource-status)
     * [Types of Sources](#types-of-sources)
-    * [Data distribution] (#data-distribution)
+    * [Data distribution](#data-distribution)
 
 ## Prerequisites
 
@@ -118,7 +118,7 @@ status:
 ```
 
 Other examples on custom resource manifest can be found in [resources][resources-dir]
-directory. For details about source types and their fields, refer [types of sources](#types-of-sources).
+directory. For details about source types and their fields, refer to [types of sources](#types-of-sources).
 
 ## Create a Pod using the Custom Resource Status
 
@@ -183,15 +183,12 @@ For examples on how to define and use the different types, please refer to the e
 
 A brief description of each source type is provided below.
 
-| `volumeConfig.sourceURL`      | `string`                                          | Source URL of the data set                                                                                 |
-
 | Type         | Fields | Required                         |  Description                                          | Supported Access Modes | Field(s) provided in CR status |
 |:-------------|:----------------------------------------|:----|:--------------------------------------------------|:-----------------------|:-------------------------------|
 | `S3`         | `volumeConfig.options["sourceURL"]`     | Yes | The s3 url to download the data from. End the sourceURL with a `/` to recursively copy | `ReadWriteOnce`        | `volumeSource`                 |
-|              | `volumeConfig.options["endpointURL"]`   | Yes | No | The s3 compatible service endpoint (i.e. minio url)          |                        | |
-|              | `volumeConfig.endpointURL`              | No | The s3 compatible service endpoint (i.e. minio url)          |                        | |
+|              | `volumeConfig.options["endpointURL"]`   | No | The s3 compatible service endpoint (i.e. minio url).  Defaults to "https://s3.amazonaws.com"          |                        | |
 |              | `volumeConfig.replicas`                 | Yes | The number of nodes this data should be replicated on. |                        | `nodeAffinity`                 |
-|              | `volumeConfig.options["dataPath"]`                 | No | The  data path on the node where s3 data would be downloaded |                        | `volumeSource`                 |
+|              | `volumeConfig.options["dataPath"]`                 | No | The  data path on the node where s3 data would be downloaded.  Defaults to "/var/datasets" |                        | `volumeSource`                 |
 |              | `volumeConfig.options["awsCredentialsSecretName]` | Yes | The name of the secret with AWS credentials to access the s3 data              |                        | |
 |              | `volumeConfig.options["timeoutForDataDownload"]`  | No | The timeout for download of s3 data. Defaults to 5 minutes. [[Format]](https://golang.org/pkg/time/#ParseDuration) |                        | |
 |              | `volumeConfig.options["distributionStrategy"]`    | No | The [distribution strategy](#data-distribution) to use to distribute the data across the replicas |                        | |
