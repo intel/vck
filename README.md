@@ -1,3 +1,7 @@
+# DISCONTINUATION OF PROJECT #
+This project will no longer be maintained by Intel.
+Intel has ceased development and contributions including, but not limited to, maintenance, bug fixes, new releases, or updates, to this project.
+Intel no longer accepts patches to this project.
 # Volume Controller for Kubernetes (VCK)
 
 [![CircleCI](https://circleci.com/gh/IntelAI/vck.svg?style=svg)](https://circleci.com/gh/IntelAI/vck)
