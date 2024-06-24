@@ -6,6 +6,7 @@
     * [Create a Volume Manager Custom Resource](#create-a-volume-manager-custom-resource)
     * [Create a Pod using the Custom Resource Status](#create-a-pod-using-the-custom-resource-status)
     * [Create a Deployment using the Custom Resource Status](#create-a-deployment-using-the-custom-resource-status)
+    * [Create a Deployment using the VCK Initializer](#create-a-deployment-using-the-vck-initializer)
     * [Types of Sources](#types-of-sources)
     * [Data distribution](#data-distribution)
 
@@ -169,7 +170,68 @@ $ kubectl create -f resources/deployments/vck-deployment.yaml
 deployment "vck-example-deployment" created
 ```
 
+## Create a Deployment using the VCK Initializer
+
+The VCK Initializer will ensure the  volume manager data is only injected into Deployments with an `initializer.kubernetes.io/vck` annotation set to a non-empty value.
+
+```yaml
+
+"initializer.kubernetes.io/vck": '{
+        "name": "<insert-your-vck-name>",
+        "id": "<insert-your-vck-id>",
+        "containers": [
+          {
+            "name": "<insert-your contianer-name>",
+            "mount-path" : "<insert-your-mount-path>"
+          }
+        ],
+      }'
+```
+
+| Key                  | Required | Description                                    | Default      |
+|:----------------------|:---------:|:------------------------------------------------|:--------------|
+| name                 | yes      | The VCK name to append volumes to containers   |              |
+| id                   | no       | The id of the volume to append to container           | first volume |
+| containers           | no       | Name and MountPath of container                | all          |
+| container.name       | yes      | Name of the container to append the VCK volume |              |
+| container.mount-path | no       | Path for the VCK to mount the volume           | /var/dataset |
+
+The id key is optional it picks the first volume by default, similarly the container object is optional it picks all containers by default and appends it to default mount path "/var/datasets". If the container object just contains the name,vck is appended to default mount path  "/var/datasets".
+
+* Annotation with only name
+
+```yaml
+
+"initializer.kubernetes.io/vck": '{
+        "name": "<insert-your-vck-name>"
+      }'
+```
+
+* Annotation with no containers
+
+```yaml
+"initializer.kubernetes.io/vck": '{
+        "name": "<insert-your-vck-name>",
+        "id": "<insert-your-vck-id>"
+      }'
+```
+
+* Annotation with no container.mount-path
+
+```yaml
+"initializer.kubernetes.io/vck": '{
+        "name": "<insert-your-vck-name>",
+        "id": "<insert-your-vck-id>",
+        "containers": [
+          {
+            "name": "<insert-your contianer-name>"
+          }
+        ],
+      }'
+```
+
 ## Types of Sources
+
 The following source types are currently implemented:
 * S3: Files present in an S3 bucket and provided as `volumeConfig.sourceURL` in the CR are downloaded/synced onto the number of nodes equal to `volumeConfig.replicas` and made available as a hostPath volume. Node affinity details are provided through `volume.nodeAffinity` to guide the scheduling of pods.
 * NFS: The path exported by an NFS server is mounted and made available as a PVC.
