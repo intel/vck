@@ -1,0 +1,12 @@
+
+namespace:
+
+pachyderm:
+  bootstrap: false
+  address: "pachyderm.default.svc:650"
+
+minio:
+  bootstrap: false
+  server_address: ""
+  access_key: ""
+  secret_key: ""

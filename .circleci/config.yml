@@ -35,12 +35,20 @@ jobs:
     steps:
       - checkout
       - run:
+          name: install gcloud and setup credentials
+          command: |
+            echo ${GKE_ARGO_CREDS} | base64 --decode > ${HOME}/gcloud-service-key.json
+            gcloud auth activate-service-account --key-file ${HOME}/gcloud-service-key.json
+            gcloud --project ${GKE_PROJECT} container clusters create "vck-${CIRCLE_BUILD_NUM}" --zone "${GKE_ZONE}" --cluster-version "${GKE_CLUSTER_VERSION}" --num-nodes "${GKE_NUM_NODES}" --machine-type "${GKE_MACHINE_TYPE}"
+            kubectl create ns "vck-${CIRCLE_BUILD_NUM}"
+            # Bootstrap the cluster
+            sh /go/src/github.com/IntelAI/vck/resources/scripts/bootstrap.sh vck-${CIRCLE_BUILD_NUM} ${MINIO_ACCESS_KEY_ID} ${MINIO_SECRET_ACCESS_KEY} true
+      - run:
           name: install chart
           command: |
-            mkdir -p $HOME/.kube
-            KUBE_CONFIG=${GKE_KUBECONFIG_KVCCI}
-            echo "${KUBE_CONFIG}" | base64 --decode > "${HOME}/.kube/config"
-            kubectl create ns "vck-${CIRCLE_BUILD_NUM}"
+            export S3_SERVER_IP=minio-vck-${CIRCLE_BUILD_NUM}.vck-${CIRCLE_BUILD_NUM}.svc
+            export NFS_SERVER_IP=nfs-vck-${CIRCLE_BUILD_NUM}-nfs-server-provisioner.vck-${CIRCLE_BUILD_NUM}.svc
+            export PACHYDERM_ADDRESS=pachd.vck-${CIRCLE_BUILD_NUM}.svc:650
             kubectl create secret generic s3-creds \
               --from-literal=awsAccessKeyID=${MINIO_ACCESS_KEY_ID} \
               --from-literal=awsSecretAccessKey=${MINIO_SECRET_ACCESS_KEY} \
@@ -53,16 +61,18 @@ jobs:
               --set crd.install=true \
               --set tag=$(git describe --tags --always --dirty) \
               --set log_level=4
-            export S3_SERVER_IP=$(kubectl get svc ${S3_SVC_NAME} -o json | jq -r .spec.clusterIP)
-            export NFS_SERVER_IP=$(kubectl get svc ${NFS_SERVER_SVC_NAME} -o json | jq -r .spec.clusterIP)
             make dep-ensure
             make code-generation
-            go test -v ./test/e2e/... -args -namespace=vck-${CIRCLE_BUILD_NUM} -s3serverip=${S3_SERVER_IP} -nfsserverip=${NFS_SERVER_IP}
+            go test -v ./test/e2e/... -args -namespace=vck-${CIRCLE_BUILD_NUM} -s3serverip=${S3_SERVER_IP} -nfsserverip=${NFS_SERVER_IP} -pachydermaddress=${PACHYDERM_ADDRESS}
       - run:
           name: cleanup
           command: |
             helm delete --purge vck-${CIRCLE_BUILD_NUM} || true
+            helm delete --purge minio-vck-${CIRCLE_BUILD_NUM} || true
+            helm delete --purge nfs-vck-${CIRCLE_BUILD_NUM} || true
+            helm delete --purge pachyderm-vck-${CIRCLE_BUILD_NUM} || true
             kubectl delete ns vck-${CIRCLE_BUILD_NUM} || true
+            gcloud container clusters delete "vck-${CIRCLE_BUILD_NUM}" --zone "us-west1-a" --project "${GKE_PROJECT}" --quiet
           when: always
 
 workflows:

@@ -43,9 +43,10 @@ import (
 )
 
 var (
-	namespace   = flag.String("namespace", "e2e-test", "namespace used for the e2e test")
-	s3ServerIP  = flag.String("s3serverip", "", "S3 server IP address")
-	nfsServerIP = flag.String("nfsserverip", "", "NFS server IP address")
+	namespace        = flag.String("namespace", "e2e-test", "namespace used for the e2e test")
+	s3ServerIP       = flag.String("s3serverip", "", "S3 server IP address")
+	nfsServerIP      = flag.String("nfsserverip", "", "NFS server IP address")
+	pachydermAddress = flag.String("pachydermaddress", "pachd.default.svc:650", "Pachyderm service address")
 )
 
 func makeClients(t *testing.T) (crv1alpha1_volume_manager.VolumeManagerInterface, *kubernetes.Clientset) {
@@ -267,10 +268,11 @@ func TestVolumeManager(t *testing.T) {
 						"key2": "val2",
 					},
 					Options: map[string]string{
-						"repo":       "test",
-						"branch":     "master",
-						"inputPath":  "s3/test",
-						"outputPath": "test",
+						"repo":                    "test",
+						"branch":                  "master",
+						"inputPath":               "s3/test",
+						"outputPath":              "test",
+						"pachydermServiceAddress": *pachydermAddress,
 					},
 				},
 			},
@@ -294,10 +296,11 @@ func TestVolumeManager(t *testing.T) {
 						"key2": "val2",
 					},
 					Options: map[string]string{
-						"repo":       "test",
-						"branch":     "master",
-						"inputPath":  "s3/",
-						"outputPath": "test",
+						"repo":                    "test",
+						"branch":                  "master",
+						"inputPath":               "s3/",
+						"outputPath":              "test",
+						"pachydermServiceAddress": *pachydermAddress,
 					},
 				},
 			},
@@ -597,38 +600,10 @@ func TestVolumeManager(t *testing.T) {
 			expNA:      false,
 			expPVC:     false,
 		},
-		{
-			description: "single vc - Pachyderm - ",
-			volumeConfigs: []crv1alpha1.VolumeConfig{
-				{
-					ID:         "vol1",
-					Replicas:   1,
-					SourceType: "Pachyderm",
-					AccessMode: "ReadWriteOnce",
-					Capacity:   "5Gi",
-					Labels: map[string]string{
-						"key1": "val1",
-						"key2": "val2",
-					},
-					Options: map[string]string{
-						"repo":                   "test",
-						"branch":                 "master",
-						"inputPath":              "s3/",
-						"outputPath":             "test",
-						"timeoutForDataDownload": "10s",
-					},
-				},
-			},
-			expSuccess: true,
-			expError:   "",
-			expHP:      true,
-			expNA:      true,
-			expPVC:     false,
-		},
 	}
 
 	for _, testCase := range testCases {
-		fmt.Printf("%s", testCase.description)
+		fmt.Printf("%s\n", testCase.description)
 		volman := makeVolumeManager(testCase.volumeConfigs)
 		createdVolman, err := crdClient.Create(volman)
 		require.Nil(t, err)

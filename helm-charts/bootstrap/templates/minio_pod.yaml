@@ -1,0 +1,18 @@
+{{- if .Values.minio.bootstrap -}}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: minio-bootstrap
+  namespace: {{ .Values.namespace }}
+spec:
+  restartPolicy: OnFailure
+  containers:
+  - command: ["/bin/sh"]
+    args:
+    - -c
+    - mc config host add s3 {{ .Values.minio.server_address }} {{ .Values.minio.access_key }} {{ .Values.minio.secret_key }} &&
+      wget http://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz &&
+      mc mb s3/e2e-test && mc cp cifar-100-python.tar.gz s3/e2e-test/cifar-100-python.tar.gz
+    image: minio/mc:RELEASE.2018-02-09T23-07-36Z
+    name: minio
+{{end}}
